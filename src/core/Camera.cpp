@@ -80,7 +80,7 @@ CCamera::CCamera(void)
 {
 #if GTA_VERSION >= GTA3_PC_11 || defined(FIX_BUGS)
 	m_fMouseAccelHorzntl = 0.0025f;
-	m_fMouseAccelVertical = 0.003f;
+	m_fMouseAccelVertical = 0.0025f;
 #endif
 	Init();
 }
@@ -241,9 +241,9 @@ CCamera::Init(void)
 	m_bLookingAtPlayer = true;
 #if GTA_VERSION < GTA3_PC_11 && !defined(FIX_BUGS)
 	m_fMouseAccelHorzntl = 0.0025f;
-	m_fMouseAccelVertical = 0.003f;
+	m_fMouseAccelVertical = 0.0025f;
 #endif
-	m_f3rdPersonCHairMultX = 0.53f;
+	m_f3rdPersonCHairMultX = 0.4f;
 	m_f3rdPersonCHairMultY = 0.4f;
 }
 

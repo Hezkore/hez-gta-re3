@@ -34,6 +34,9 @@ bool CCamera::bFreeCam = false;
 int nPreviousMode = -1;
 #endif
 
+#define m_fMultiHori -0.8f
+#define m_fMultiVert 0.8f
+
 void
 CCam::Init(void)
 {
@@ -1517,8 +1520,8 @@ CCam::Process_FollowPedWithMouse(const CVector &CameraTarget, float TargetOrient
 	float LookLeftRight, LookUpDown;
 	if((MouseX != 0.0f || MouseY != 0.0f) && !CPad::GetPad(0)->ArePlayerControlsDisabled()){
 		UseMouse = true;
-		LookLeftRight = -2.5f*MouseX;
-		LookUpDown = 4.0f*MouseY;
+		LookLeftRight = m_fMultiHori*MouseX;
+		LookUpDown = m_fMultiVert*MouseY;
 	}else{
 		LookLeftRight = -CPad::GetPad(0)->LookAroundLeftRight();
 		LookUpDown = CPad::GetPad(0)->LookAroundUpDown();
@@ -2589,8 +2592,8 @@ CCam::Process_M16_1stPerson(const CVector &CameraTarget, float, float, float)
 	float LookLeftRight, LookUpDown;
 	if(MouseX != 0.0f || MouseY != 0.0f){
 		UseMouse = true;
-		LookLeftRight = -3.0f*MouseX;
-		LookUpDown = 4.0f*MouseY;
+		LookLeftRight = -m_fMultiHori*MouseX;
+		LookUpDown = m_fMultiVert*MouseY;
 	}else{
 		LookLeftRight = -CPad::GetPad(0)->SniperModeLookLeftRight();
 		LookUpDown = CPad::GetPad(0)->SniperModeLookUpDown();
@@ -2880,8 +2883,8 @@ CCam::Process_1rstPersonPedOnPC(const CVector&, float TargetOrientation, float, 
 		float LookLeftRight, LookUpDown;
 		if(MouseX != 0.0f || MouseY != 0.0f){
 			UseMouse = true;
-			LookLeftRight = -3.0f*MouseX;
-			LookUpDown = 4.0f*MouseY;
+			LookLeftRight = m_fMultiHori*MouseX;
+			LookUpDown = m_fMultiVert*MouseY;
 		}else{
 			LookLeftRight = -CPad::GetPad(0)->LookAroundLeftRight();
 			LookUpDown = CPad::GetPad(0)->LookAroundUpDown();
@@ -2978,8 +2981,8 @@ CCam::Process_Sniper(const CVector &CameraTarget, float TargetOrientation, float
 	float LookLeftRight, LookUpDown;
 	if(MouseX != 0.0f || MouseY != 0.0f){
 		UseMouse = true;
-		LookLeftRight = -3.0f*MouseX;
-		LookUpDown = 4.0f*MouseY;
+		LookLeftRight = m_fMultiHori*MouseX;
+		LookUpDown = m_fMultiVert*MouseY;
 	}else{
 		LookLeftRight = -CPad::GetPad(0)->SniperModeLookLeftRight();
 		LookUpDown = CPad::GetPad(0)->SniperModeLookUpDown();
