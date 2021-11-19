@@ -806,6 +806,7 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	return AddParticle(type, vecPos, vecDir, pEntity, fSize, color, nRotationSpeed, nRotation, nCurFrame, nLifeSpan);
 }
 
+float throttleParticleAdd = 0;
 CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVector const &vecDir, CEntity *pEntity, float fSize, RwRGBA const &color, int32 nRotationSpeed, int32 nRotation, int32 nCurFrame, int32 nLifeSpan)
 {
 	if ( CTimer::GetIsPaused() )
@@ -830,6 +831,10 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	
 	if ( pParticle == nil )
 		return nil;
+	
+	throttleParticleAdd += CTimer::GetTimeStepInMilliseconds();
+	if(throttleParticleAdd < 31) return nil;
+	throttleParticleAdd -= 31;
 	
 	tParticleSystemData *psystem = &mod_ParticleSystemManager.m_aParticles[type];
 	
@@ -1039,10 +1044,18 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	return pParticle;
 }
 
+float throttleParticleUpdate = 0;
+
 void CParticle::Update()
 {
 	if ( CTimer::GetIsPaused() )
 		return;
+	
+	CParticleObject::UpdateAll();
+	
+	throttleParticleUpdate += CTimer::GetTimeStepInMilliseconds();
+	if(throttleParticleUpdate < 31) return;
+	throttleParticleUpdate -= 31;
 
 	CRGBA color(0, 0, 0, 0);
 	
@@ -1053,8 +1066,6 @@ void CParticle::Update()
 	float fFricDeccel96 = 0.96f;
 	float fFricDeccel99 = 0.99f;
 	
-	CParticleObject::UpdateAll();
-
 	for ( int32 i = 0; i < MAX_PARTICLES; i++ )
 	{
 		tParticleSystemData *psystem = &mod_ParticleSystemManager.m_aParticles[i];

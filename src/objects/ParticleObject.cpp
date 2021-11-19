@@ -159,7 +159,7 @@ CParticleObject::AddObject(uint16 type, CVector const &pos, CVector const &targe
 	pobj->m_pParticle        = NULL;
 	
 	if ( lifeTime != 0 )
-		pobj->m_nRemoveTimer = CTimer::GetTimeInMilliseconds() + lifeTime;
+		pobj->m_nRemoveTimer = lifeTime;
 	else
 		pobj->m_nRemoveTimer = 0;
 	
@@ -240,7 +240,7 @@ CParticleObject::AddObject(uint16 type, CVector const &pos, CVector const &targe
 				pobj->m_nSkipFrames      = 1;
 				pobj->m_nCreationChance  = 0;
 				pobj->m_vecTarget        = CVector(0.0f, 0.0f, 0.3f);
-				pobj->m_nRemoveTimer     = CTimer::GetTimeInMilliseconds() + 5000;
+				pobj->m_nRemoveTimer     = 5000;
 				CAudioHydrant::Add(pobj);
 				break;
 			}
@@ -373,7 +373,7 @@ CParticleObject::AddObject(uint16 type, CVector const &pos, CVector const &targe
 				pobj->m_nNumEffectCycles = 1;
 				pobj->m_nSkipFrames      = 1;
 				pobj->m_nCreationChance  = 0;
-				pobj->m_nRemoveTimer     = CTimer::GetTimeInMilliseconds();
+				pobj->m_nRemoveTimer     = 0;
 				break;
 			}
 			
@@ -384,7 +384,7 @@ CParticleObject::AddObject(uint16 type, CVector const &pos, CVector const &targe
 				pobj->m_nNumEffectCycles = 1;
 				pobj->m_nSkipFrames      = 1;
 				pobj->m_nCreationChance  = 0;
-				pobj->m_nRemoveTimer     = CTimer::GetTimeInMilliseconds();
+				pobj->m_nRemoveTimer     = 0;
 				pobj->m_vecTarget.Normalise();
 				break;
 			}
@@ -483,7 +483,7 @@ void CParticleObject::UpdateClose(void)
 		}
 	}
 	
-	if ( ++this->m_nFrameCounter / CTimer::GetTimeStepFix() >= this->m_nSkipFrames )
+	if ( ++this->m_nFrameCounter >= this->m_nSkipFrames )
     {
 		this->m_nFrameCounter = 0;
 		
@@ -1087,7 +1087,7 @@ void CParticleObject::UpdateClose(void)
 		}
 	}
 	
-	if ( this->m_nRemoveTimer != 0 && this->m_nRemoveTimer < CTimer::GetTimeInMilliseconds() )
+	if ( this->m_nRemoveTimer != 0 )
 	{
 		MoveToList(&pCloseListHead, &pUnusedListHead, this);
 		this->m_nState = POBJECTSTATE_FREE;
@@ -1100,7 +1100,7 @@ void CParticleObject::UpdateClose(void)
 void
 CParticleObject::UpdateFar(void)
 {
-	if ( this->m_nRemoveTimer != 0 && this->m_nRemoveTimer < CTimer::GetTimeInMilliseconds() )
+	if ( this->m_nRemoveTimer != 0 )
 	{
 		MoveToList(&pFarListHead, &pUnusedListHead, this);
 		this->m_nState = POBJECTSTATE_FREE;
