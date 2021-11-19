@@ -1824,7 +1824,7 @@ CCam::WorkOutCamHeight(const CVector &TargetCoors, float TargetOrientation, floa
 		PreviousNearCheckNearClipSmall = false;
 	}
 
-	float TopAlphaSpeed = 0.15f;
+	float TopAlphaSpeed = 0.015f;
 	float AlphaSpeedStep = 0.015f;
 
 	float zoomvalue = TheCamera.CarZoomValueSmooth;
@@ -2592,7 +2592,7 @@ CCam::Process_M16_1stPerson(const CVector &CameraTarget, float, float, float)
 	float LookLeftRight, LookUpDown;
 	if(MouseX != 0.0f || MouseY != 0.0f){
 		UseMouse = true;
-		LookLeftRight = -m_fMultiHori*MouseX;
+		LookLeftRight = m_fMultiHori*MouseX;
 		LookUpDown = m_fMultiVert*MouseY;
 	}else{
 		LookLeftRight = -CPad::GetPad(0)->SniperModeLookLeftRight();
