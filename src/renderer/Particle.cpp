@@ -1046,12 +1046,12 @@ void CParticle::Update()
 
 	CRGBA color(0, 0, 0, 0);
 	
-	float fFricDeccel50 = pow(0.50f, CTimer::GetTimeStep());
-	float fFricDeccel80 = pow(0.80f, CTimer::GetTimeStep());
-	float fFricDeccel90 = pow(0.90f, CTimer::GetTimeStep());
-	float fFricDeccel95 = pow(0.95f, CTimer::GetTimeStep());
-	float fFricDeccel96 = pow(0.96f, CTimer::GetTimeStep());
-	float fFricDeccel99 = pow(0.99f, CTimer::GetTimeStep());
+	float fFricDeccel50 = 0.50f;
+	float fFricDeccel80 = 0.80f;
+	float fFricDeccel90 = 0.90f;
+	float fFricDeccel95 = 0.95f;
+	float fFricDeccel96 = 0.96f;
+	float fFricDeccel99 = 0.99f;
 	
 	CParticleObject::UpdateAll();
 
@@ -1069,7 +1069,7 @@ void CParticle::Update()
 		{
 			bRemoveParticle = false;
 
-			CVector moveStep = particle->m_vecPosition + ( particle->m_vecVelocity * CTimer::GetTimeStep() );
+			CVector moveStep = particle->m_vecPosition + particle->m_vecVelocity;
 			
 			if (  CTimer::GetTimeInMilliseconds() > particle->m_nTimeWhenWillBeDestroyed || particle->m_nAlpha == 0 )
 			{
@@ -1149,7 +1149,7 @@ void CParticle::Update()
 			if ( psystem->m_fGravitationalAcceleration > 0.0f )
 			{
 				if ( -50.0f * psystem->m_fGravitationalAcceleration < particle->m_vecVelocity.z )
-					particle->m_vecVelocity.z -= psystem->m_fGravitationalAcceleration * CTimer::GetTimeStep();
+					particle->m_vecVelocity.z -= psystem->m_fGravitationalAcceleration;
 
 				if ( psystem->Flags & ZCHECK_FIRST )
 				{
@@ -1347,7 +1347,7 @@ void CParticle::Update()
 				if ( psystem->m_fGravitationalAcceleration < 0.0f )
 				{
 					if ( -5.0f * psystem->m_fGravitationalAcceleration > particle->m_vecVelocity.z )
-						particle->m_vecVelocity.z -= psystem->m_fGravitationalAcceleration * CTimer::GetTimeStep();
+						particle->m_vecVelocity.z -= psystem->m_fGravitationalAcceleration;
 				}
 				else
 				{
@@ -1666,7 +1666,7 @@ void CParticle::Render()
 								
 								float fSpeed = particle->m_vecVelocity.Magnitude();
 								
-								float fNewTrailLength = fSpeed * CTimer::GetTimeStep() * w * 2.0f;
+								float fNewTrailLength = fSpeed * w * 2.0f;
 								
 								if ( fDist > fNewTrailLength )
 									fTrailLength = fNewTrailLength;

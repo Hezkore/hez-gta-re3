@@ -483,7 +483,7 @@ void CParticleObject::UpdateClose(void)
 		}
 	}
 	
-	if ( ++this->m_nFrameCounter >= this->m_nSkipFrames )
+	if ( ++this->m_nFrameCounter / CTimer::GetTimeStepFix() >= this->m_nSkipFrames )
     {
 		this->m_nFrameCounter = 0;
 		
