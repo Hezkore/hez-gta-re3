@@ -5,7 +5,8 @@
 
 ## Changes to this fork
 The camera will now have the same vertical speed as horizontal speed.\
-The mouse is generally also slower, which lets you adjust the mouse sensitivity at a fine-granularity level.
+The mouse is generally also slower, which lets you adjust the mouse sensitivity at a fine-granularity level.\
+Particles are no longer affected by framerate.
 
 ## Intro
 
