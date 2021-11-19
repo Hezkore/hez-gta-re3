@@ -1,7 +1,8 @@
 <img src="https://github.com/hezkore/re3/blob/master/res/images/logo_1024.png?raw=true" alt="re3 logo" width="200">
 
 ## About this fork of re3
-This fork fixes some issues I've had with the original re3.
+This fork fixes some issues I've had with the original re3.\
+They're currently only applied to GTA 3.
 
 * The camera now has the same vertical and horizontal speed.
 * The mouse is generally slower, letting you adjust the mouse sensitivity at a finer-granularity level.
