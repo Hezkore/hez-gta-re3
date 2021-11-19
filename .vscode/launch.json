@@ -3,7 +3,7 @@
     {
       "MIMode": "gdb",
       "args": [],
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/bin/linux-amd64-librw_gl3_glfw-oal/Debug",
       "environment": [],
       "externalConsole": false,
       "name": "(gdb) Launch (Linux Debug)",
@@ -24,7 +24,7 @@
     {
       "MIMode": "gdb",
       "args": [],
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/bin/linux-amd64-librw_gl3_glfw-oal/Release",
       "environment": [],
       "externalConsole": false,
       "name": "(gdb) Launch (Linux Release)",
