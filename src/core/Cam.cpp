@@ -1824,7 +1824,7 @@ CCam::WorkOutCamHeight(const CVector &TargetCoors, float TargetOrientation, floa
 		PreviousNearCheckNearClipSmall = false;
 	}
 
-	float TopAlphaSpeed = 0.015f;
+	float TopAlphaSpeed = 0.15f;
 	float AlphaSpeedStep = 0.015f;
 
 	float zoomvalue = TheCamera.CarZoomValueSmooth;
