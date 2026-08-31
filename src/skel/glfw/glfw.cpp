@@ -58,6 +58,11 @@ long _dwOperatingSystemVersion;
 #include <X11/XKBlib.h>
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3native.h>
+// GLFW_PLATFORM is 3.4 and up. Without it we can't keep GLFW off Wayland, and reading
+// the keyboard from the X server is a segfault there. Build with --no-x11-keyboard instead.
+#ifndef GLFW_PLATFORM
+#error Reading the keyboard from the X server needs GLFW 3.4 or newer
+#endif
 #endif
 
 #ifdef _WIN32
@@ -1915,9 +1920,8 @@ main(int argc, char *argv[])
 #endif
 #endif
 
-#if defined(GET_KEYBOARD_INPUT_FROM_X11) && defined(GLFW_PLATFORM)
+#ifdef GET_KEYBOARD_INPUT_FROM_X11
 	// Keyboard input comes from the X server, so GLFW must not give us a Wayland window.
-	// GLFW_PLATFORM is 3.4 and up, older versions are X11 only.
 	glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 #endif
 
