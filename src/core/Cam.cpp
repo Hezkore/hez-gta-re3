@@ -2490,8 +2490,8 @@ CCam::Process_Rocket(const CVector &CameraTarget, float, float, float)
 	float LookLeftRight, LookUpDown;
 	if(MouseX != 0.0f || MouseY != 0.0f){
 		UseMouse = true;
-		LookLeftRight = -3.0f*MouseX;
-		LookUpDown = 4.0f*MouseY;
+		LookLeftRight = m_fMultiHori*MouseX;
+		LookUpDown = m_fMultiVert*MouseY;
 	}else{
 		LookLeftRight = -CPad::GetPad(0)->SniperModeLookLeftRight();
 		LookUpDown = CPad::GetPad(0)->SniperModeLookUpDown();
@@ -4628,8 +4628,8 @@ CCam::Process_FollowPed_Rotation(const CVector &CameraTarget, float TargetOrient
 /*
 	if((MouseX != 0.0f || MouseY != 0.0f) && !CPad::GetPad(0)->ArePlayerControlsDisabled()){
 		UseMouse = true;
-		LookLeftRight = -2.5f*MouseX;
-		LookUpDown = 4.0f*MouseY;
+		LookLeftRight = m_fMultiHori*MouseX;
+		LookUpDown = m_fMultiVert*MouseY;
 	}else
 */
 	{
@@ -5089,8 +5089,8 @@ CCam::Process_FollowCar_SA(const CVector& CameraTarget, float TargetOrientation,
 
 	// FIX: Disable mouse movement in drive-by, it's buggy. Original SA bug.
 	if (/*bFreeMouseCam &&*/ CCamera::m_bUseMouse3rdPerson && !pad->ArePlayerControlsDisabled() && nextDirectionIsForward) {
-		float mouseY = pad->GetMouseYThisFrame() * 2.0f;
-		float mouseX = pad->GetMouseXThisFrame() * -2.0f;
+		float mouseY = pad->GetMouseYThisFrame() * m_fMultiVert;
+		float mouseX = pad->GetMouseXThisFrame() * m_fMultiHori;
 
 		// If you want an ability to toggle free cam while steering with mouse, you can add an OR after DisableMouseSteering.
 		// There was a pad->NewState.m_bVehicleMouseLook in SA, which doesn't exists in III.
