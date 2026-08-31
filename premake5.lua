@@ -42,6 +42,11 @@ newoption {
 	description = "Don't print full paths into binary"
 }
 
+newoption {
+	trigger     = "no-x11-keyboard",
+	description = "Don't read keyboard input from the X server"
+}
+
 require("autoconf")
 
 if(_OPTIONS["with-librw"]) then
@@ -384,7 +389,7 @@ project "reLCS"
 			-- iterates all configs and runs on them
 			["dontWrite"] = function (cfg)
 				check_symbol_exists(cfg, "haveX11", "glfwGetX11Display", { "X11/Xlib.h", "X11/XKBlib.h", "GLFW/glfw3.h", "GLFW/glfw3native.h" }, "GLFW_EXPOSE_NATIVE_X11")
-				if cfg.autoconf["haveX11"] ~= nil and cfg.autoconf["haveX11"] == 1 then
+				if cfg.autoconf["haveX11"] ~= nil and cfg.autoconf["haveX11"] == 1 and not _OPTIONS["no-x11-keyboard"] then
 					table.insert(cfg.links, "X11")
 					table.insert(cfg.defines, "GET_KEYBOARD_INPUT_FROM_X11")
 				end
