@@ -1344,11 +1344,11 @@ cMusicManager::DisplayRadioStationName()
 			CFont::SetJustifyOff();
 			CFont::SetBackgroundOff();
 			CFont::SetDropShadowPosition(2);
-			CFont::SetScale(PSP_SCREEN_SCALE_X(0.5f), PSP_SCREEN_SCALE_Y(0.88f));
+			CFont::SetScale(PSP_HUD_SIZE(0.5f), PSP_HUD_SIZE(0.88f));
 			CFont::SetPropOn();
 			CFont::SetFontStyle(FONT_BANK);
 			CFont::SetCentreOn();
-			CFont::SetCentreSize(PSP_SCREEN_SCALE_X(260.0f));
+			CFont::SetCentreSize(PSP_HUD_SIZE(260.0f));
 			CFont::SetDropColor(CRGBA(0, 0, 0, 255));
 
 			if (gNumRetunePresses)
@@ -1356,7 +1356,7 @@ cMusicManager::DisplayRadioStationName()
 			else
 				CFont::SetColor(CRGBA(77, 155, 210, 255));
 
-			CFont::PrintString(SCREEN_WIDTH / 2, PSP_SCREEN_SCALE_Y(7.0f), pCurrentStation);
+			CFont::PrintString(SCREEN_WIDTH / 2, PSP_HUD_SIZE(7.0f), pCurrentStation);
 			CFont::DrawFonts();
 			CFont::SetCentreSize(SCREEN_STRETCH_X(DEFAULT_SCREEN_WIDTH));
 		}

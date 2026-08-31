@@ -1706,7 +1706,7 @@ void CGarages::PrintMessages()
 		// CRadar::m_FadeDownRadar = true; // TODO
 		CFont::DrawFonts();
 		float x_scale = FrontEndMenuManager.m_PrefsUseWideScreen ? 0.34506f : 0.3834f;
-		CFont::SetScale(PSP_SCREEN_SCALE_X(x_scale), PSP_SCREEN_SCALE_Y(0.71f));
+		CFont::SetScale(PSP_HUD_SIZE(x_scale), PSP_HUD_SIZE(0.71f));
 		CFont::SetPropOn();
 		CFont::SetJustifyOff();
 		CFont::SetBackgroundOff();
@@ -1715,8 +1715,8 @@ void CGarages::PrintMessages()
 		CFont::SetColor(CRGBA(27, 89, 130, 255));
 		CFont::SetDropShadowPosition(2);
 		CFont::SetDropColor(CRGBA(0, 0, 0, 255));
-		CFont::SetCentreSize(PSP_SCREEN_SCALE_X(454.0f));
-		float y_offset = PSP_SCREEN_SCALE_Y(170.0f);
+		CFont::SetCentreSize(PSP_HUD_SIZE(454.0f));
+		float y_offset = PSP_HUD_SIZE(170.0f);
 
 		if (MessageNumberInString2 >= 0) {
 			CMessages::InsertNumberInString(TheText.Get(MessageIDString), MessageNumberInString, MessageNumberInString2, -1, -1, -1, -1, gUString);

@@ -234,10 +234,15 @@ inline uint32 ldb(uint32 p, uint32 s, uint32 w)
 #define PSP_SCALE_TO_PS2_X(a) ((float)a * ((float)DEFAULT_SCREEN_WIDTH / (float)PSP_DEFAULT_SCREEN_WIDTH))
 #define PSP_SCALE_TO_PS2_Y(a) ((float)a * ((float)DEFAULT_SCREEN_HEIGHT / (float)PSP_DEFAULT_SCREEN_HEIGHT))
 
-#define PSP_SCREEN_SCALE_X(a) ((a) * (float) SCREEN_WIDTH / PSP_DEFAULT_SCREEN_WIDTH)
-#define PSP_SCREEN_SCALE_Y(a) ((a) * (float) SCREEN_WIDTH / PSP_DEFAULT_SCREEN_WIDTH)
-#define PSP_SCREEN_SCALE_FROM_RIGHT(a) (SCREEN_WIDTH - PSP_SCREEN_SCALE_X(a))
-#define PSP_SCREEN_SCALE_FROM_BOTTOM(a) (SCREEN_HEIGHT - PSP_SCREEN_SCALE_Y(a))
+// the PSP hud reads its 480 unit design at one size or another, picked in the
+// debug menu under Render. Each distance measures from the edge its element
+// is drawn at, so a smaller hud keeps to its corner instead of sliding toward the
+// top left
+extern float gPSPHudScale;
+#define PSP_HUD_SIZE(a) ((a) * gPSPHudScale * (float) HUD_WIDTH / PSP_DEFAULT_SCREEN_WIDTH)
+#define PSP_HUD_FROM_LEFT(a) (HUD_LEFT + PSP_HUD_SIZE(a))
+#define PSP_HUD_FROM_RIGHT(a) (HUD_RIGHT - PSP_HUD_SIZE(a))
+#define PSP_HUD_FROM_BOTTOM(a) (SCREEN_HEIGHT - PSP_HUD_SIZE(a))
 
 #include "maths.h"
 #include "Vector.h"

@@ -66,6 +66,7 @@ uint32 CHud::m_HelpMessageState;
 uint32 CHud::m_HelpMessageTimer;
 int32 CHud::m_HelpMessageFadeTimer;
 wchar CHud::m_HelpMessageToPrint[HELP_MSG_LENGTH];
+float gPSPHudScale = 0.75f; // how wide the PSP hud units span, 1 is the PSP look, 0.75 spans the PC games' 640
 float CHud::m_HelpMessageDisplayTime;
 bool CHud::m_HelpMessageDisplayForever;
 bool CHud::m_HelpMessageQuick;
@@ -453,7 +454,7 @@ void CHud::Draw()
 					RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERLINEAR);
 					if (FrontEndMenuManager.m_PrefsShowHud)
 						Sprites[WeaponType].Draw(
-							CRect(PSP_SCREEN_SCALE_X(left), PSP_SCREEN_SCALE_Y(16.0f), PSP_SCREEN_SCALE_X(right), PSP_SCREEN_SCALE_Y(60.0f)),
+							CRect(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - left), PSP_HUD_SIZE(16.0f), PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - right), PSP_HUD_SIZE(60.0f)),
 							CRGBA(255, 255, 255, alpha));
 				} else {
 					CBaseModelInfo *weaponModel = CModelInfo::GetModelInfo(weaponInfo->m_nModelId);
@@ -474,7 +475,7 @@ void CHud::Draw()
 							static CSprite2d sprite;
 							sprite.m_pTexture = weaponIcon;
 							sprite.Draw(
-								CRect(PSP_SCREEN_SCALE_X(left), PSP_SCREEN_SCALE_Y(16.0f), PSP_SCREEN_SCALE_X(right), PSP_SCREEN_SCALE_Y(60.0f)),
+								CRect(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - left), PSP_HUD_SIZE(16.0f), PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - right), PSP_HUD_SIZE(60.0f)),
 								CRGBA(255, 255, 255, alpha));
 							sprite.m_pTexture = nil;
 #endif
@@ -483,7 +484,7 @@ void CHud::Draw()
 				}
 
 				CFont::SetBackgroundOff();
-				CFont::SetScale(PSP_SCREEN_SCALE_X(FrontEndMenuManager.m_PrefsUseWideScreen ? 0.18f : 0.2f), PSP_SCREEN_SCALE_Y(0.44f));
+				CFont::SetScale(PSP_HUD_SIZE(FrontEndMenuManager.m_PrefsUseWideScreen ? 0.18f : 0.2f), PSP_HUD_SIZE(0.44f));
 				CFont::SetJustifyOff();
 				CFont::SetCentreOn();
 				CFont::SetCentreSize(SCREEN_STRETCH_X(DEFAULT_SCREEN_WIDTH));
@@ -513,7 +514,7 @@ void CHud::Draw()
 							if (FrontEndMenuManager.m_PrefsUseWideScreen)
 								pos = 438.0f;
 #endif
-							CFont::PrintString(PSP_SCREEN_SCALE_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - pos), PSP_SCREEN_SCALE_Y(42.0f), sPrint);
+							CFont::PrintString(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - pos), PSP_HUD_SIZE(42.0f), sPrint);
 						}
 						else {
 
@@ -539,14 +540,14 @@ void CHud::Draw()
 							CFont::SetCentreOff();
 							CFont::SetRightJustifyOn();
 							AsciiToUnicode(sAmmo, sPrint);
-							CFont::PrintString(PSP_SCREEN_SCALE_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - (FrontEndMenuManager.m_PrefsUseWideScreen ? 438.0f : 435.0f)), PSP_SCREEN_SCALE_Y(42.0f), sPrint);
+							CFont::PrintString(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - (FrontEndMenuManager.m_PrefsUseWideScreen ? 438.0f : 435.0f)), PSP_HUD_SIZE(42.0f), sPrint);
 							
 							CFont::SetRightJustifyOff();
 							AsciiToUnicode(sMinus, sPrint);
-							CFont::PrintString(PSP_SCREEN_SCALE_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - (FrontEndMenuManager.m_PrefsUseWideScreen ? 439.0f : 436.0f)), PSP_SCREEN_SCALE_Y(42.0f), sPrint);
+							CFont::PrintString(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - (FrontEndMenuManager.m_PrefsUseWideScreen ? 439.0f : 436.0f)), PSP_HUD_SIZE(42.0f), sPrint);
 							
 							AsciiToUnicode(sClip, sPrint);
-							CFont::PrintString(PSP_SCREEN_SCALE_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - (FrontEndMenuManager.m_PrefsUseWideScreen ? 441.0f : 439.0f)), PSP_SCREEN_SCALE_Y(42.0f), sPrint);
+							CFont::PrintString(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - (FrontEndMenuManager.m_PrefsUseWideScreen ? 441.0f : 439.0f)), PSP_HUD_SIZE(42.0f), sPrint);
 							
 						}
 					}
@@ -767,9 +768,9 @@ void CHud::Draw()
 					CFont::SetBackgroundOff();
 
 					if (FrontEndMenuManager.m_PrefsUseWideScreen)
-						CFont::SetScale(PSP_SCREEN_SCALE_X(0.42768f), PSP_SCREEN_SCALE_Y(0.88f));
+						CFont::SetScale(PSP_HUD_SIZE(0.42768f), PSP_HUD_SIZE(0.88f));
 					else
-						CFont::SetScale(PSP_SCREEN_SCALE_X(0.4752f), PSP_SCREEN_SCALE_Y(0.88f));
+						CFont::SetScale(PSP_HUD_SIZE(0.4752f), PSP_HUD_SIZE(0.88f));
 
 					//CFont::SetSlantRefPoint(SCREEN_SCALE_FROM_RIGHT(32.0f), SCREEN_SCALE_FROM_BOTTOM(128.0f));
 					//CFont::SetSlant(0.15f);
@@ -783,7 +784,7 @@ void CHud::Draw()
 					CFont::SetColor(CRGBA(ZONE_COLOR.r, ZONE_COLOR.g, ZONE_COLOR.b, fZoneAlpha));
 
 					if (!CTheScripts::bPlayerIsInTheStatium)
-						CFont::PrintStringFromBottom(PSP_SCREEN_SCALE_FROM_RIGHT(24.0f), PSP_SCREEN_SCALE_FROM_BOTTOM(16.0f), m_ZoneToPrint);
+						CFont::PrintStringFromBottom(PSP_HUD_FROM_RIGHT(24.0f), PSP_HUD_FROM_BOTTOM(16.0f), m_ZoneToPrint);
 
 					//CFont::SetSlant(0.f);
 				} else {
@@ -867,12 +868,12 @@ void CHud::Draw()
 					CFont::SetBackgroundOff();
 
 					if (FrontEndMenuManager.m_PrefsUseWideScreen)
-						CFont::SetScale(PSP_SCREEN_SCALE_X(0.42768f), PSP_SCREEN_SCALE_Y(0.88f));
+						CFont::SetScale(PSP_HUD_SIZE(0.42768f), PSP_HUD_SIZE(0.88f));
 					else
-						CFont::SetScale(PSP_SCREEN_SCALE_X(0.4752f), PSP_SCREEN_SCALE_Y(0.88f));
+						CFont::SetScale(PSP_HUD_SIZE(0.4752f), PSP_HUD_SIZE(0.88f));
 
 					CFont::SetWrapx(SCREEN_WIDTH);
-					CFont::SetSlantRefPoint(PSP_SCREEN_SCALE_FROM_RIGHT(24.0f), PSP_SCREEN_SCALE_FROM_BOTTOM(35.6f));
+					CFont::SetSlantRefPoint(PSP_HUD_FROM_RIGHT(24.0f), PSP_HUD_FROM_BOTTOM(35.6f));
 					CFont::SetSlant(0.f);
 
 					CFont::SetRightJustifyOn();
@@ -883,7 +884,7 @@ void CHud::Draw()
 					CFont::SetColor(CRGBA(VEHICLE_COLOR.r, VEHICLE_COLOR.g, VEHICLE_COLOR.b, fVehicleAlpha));
 					CFont::SetDropColor(CRGBA(0, 0, 0, fVehicleAlpha));
 
-					CFont::PrintStringFromBottom(PSP_SCREEN_SCALE_FROM_RIGHT(24.0f), PSP_SCREEN_SCALE_FROM_BOTTOM(35.6f), m_pVehicleNameToPrint);
+					CFont::PrintStringFromBottom(PSP_HUD_FROM_RIGHT(24.0f), PSP_HUD_FROM_BOTTOM(35.6f), m_pVehicleNameToPrint);
 
 					CFont::SetSlant(0.f);
 				}
@@ -928,8 +929,8 @@ void CHud::Draw()
 						UseTimerCounterFontSettings();
 						CFont::SetPropOn();
 						CFont::SetColor(CRGBA(255, 255, 255, m_HudAlpha));
-						CFont::SetScale(PSP_SCREEN_SCALE_X(0.7f), PSP_SCREEN_SCALE_Y(1.5217391f));
-						CFont::PrintString(PSP_SCREEN_SCALE_FROM_RIGHT(12.0f), PSP_SCREEN_SCALE_Y(31.0f * nNumBigOnscrnLines) + PSP_SCREEN_SCALE_Y(100.0f), pCounterText);
+						CFont::SetScale(PSP_HUD_SIZE(0.7f), PSP_HUD_SIZE(1.5217391f));
+						CFont::PrintString(PSP_HUD_FROM_RIGHT(12.0f), PSP_HUD_SIZE(31.0f * nNumBigOnscrnLines) + PSP_HUD_SIZE(100.0f), pCounterText);
 					}
 				}
 				if (CUserDisplay::OnscnTimer.m_sCounters[i].m_aCounterText2[0] != '\0')
@@ -961,17 +962,17 @@ void CHud::Draw()
 						CUserDisplay::OnscnTimer.m_sClocks[0].m_aClockColour.g,
 						CUserDisplay::OnscnTimer.m_sClocks[0].m_aClockColour.b,
 						m_HudAlpha));
-					CFont::PrintString(PSP_SCREEN_SCALE_FROM_RIGHT(12.0f), PSP_SCREEN_SCALE_Y(31.0f * nNumBigOnscrnLines) + PSP_SCREEN_SCALE_Y(100.0f), sTimer);
+					CFont::PrintString(PSP_HUD_FROM_RIGHT(12.0f), PSP_HUD_SIZE(31.0f * nNumBigOnscrnLines) + PSP_HUD_SIZE(100.0f), sTimer);
 
 					if (CUserDisplay::OnscnTimer.m_sClocks[0].m_aClockText[0]) {
-						float width = CFont::GetStringWidth(sTimer) + PSP_SCREEN_SCALE_Y(4.0f);
+						float width = CFont::GetStringWidth(sTimer) + PSP_HUD_SIZE(4.0f);
 						CFont::SetPropOn();
 						CFont::SetColor(CRGBA(
 							CUserDisplay::OnscnTimer.m_sClocks[0].m_aClockColour.r,
 							CUserDisplay::OnscnTimer.m_sClocks[0].m_aClockColour.g,
 							CUserDisplay::OnscnTimer.m_sClocks[0].m_aClockColour.b,
 							m_HudAlpha));
-						CFont::PrintString(PSP_SCREEN_SCALE_FROM_RIGHT(12.0f) - width, PSP_SCREEN_SCALE_Y(31.0f * nNumBigOnscrnLines) + PSP_SCREEN_SCALE_Y(100.0f), TheText.Get(CUserDisplay::OnscnTimer.m_sClocks[0].m_aClockText));
+						CFont::PrintString(PSP_HUD_FROM_RIGHT(12.0f) - width, PSP_HUD_SIZE(31.0f * nNumBigOnscrnLines) + PSP_HUD_SIZE(100.0f), TheText.Get(CUserDisplay::OnscnTimer.m_sClocks[0].m_aClockText));
 					}
 				}
 
@@ -1008,23 +1009,23 @@ void CHud::Draw()
 								CUserDisplay::OnscnTimer.m_sCounters[i].m_colour1.g,
 								CUserDisplay::OnscnTimer.m_sCounters[i].m_colour1.b,
 								m_HudAlpha));
-							sizeOfCounter = CFont::GetStringWidth(sTimer) + PSP_SCREEN_SCALE_X(4.0f);
-							CFont::PrintString(PSP_SCREEN_SCALE_FROM_RIGHT(12.0f), PSP_SCREEN_SCALE_Y(100.0f) + PSP_SCREEN_SCALE_Y(20.0f * nNumOnscrnLines) + PSP_SCREEN_SCALE_Y(31.0f * nNumBigOnscrnLines), sTimer);
+							sizeOfCounter = CFont::GetStringWidth(sTimer) + PSP_HUD_SIZE(4.0f);
+							CFont::PrintString(PSP_HUD_FROM_RIGHT(12.0f), PSP_HUD_SIZE(100.0f) + PSP_HUD_SIZE(20.0f * nNumOnscrnLines) + PSP_HUD_SIZE(31.0f * nNumBigOnscrnLines), sTimer);
 						} else {
 							int counter = atoi(CUserDisplay::OnscnTimer.m_sCounters[i].m_aCounterBuffer);
 
-							const float barWidth = PSP_SCREEN_SCALE_X(92.f / 2.f);
-							const float right = PSP_SCREEN_SCALE_FROM_RIGHT(12.0f);
+							const float barWidth = PSP_HUD_SIZE(92.f / 2.f);
+							const float right = PSP_HUD_FROM_RIGHT(12.0f);
 							const float left = right - barWidth;
 
-							const float barHeight = PSP_SCREEN_SCALE_Y(11.0f);
-							const float top = PSP_SCREEN_SCALE_Y(100.0f) + PSP_SCREEN_SCALE_Y(20.0f * nNumOnscrnLines) + PSP_SCREEN_SCALE_Y(31.0f * nNumBigOnscrnLines) + PSP_SCREEN_SCALE_Y(3.0f);
+							const float barHeight = PSP_HUD_SIZE(11.0f);
+							const float top = PSP_HUD_SIZE(100.0f) + PSP_HUD_SIZE(20.0f * nNumOnscrnLines) + PSP_HUD_SIZE(31.0f * nNumBigOnscrnLines) + PSP_HUD_SIZE(3.0f);
 							const float bottom = top + barHeight;
 
-							sizeOfCounter = barWidth + PSP_SCREEN_SCALE_X(4.0f);
+							sizeOfCounter = barWidth + PSP_HUD_SIZE(4.0f);
 
 							// shadow
-							CSprite2d::DrawRect(CRect(left - PSP_SCREEN_SCALE_X(1.0f), top - PSP_SCREEN_SCALE_Y(1.0f), right + PSP_SCREEN_SCALE_X(1.0f), bottom + PSP_SCREEN_SCALE_Y(1.0f)), CRGBA(0, 0, 0, m_HudAlpha));
+							CSprite2d::DrawRect(CRect(left - PSP_HUD_SIZE(1.0f), top - PSP_HUD_SIZE(1.0f), right + PSP_HUD_SIZE(1.0f), bottom + PSP_HUD_SIZE(1.0f)), CRGBA(0, 0, 0, m_HudAlpha));
 							
 							CSprite2d::DrawRect(
 								CRect(left, top, right, bottom), 
@@ -1050,7 +1051,7 @@ void CHud::Draw()
 								CUserDisplay::OnscnTimer.m_sCounters[i].m_colour1.g,
 								CUserDisplay::OnscnTimer.m_sCounters[i].m_colour1.b,
 								m_HudAlpha));
-							CFont::PrintString(PSP_SCREEN_SCALE_FROM_RIGHT(12.0f) - sizeOfCounter, PSP_SCREEN_SCALE_Y(100.0f) + PSP_SCREEN_SCALE_Y(20.f * nNumOnscrnLines) + PSP_SCREEN_SCALE_Y(31.0f * nNumBigOnscrnLines), TheText.Get(CUserDisplay::OnscnTimer.m_sCounters[i].m_aCounterText1));
+							CFont::PrintString(PSP_HUD_FROM_RIGHT(12.0f) - sizeOfCounter, PSP_HUD_SIZE(100.0f) + PSP_HUD_SIZE(20.f * nNumOnscrnLines) + PSP_HUD_SIZE(31.0f * nNumBigOnscrnLines), TheText.Get(CUserDisplay::OnscnTimer.m_sCounters[i].m_aCounterText1));
 						}
 						nNumOnscrnLines++;
 					}
@@ -1466,19 +1467,19 @@ CHud::DrawHealthBar(int16 value)
 
 	float fX1 = FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f;
 	float fX2 = fWidth + (FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f);
-	CRect rect1(PSP_SCREEN_SCALE_X(fX1), PSP_SCREEN_SCALE_Y(40.0f), PSP_SCREEN_SCALE_X(fX2), PSP_SCREEN_SCALE_Y(50.0f));
+	CRect rect1(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX1), PSP_HUD_SIZE(40.0f), PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX2), PSP_HUD_SIZE(50.0f));
 	CRGBA color1(255, 255, 255, m_HudAlpha);
 	Sprites[HUD_BAR_INSIDE2].Draw(rect1, color1, 0.0f, 0.0f, u, 0.0f, 0.0f, 1.0f, u, 1.0f);
 
 	fX1 = fWidth + (FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f);
 	fX2 = (FrontEndMenuManager.m_PrefsUseWideScreen ? 43.52f : 54.4f) + (FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f);
-	CRect rect2(PSP_SCREEN_SCALE_X(fX1), PSP_SCREEN_SCALE_Y(40.0f), PSP_SCREEN_SCALE_X(fX2), PSP_SCREEN_SCALE_Y(50.0f));
+	CRect rect2(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX1), PSP_HUD_SIZE(40.0f), PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX2), PSP_HUD_SIZE(50.0f));
 	CRGBA color2(255, 255, 255, m_HudAlpha);
 	Sprites[HUD_BAR_INSIDE2DARK].Draw(rect2, color2, u, 0.0f, 1.0f, 0.0f, u, 1.0f, 1.0f, 1.0f);
 
 	fX1 = FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f;
 	fX2 = (FrontEndMenuManager.m_PrefsUseWideScreen ? 43.52f : 54.4f) + (FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f);
-	CRect rect3(PSP_SCREEN_SCALE_X(fX1), PSP_SCREEN_SCALE_Y(40.0f), PSP_SCREEN_SCALE_X(fX2), PSP_SCREEN_SCALE_Y(50.0f));
+	CRect rect3(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX1), PSP_HUD_SIZE(40.0f), PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX2), PSP_HUD_SIZE(50.0f));
 	CRGBA color3(255, 255, 255, m_HudAlpha);
 	Sprites[HUD_BAR_OUTLINE].Draw(rect3, color3, 0.01f, 0.0f, 1.0f, 0.0f, 0.01f, 1.0f, 1.0f, 1.0f);
 
@@ -1498,7 +1499,7 @@ CHud::DrawHealthBar(int16 value)
 			fX1 = 375.0f + 12.0f;
 		else
 			fX1 = 360.0f + 15.0f;
-		CFont::PrintString(PSP_SCREEN_SCALE_X(fX1), PSP_SCREEN_SCALE_Y(36.0f), (wchar*)L"+");
+		CFont::PrintString(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX1), PSP_HUD_SIZE(36.0f), (wchar*)L"+");
 	}
 
 }
@@ -1536,19 +1537,19 @@ CHud::DrawArmourBar(int16 value)
 
 	float fX1 = FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f;
 	float fX2 = fWidth + (FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f);
-	CRect rect1(PSP_SCREEN_SCALE_X(fX1), PSP_SCREEN_SCALE_Y(28.0f), PSP_SCREEN_SCALE_X(fX2), PSP_SCREEN_SCALE_Y(38.0f));
+	CRect rect1(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX1), PSP_HUD_SIZE(28.0f), PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX2), PSP_HUD_SIZE(38.0f));
 	CRGBA color1(255, 255, 255, m_HudAlpha);
 	Sprites[HUD_BAR_INSIDE1].Draw(rect1, color1, 0.0f, 0.0f, u, 0.0f, 0.0f, 1.0f, u, 1.0f);
 
 	fX1 = fWidth + (FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f);
 	fX2 = (FrontEndMenuManager.m_PrefsUseWideScreen ? 43.52f : 54.4f) + (FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f);
-	CRect rect2(PSP_SCREEN_SCALE_X(fX1), PSP_SCREEN_SCALE_Y(28.0f), PSP_SCREEN_SCALE_X(fX2), PSP_SCREEN_SCALE_Y(38.0f));
+	CRect rect2(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX1), PSP_HUD_SIZE(28.0f), PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX2), PSP_HUD_SIZE(38.0f));
 	CRGBA color2(255, 255, 255, m_HudAlpha);
 	Sprites[HUD_BAR_INSIDE1DARK].Draw(rect2, color2, u, 0.0f, 1.0f, 0.0f, u, 1.0f, 1.0f, 1.0f);
 
 	fX1 = FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f;
 	fX2 = (FrontEndMenuManager.m_PrefsUseWideScreen ? 43.52f : 54.4f) + (FrontEndMenuManager.m_PrefsUseWideScreen ? 375.0f : 360.0f);
-	CRect rect3(PSP_SCREEN_SCALE_X(fX1), PSP_SCREEN_SCALE_Y(28.0f), PSP_SCREEN_SCALE_X(fX2), PSP_SCREEN_SCALE_Y(38.0f));
+	CRect rect3(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX1), PSP_HUD_SIZE(28.0f), PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX2), PSP_HUD_SIZE(38.0f));
 	CRGBA color3(255, 255, 255, m_HudAlpha);
 	Sprites[HUD_BAR_OUTLINE].Draw(rect3, color3, 0.01f, 0.0f, 1.0f, 0.0f, 0.01f, 1.0f, 1.0f, 1.0f);
 
@@ -1567,7 +1568,7 @@ CHud::DrawArmourBar(int16 value)
 			fX1 = 375.0f + 12.0f;
 		else
 			fX1 = 360.0f + 15.0f;
-		CFont::PrintString(PSP_SCREEN_SCALE_X(fX1), PSP_SCREEN_SCALE_Y(24.0f), (wchar*)L"+");
+		CFont::PrintString(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - fX1), PSP_HUD_SIZE(24.0f), (wchar*)L"+");
 	}
 
 }
@@ -1605,7 +1606,7 @@ CHud::DrawTimeAndCashNumbers(char *str, float x, float y, bool secondSet)
 		float width2 = width;
 		if (c == 22)
 			width2 += 3.0f;
-		CRect rect(PSP_SCREEN_SCALE_X(x), PSP_SCREEN_SCALE_Y(y), PSP_SCREEN_SCALE_X(x+ width2), PSP_SCREEN_SCALE_Y(y) + PSP_SCREEN_SCALE_Y(height));
+		CRect rect(PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - x), PSP_HUD_SIZE(y), PSP_HUD_FROM_RIGHT(PSP_DEFAULT_SCREEN_WIDTH - (x + width2)), PSP_HUD_SIZE(y) + PSP_HUD_SIZE(height));
 
 		float u = col * 0.125f;
 		// TODO(LCS): some odd calculation with u going on in here if it's < 0, it might be fabs, but maybe not
@@ -1621,7 +1622,7 @@ CHud::DrawTimeAndCashNumbers(char *str, float x, float y, bool secondSet)
 			x -= 4.0f;
 
 #ifdef GTA_PSP
-		x = Ceil(PSP_SCREEN_SCALE_X(x)) * ((float)PSP_DEFAULT_SCREEN_WIDTH / (float)SCREEN_WIDTH);
+		x = Ceil(PSP_HUD_SIZE(x)) * ((float)PSP_DEFAULT_SCREEN_WIDTH / (float)SCREEN_WIDTH);
 #else
 		// BUG: actually above wasn't PSP only but on higher resolutions things don't look like they were meant to, so we stick with PS2 version here
 		x = Ceil(PSP_SCALE_TO_PS2_X(x)) * ((float)PSP_DEFAULT_SCREEN_WIDTH / (float)DEFAULT_SCREEN_WIDTH);
@@ -2308,7 +2309,7 @@ CHud::ResetWastedText(void)
 void
 CHud::UseTimerCounterFontSettings()
 {
-	CFont::SetScale(PSP_SCREEN_SCALE_X(0.4048f), PSP_SCREEN_SCALE_Y(0.88f));
+	CFont::SetScale(PSP_HUD_SIZE(0.4048f), PSP_HUD_SIZE(0.88f));
 	CFont::SetFontStyle(FONT_STANDARD);
 	CFont::SetCentreOff();
 	CFont::SetRightJustifyOn();

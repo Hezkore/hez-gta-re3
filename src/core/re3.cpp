@@ -1002,6 +1002,7 @@ DebugMenuPopulate(void)
 		DebugMenuAddCmd("Spawn", "Spawn Freeway", [](){ SpawnCar(MI_FREEWAY); });
 
 		DebugMenuAddVarBool8("Render", "Draw hud", &CHud::m_Wants_To_Draw_Hud, nil);
+		DebugMenuAddVar("Render", "PSP hud scale", &gPSPHudScale, nil, 0.05f, 0.3f, 1.0f);
 		DebugMenuAddVar("Render", "Brightness", &FrontEndMenuManager.m_PrefsBrightness, nil, 16, 0, 700, nil);
 #ifdef PROPER_SCALING	
 		DebugMenuAddVarBool8("Render", "Proper Scaling", &CDraw::ms_bProperScaling, nil);
