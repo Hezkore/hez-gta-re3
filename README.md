@@ -14,13 +14,11 @@ Audio is done with MSS (using dlls from original GTA) or OpenAL.
 
 ## My fixes
 
-Only in GTA 3 so far:
-
-* The camera now has the same vertical and horizontal speed.
-* The mouse is generally slower, letting you adjust the mouse sensitivity at a finer-granularity level.
-
 In both games:
 
+* The camera turns as fast up and down as it does sideways, in each view, and the mouse is slower, so the sensitivity slider has a finer range.
+* The left mouse button fires on a Wayland desktop too, instead of coming up unbound.
+* Menu pages no longer flash the old page while fading into the new one at low framerates.
 * The game runs at 30 FPS internally no matter how fast it renders, so physics, scripts, weather, particles and everything else behave like they did on the PS2. Everything is drawn in between those frames, so it still looks as smooth as your monitor allows.
 * Animations are smoothed between frames as well, cutscenes included. Turn it off with the SMOOTH ANIMATIONS option if you want.
 * The motion blur works the same at any framerate, and can be set to OFF, FAINT or STRONG.
@@ -34,6 +32,7 @@ In both games:
 Only in Vice City:
 
 * The camera no longer hops up and down over kerbs while driving on screens wider than 16:9.
+* The trails look the same at any framerate, and a long frame no longer pastes a stale picture over the screen.
 
 ## Installation
 
