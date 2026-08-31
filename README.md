@@ -1,28 +1,29 @@
-<img src="https://github.com/hezkore/re3/blob/master/res/images/logo_1024.png?raw=true" alt="re3 logo" width="200">
+<img src="https://github.com/hezkore/hez-gta-re3/blob/master/res/images/logo_1024.png?raw=true" alt="re3 logo" width="200">
 
-## About this fork of re3
-This fork fixes some issues I've had with the original re3.\
-They're currently only applied to GTA 3.
+## Intro
+
+The original re3 is no longer up, its repository was taken down and GitHub answers with a legal notice now.\
+This is my fork of the last version of it I had, with my own fixes on top.
+
+In here you'll find the fully reversed source code for GTA III ([master](https://github.com/hezkore/hez-gta-re3/tree/master/) branch) and GTA VC ([miami](https://github.com/hezkore/hez-gta-re3/tree/miami/) branch).
+
+It builds and runs on Windows, Linux, MacOS and FreeBSD, on x86, amd64, arm and arm64.\
+Rendering is handled either by original RenderWare (D3D8)
+or the reimplementation [librw](https://github.com/aap/librw) (D3D9, OpenGL 2.1 or above, OpenGL ES 2.0 or above).\
+Audio is done with MSS (using dlls from original GTA) or OpenAL.
+
+## My fixes
+
+These are only in GTA 3 so far:
 
 * The camera now has the same vertical and horizontal speed.
 * The mouse is generally slower, letting you adjust the mouse sensitivity at a finer-granularity level.
 * Particles are no longer affected by framerate.\
 _(via a dirty fixed rate hack)_
 
-## Intro
+In both games:
 
-In this repository you'll find the fully reversed source code for GTA III ([master](https://github.com/hezkore/re3/tree/master/) branch) and GTA VC ([miami](https://github.com/GTAmodding/re3/tree/miami/) branch).
-
-It has been tested and works on Windows, Linux, MacOS and FreeBSD, on x86, amd64, arm and arm64.\
-Rendering is handled either by original RenderWare (D3D8)
-or the reimplementation [librw](https://github.com/aap/librw) (D3D9, OpenGL 2.1 or above, OpenGL ES 2.0 or above).\
-Audio is done with MSS (using dlls from original GTA) or OpenAL.
-
-The project has also been ported to the [Nintendo Switch](https://github.com/AGraber/re3-nx/),
-[Playstation Vita](https://github.com/Rinnegatamante/re3) and
-[Nintendo Wii U](https://github.com/GaryOderNichts/re3-wiiu/).
-
-We cannot build for PS2 or Xbox yet. If you're interested in doing so, get in touch with us.
+* The game starts on a Wayland desktop again, instead of quitting with `GLFW Error: X11: Platform not initialized`.
 
 ## Installation
 
@@ -103,7 +104,7 @@ Sorry for the inconvenience.
 
 When using premake, you may want to point GTA_III_RE_DIR environment variable to GTA3 root folder if you want the executable to be moved there via post-build script.
 
-Clone the repository with `git clone --recursive https://github.com/GTAmodding/re3.git`. Then `cd re3` into the cloned repository.
+Clone the repository with `git clone --recursive https://github.com/hezkore/hez-gta-re3.git`. Then `cd hez-gta-re3` into the cloned repository.
 
 <details><summary>Linux Premake</summary>
 
