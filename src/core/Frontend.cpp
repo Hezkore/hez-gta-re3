@@ -786,9 +786,7 @@ CMenuManager::CheckSliderMovement(int value)
 	case MENUACTION_MOUSESENS:
 		TheCamera.m_fMouseAccelHorzntl += value * 1.0f/200.0f/15.0f;	// probably because diving it to 15 instead of 16(MENUSLIDER_LOGICAL_BARS) had more accurate steps
 		TheCamera.m_fMouseAccelHorzntl = Clamp(TheCamera.m_fMouseAccelHorzntl, 1.0f/3200.0f, 1.0f/200.0f);
-#ifdef FIX_BUGS
-		TheCamera.m_fMouseAccelVertical = TheCamera.m_fMouseAccelHorzntl + 0.0005f;
-#endif
+		TheCamera.m_fMouseAccelVertical = TheCamera.m_fMouseAccelHorzntl;
 		break;
 #ifdef CUSTOM_FRONTEND_OPTIONS
 	case MENUACTION_CFO_SLIDER:
@@ -3185,9 +3183,9 @@ CMenuManager::LoadSettings()
 	}
 #endif
 
-#ifdef FIX_BUGS
-	TheCamera.m_fMouseAccelVertical = TheCamera.m_fMouseAccelHorzntl + 0.0005f;
-#endif
+	// the camera turns as fast up and down as it does sideways, whatever an old settings
+	// file or ini has
+	TheCamera.m_fMouseAccelVertical = TheCamera.m_fMouseAccelHorzntl;
 #ifdef PC_PLAYER_CONTROLS
 	CCamera::m_bUseMouse3rdPerson = m_ControlMethod == CONTROL_STANDARD;
 #endif
@@ -4970,9 +4968,7 @@ CMenuManager::ProcessUserInput(uint8 goDown, uint8 goUp, uint8 optionSelected, u
 #endif
 					MousePointerStateHelper.bInvertVertically = true;
 					TheCamera.m_bHeadBob = false;
-#ifdef FIX_BUGS
-					TheCamera.m_fMouseAccelVertical = 0.003f;
-#endif
+					TheCamera.m_fMouseAccelVertical = 0.0025f;
 					TheCamera.m_fMouseAccelHorzntl = 0.0025f;
 					CVehicle::m_bDisableMouseSteering = true;
 					m_ControlMethod = CONTROL_STANDARD;
