@@ -1882,6 +1882,12 @@ main(int argc, char *argv[])
 #endif
 #endif
 
+#if defined(GET_KEYBOARD_INPUT_FROM_X11) && defined(GLFW_PLATFORM)
+	// Keyboard input comes from the X server, so GLFW must not give us a Wayland window.
+	// GLFW_PLATFORM is 3.4 and up, older versions are X11 only.
+	glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+#endif
+
 	/* 
 	 * Initialize the platform independent data.
 	 * This will in turn initialize the platform specific data...
