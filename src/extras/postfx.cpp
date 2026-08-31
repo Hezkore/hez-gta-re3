@@ -374,7 +374,8 @@ CPostFX::RenderMotionBlur(RwCamera *cam, uint32 blur)
 bool
 CPostFX::NeedBackBuffer(void)
 {
-	// Current frame -- needed for non-blur effect
+	// Current frame -- needed for non-blur effect, and for the trail to add the new
+	// frame past what darkening can give it, see CMBlur::RenderTrail
 	switch(EffectSwitch){
 	case POSTFX_OFF:
 	case POSTFX_SIMPLE:
