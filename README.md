@@ -1,29 +1,30 @@
-<img src="https://github.com/GTAmodding/re3/blob/miami/res/images/logo_1024.png?raw=true" alt="reVC logo" width="200">
-
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2FGTAmodding%2Fre3%2Fbadge%3Fref%3Dmiami&style=flat)](https://actions-badge.atrox.dev/GTAmodding/re3/goto?ref=miami)
-<a href="https://discord.gg/RFNbjsUMGg"><img src="https://img.shields.io/badge/discord-join-7289DA.svg?logo=discord&longCache=true&style=flat" /></a>
+<img src="https://github.com/hezkore/hez-gta-re3/blob/miami/res/images/logo_1024.png?raw=true" alt="reVC logo" width="200">
 
 ## Intro
 
-In this repository you'll find the fully reversed source code for GTA III ([master](https://github.com/GTAmodding/re3/tree/master/) branch) and GTA VC ([miami](https://github.com/GTAmodding/re3/tree/miami/) branch).
+The original re3 is no longer up, its repository was taken down and GitHub answers with a legal notice now.\
+This is my fork of the last version of it I had, with my own fixes on top.
 
-It has been tested and works on Windows, Linux, MacOS and FreeBSD, on x86, amd64, arm and arm64.\
+In here you'll find the fully reversed source code for GTA III ([master](https://github.com/hezkore/hez-gta-re3/tree/master/) branch) and GTA VC ([miami](https://github.com/hezkore/hez-gta-re3/tree/miami/) branch).
+
+It builds and runs on Windows, Linux, MacOS and FreeBSD, on x86, amd64, arm and arm64.\
 Rendering is handled either by original RenderWare (D3D8)
 or the reimplementation [librw](https://github.com/aap/librw) (D3D9, OpenGL 2.1 or above, OpenGL ES 2.0 or above).\
 Audio is done with MSS (using dlls from original GTA) or OpenAL.
 
-We cannot build for PS2 or Xbox yet. If you're interested in doing so, get in touch with us.
+## My fixes
+
+They are in both games. See [My fixes](https://github.com/hezkore/hez-gta-re3/tree/master/#my-fixes) in the master branch readme.
 
 ## Installation
 
-- reVC requires game assets to work, so you **must** own [a copy of GTA Vice City](https://store.steampowered.com/app/12110/Grand_Theft_Auto_Vice_City/).
-- Build reVC or download the latest build:
-  - [Windows D3D9 MSS 32bit](https://nightly.link/GTAmodding/re3/workflows/reVC_msvc_x86/miami/reVC_Release_win-x86-librw_d3d9-mss.zip)
-  - [Windows D3D9 64bit](https://nightly.link/GTAmodding/re3/workflows/reVC_msvc_amd64/miami/reVC_Release_win-amd64-librw_d3d9-oal.zip)
-  - [Windows OpenGL 64bit](https://nightly.link/GTAmodding/re3/workflows/reVC_msvc_amd64/miami/reVC_Release_win-amd64-librw_gl3_glfw-oal.zip)
-  - [Linux 64bit](https://nightly.link/GTAmodding/re3/workflows/build-cmake-conan/miami/ubuntu-18.04-gl3.zip)
-  - [MacOS 64bit x86-64](https://nightly.link/GTAmodding/re3/workflows/build-cmake-conan/miami/macos-latest-gl3.zip)
-- Extract the downloaded zip over your GTA VC directory and run reVC. The zip includes the binary, updated and additional gamefiles and in case of OpenAL the required dlls.
+- You **must** own the games. re3 needs [a copy of GTA III](https://store.steampowered.com/app/12100/Grand_Theft_Auto_III/), reVC needs [a copy of GTA Vice City](https://store.steampowered.com/app/12110/Grand_Theft_Auto_Vice_City/).
+- Build it yourself, or grab the newest [nightly](https://github.com/hezkore/hez-gta-re3/releases). Each nightly has one zip per game:
+  - `re3-windows-amd64.zip` and `re3-linux-amd64.zip` for GTA III
+  - `reVC-windows-amd64.zip` and `reVC-linux-amd64.zip` for GTA Vice City
+- Extract the zip over the game directory and run the binary in it. The zip has the binary, updated and additional gamefiles and the dlls OpenAL needs.
+
+A nightly is built at midnight UTC, but only when a branch has moved since the last one. The ten newest are kept.
 
 ## Screenshots
 
