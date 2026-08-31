@@ -215,8 +215,11 @@ void
 CPostFX::RenderOverlayBlur(RwCamera *cam, int32 r, int32 g, int32 b, int32 a)
 {
 	// The previous frame over the new one, see CMBlur::RenderTrail. The game had it
-	// tinted with twice the colour at a fixed alpha, then added it tinted twice more, and
-	// with trails on two of the three are two pixels over, which gives the double image
+	// tinted with twice the colour at alpha 30, then added it tinted twice more, and
+	// with trails on two of the three are two pixels over, which gives the double image.
+	// The two added copies are blended additively, where a plays no part, so they add
+	// the full tint of the previous frame each frame. That is the warm, bright look
+	// trails give the game
 	float alpha = 30.0f/255.0f;
 	float tint[3] = { r/255.0f, g/255.0f, b/255.0f };
 	float keep[3], over[3];
@@ -225,10 +228,11 @@ CPostFX::RenderOverlayBlur(RwCamera *cam, int32 r, int32 g, int32 b, int32 a)
 	int i;
 
 	for(i = 0; i < 3; i++){
-		keep[i] = tint[i] * (BlurOn ? 1.0f : 2.0f*alpha + 2.0f);
-		over[i] = tint[i] * (2.0f*alpha + 1.0f);
+		float first = alpha * Min(2.0f*tint[i], 1.0f);
+		over[i] = first + tint[i];
+		keep[i] = tint[i] + (BlurOn ? 0.0f : over[i]);
 	}
-	CMBlur::RenderTrail(Vertex, pFrontBuffer, keep, pass, white, trailStrength, BlurOn ? Vertex2 : nil, over);
+	CMBlur::RenderTrail(Vertex, pFrontBuffer, keep, pass, white, trailStrength, BlurOn ? Vertex2 : nil, over, pBackBuffer);
 }
 
 void
@@ -319,17 +323,15 @@ CPostFX::RenderMotionBlur(RwCamera *cam, uint32 blur)
 bool
 CPostFX::NeedBackBuffer(void)
 {
-	// Current frame -- needed for non-blur effect
+	// Current frame -- needed for non-blur effect, and for the trail to add the new
+	// frame past what darkening can give it, see CMBlur::RenderTrail
 	switch(EffectSwitch){
 	case POSTFX_OFF:
 	case POSTFX_SIMPLE:
 		// no actual rendering here
 		return false;
 	case POSTFX_NORMAL:
-		if(MotionBlur != MBLUR_OFF)
-			return false;
-		else
-			return true;
+		return true;
 	case POSTFX_MOBILE:
 		return true;
 	}

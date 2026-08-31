@@ -342,21 +342,28 @@ CMBlur::CreateImmediateModeData(RwCamera *cam, RwRect *rect, RwIm2DVertex *verts
 // trail: the frame is taken as 1/strength as long, so the previous frames fade out that
 // much sooner while the colour the overlay gives the picture is kept. With quad2 the
 // previous frame is added once more through that quad, by keep2, for the double image
-// the trails give.
+// the trails give. That copy is part of G, so it fades with G: the two keeps together
+// are raised to the part and what is left is split between them as before. When the
+// map brightens the picture, keep and pass adding up to more than 1, a frame longer
+// than a logical frame gives C more than all of itself. Darkening cannot do that, so
+// the rest is added from fresh, a copy of the new frame.
 void
-CMBlur::RenderTrail(RwIm2DVertex *quad, RwRaster *ghost, const float *keep, const float *pass, const float *white, float strength, RwIm2DVertex *quad2, const float *keep2)
+CMBlur::RenderTrail(RwIm2DVertex *quad, RwRaster *ghost, const float *keep, const float *pass, const float *white, float strength, RwIm2DVertex *quad2, const float *keep2, RwRaster *fresh)
 {
 	float length = CTimer::GetRenderFrameLength()/strength;
-	int32 k[3], p[3], w[3], k2[3];
+	int32 k[3], p[3], w[3], k2[3], more[3];
 	int i;
 
 	for(i = 0; i < 3; i++){
-		int32 kept = Min((int32)(Pow(keep[i], length)*255.0f + 0.5f), 254);
-		float part = keep[i] < 1.0f ? (1.0f - kept/255.0f)/(1.0f - keep[i]) : length;
-		k[i] = kept;
-		p[i] = Min((int32)(pass[i]*part*255.0f + 0.5f), 255);
+		float total = keep[i] + (quad2 ? keep2[i] : 0.0f);
+		int32 kept = Min((int32)(Pow(total, length)*255.0f + 0.5f), 254);
+		float part = total < 1.0f ? (1.0f - kept/255.0f)/(1.0f - total) : length;
+		k[i] = total > 0.0f ? (int32)(kept*keep[i]/total + 0.5f) : 0;
+		k2[i] = kept - k[i];
+		p[i] = Min((int32)(pass[i]*part*255.0f + 0.5f), 510);
+		more[i] = Max(p[i] - 255, 0);
+		p[i] -= more[i];
 		w[i] = Min((int32)(white[i]*part*255.0f + 0.5f), 255);
-		k2[i] = quad2 ? Min((int32)(keep2[i]*part*255.0f + 0.5f), 255) : 0;
 	}
 
 	RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
@@ -364,19 +371,31 @@ CMBlur::RenderTrail(RwIm2DVertex *quad, RwRaster *ghost, const float *keep, cons
 	SetAlphaTest(0);
 
 	// what the new frame keeps
-	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, nil);
-	for(i = 0; i < 4; i++)
-		RwIm2DVertexSetIntRGBA(&quad[i], p[0], p[1], p[2], 255);
-	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDZERO);
-	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDSRCCOLOR);
-	RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad, 4, Index, 6);
+	if(p[0] < 255 || p[1] < 255 || p[2] < 255){
+		RwRenderStateSet(rwRENDERSTATETEXTURERASTER, nil);
+		for(i = 0; i < 4; i++)
+			RwIm2DVertexSetIntRGBA(&quad[i], p[0], p[1], p[2], 255);
+		RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDZERO);
+		RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDSRCCOLOR);
+		RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad, 4, Index, 6);
+	}
+
+	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDONE);
+	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
+
+	// plus the rest of itself, past what it had
+	if(more[0] > 0 || more[1] > 0 || more[2] > 0){
+		assert(fresh);
+		RwRenderStateSet(rwRENDERSTATETEXTURERASTER, fresh);
+		for(i = 0; i < 4; i++)
+			RwIm2DVertexSetIntRGBA(&quad[i], more[0], more[1], more[2], 255);
+		RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad, 4, Index, 6);
+	}
 
 	// plus what is left of the previous one
 	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, ghost);
 	for(i = 0; i < 4; i++)
 		RwIm2DVertexSetIntRGBA(&quad[i], k[0], k[1], k[2], 255);
-	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDONE);
-	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
 	RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad, 4, Index, 6);
 
 	// plus the previous one again through the second quad
