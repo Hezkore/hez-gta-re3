@@ -77,7 +77,7 @@ jobs:
       - name: Build
         if: runner.os == 'Linux'
         run: |
-          ./premake5Linux --with-librw gmake2
+          ./premake5Linux --with-librw --no-x11-keyboard gmake2
           make -C build config=release_linux-amd64-librw_gl3_glfw-oal
           mv bin/linux-amd64-librw_gl3_glfw-oal/Release/${{ matrix.game.name }} gamefiles/
 
