@@ -930,7 +930,7 @@ void CGame::InitialiseWhenRestarting(void)
 				CSprite2d *splash = LoadSplash(NULL);
 				splash->Draw(rect, color, color, color, color);		
 #ifdef FIX_BUGS
-				splash->DrawRect(CRect(SCREEN_SCALE_X(20.0f), SCREEN_SCALE_Y(110.0f), SCREEN_SCALE_FROM_RIGHT(20.0f), SCREEN_SCALE_Y(300.0f)), CRGBA(50, 50, 50, 192));
+				splash->DrawRect(CRect(SCREEN_SCALE_FROM_LEFT(20.0f), SCREEN_SCALE_Y(110.0f), SCREEN_SCALE_FROM_RIGHT(20.0f), SCREEN_SCALE_Y(300.0f)), CRGBA(50, 50, 50, 192));
 #else
 				splash->DrawRect(CRect(20.0f, 110.0f, SCREEN_WIDTH-20.0f, 300.0f), CRGBA(50, 50, 50, 192));
 #endif

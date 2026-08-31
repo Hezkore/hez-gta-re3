@@ -1038,7 +1038,7 @@ void CHud::Draw()
 					PagerOn = 0;
 				}
 			}
-			Sprites[HUD_PAGER].Draw(CRect(SCREEN_SCALE_X(26.0f) - SCREEN_SCALE_X_FIX(PagerXOffset), SCREEN_SCALE_Y(27.0f), SCREEN_SCALE_X(160.0f) + SCREEN_SCALE_X(26.0f) - SCREEN_SCALE_X_FIX(PagerXOffset), SCREEN_SCALE_Y(80.0f) + SCREEN_SCALE_Y(27.0f)), CRGBA(255, 255, 255, 255));		
+			Sprites[HUD_PAGER].Draw(CRect(SCREEN_SCALE_FROM_LEFT(26.0f) - SCREEN_SCALE_X_FIX(PagerXOffset), SCREEN_SCALE_Y(27.0f), SCREEN_SCALE_X(160.0f) + SCREEN_SCALE_FROM_LEFT(26.0f) - SCREEN_SCALE_X_FIX(PagerXOffset), SCREEN_SCALE_Y(80.0f) + SCREEN_SCALE_Y(27.0f)), CRGBA(255, 255, 255, 255));		
 			CFont::SetBackgroundOff();
 			CFont::SetScale(SCREEN_SCALE_X(0.84f), SCREEN_SCALE_Y(1.0f));
 			CFont::SetColor(PAGER_COLOR);
@@ -1049,7 +1049,7 @@ void CHud::Draw()
 			CFont::SetJustifyOff();
 			CFont::SetPropOff();
 			CFont::SetFontStyle(FONT_PAGER);
-			CFont::PrintString(SCREEN_SCALE_X(52.0f) - SCREEN_SCALE_X_FIX(PagerXOffset), SCREEN_SCALE_Y(54.0f), m_PagerMessage);
+			CFont::PrintString(SCREEN_SCALE_FROM_LEFT(52.0f) - SCREEN_SCALE_X_FIX(PagerXOffset), SCREEN_SCALE_Y(54.0f), m_PagerMessage);
 		}
 
 		/*
@@ -1058,7 +1058,7 @@ void CHud::Draw()
 		if (m_ItemToFlash == ITEM_RADAR && FRAMECOUNTER & 8 || m_ItemToFlash != ITEM_RADAR) {
 			CRadar::DrawMap();
 			CRect rect(0.0f, 0.0f, SCREEN_SCALE_X(RADAR_WIDTH), SCREEN_SCALE_Y(RADAR_HEIGHT));
-			rect.Translate(SCREEN_SCALE_X_FIX(RADAR_LEFT), SCREEN_SCALE_FROM_BOTTOM(RADAR_BOTTOM + RADAR_HEIGHT));
+			rect.Translate(HUD_LEFT + SCREEN_SCALE_X_FIX(RADAR_LEFT), SCREEN_SCALE_FROM_BOTTOM(RADAR_BOTTOM + RADAR_HEIGHT));
 
 #ifdef PS2_HUD
 	#ifdef FIX_BUGS
@@ -1183,15 +1183,15 @@ void CHud::Draw()
 			CFont::SetFontStyle(FONT_LOCALE(FONT_BANK));
 
 #ifdef XBOX_SUBTITLES
-			float radarBulge = SCREEN_SCALE_X(45.0f) + SCREEN_SCALE_X(16.0f);
-			float rectWidth = SCREEN_WIDTH - SCREEN_SCALE_X(45.0f) - SCREEN_SCALE_X(16.0f) - radarBulge;
+			float radarBulge = SCREEN_SCALE_FROM_LEFT(45.0f) + SCREEN_SCALE_X(16.0f);
+			float rectWidth = HUD_RIGHT - SCREEN_SCALE_X(45.0f) - SCREEN_SCALE_X(16.0f) - radarBulge;
 			CFont::SetCentreSize(rectWidth);
 			CFont::SetColor(CRGBA(180, 180, 180, 255));
 
 			CFont::PrintOutlinedString(rectWidth / 2.0f + radarBulge, SCREEN_SCALE_Y(4.0f) + SCREEN_SCALE_FROM_BOTTOM(48.0f) - SCREEN_SCALE_Y(1), m_Message,
 				2.0f, true, CRGBA(0, 0, 0, 255));
 #else
-			float radarBulge = SCREEN_SCALE_X(40.0f) + SCREEN_SCALE_X(8.0f);
+			float radarBulge = SCREEN_SCALE_FROM_LEFT(40.0f) + SCREEN_SCALE_X(8.0f);
 			float rectWidth = SCREEN_SCALE_FROM_RIGHT(50.0f) - SCREEN_SCALE_X(8.0f) - radarBulge;
 			
 			CFont::SetCentreSize(rectWidth);
@@ -1404,16 +1404,16 @@ void CHud::DrawAfterFade()
 			CFont::SetJustifyOff();			
 #ifdef MORE_LANGUAGES
 			if (CFont::IsJapanese())
-				CFont::SetWrapx(SCREEN_SCALE_X(229.0f) + SCREEN_SCALE_X(26.0f) - SCREEN_SCALE_X_FIX(4.0f));
+				CFont::SetWrapx(SCREEN_SCALE_X(229.0f) + SCREEN_SCALE_FROM_LEFT(26.0f) - SCREEN_SCALE_X_FIX(4.0f));
 			else
 #endif
-				CFont::SetWrapx(SCREEN_SCALE_X(200.0f) + SCREEN_SCALE_X(26.0f) - SCREEN_SCALE_X_FIX(4.0f));
+				CFont::SetWrapx(SCREEN_SCALE_X(200.0f) + SCREEN_SCALE_FROM_LEFT(26.0f) - SCREEN_SCALE_X_FIX(4.0f));
 			CFont::SetFontStyle(FONT_LOCALE(FONT_BANK));
 			CFont::SetBackgroundOn();
 			CFont::SetBackGroundOnlyTextOff();
 			CFont::SetBackgroundColor(CRGBA(0, 0, 0, fAlpha * 0.9f));
 			CFont::SetColor(CRGBA(175, 175, 175, 255));
-			CFont::PrintString(SCREEN_SCALE_X(26.0f), SCREEN_SCALE_Y(28.0f) + SCREEN_SCALE_Y_FIX((150.0f - PagerXOffset) * 0.6f), m_HelpMessageToPrint);
+			CFont::PrintString(SCREEN_SCALE_FROM_LEFT(26.0f), SCREEN_SCALE_Y(28.0f) + SCREEN_SCALE_Y_FIX((150.0f - PagerXOffset) * 0.6f), m_HelpMessageToPrint);
 			CFont::SetAlphaFade(255.0f);
 		}
 	}
@@ -1607,7 +1607,7 @@ void CHud::DrawAfterFade()
 			CFont::SetRightJustifyOn();
 			CFont::SetFontStyle(FONT_HEADING);
 			
-			if (BigMessageX[1] >= SCREEN_WIDTH - SCREEN_SCALE_X_FIX(20.0f))
+			if (BigMessageX[1] >= HUD_RIGHT - SCREEN_SCALE_X_FIX(20.0f))
 			{
 				BigMessageInUse[1] += CTimer::GetTimeStep();
 

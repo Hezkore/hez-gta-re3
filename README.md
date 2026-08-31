@@ -24,6 +24,8 @@ These are only in GTA 3 so far:
 * LIMIT FPS has a list of framerates instead of ON and OFF.
 * Menus run at the full framerate.
 * The defaults are the best the game can look: map memory usage on high, rim lights, lightmaps and road gloss on, draw distance at max, VSync on and no FPS limit.
+* Better support for ultra wide screens. The HUD, subtitles and loading screens stay inside a 16:9 box in the middle of the screen, nothing is stretched or scaled. Turn on EXTEND HUD under Display if you want them at the screen edges instead.
+* Cutscenes are no longer zoomed in on screens wider than 16:9.
 
 In both games:
 

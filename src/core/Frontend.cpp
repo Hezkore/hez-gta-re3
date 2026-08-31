@@ -1093,7 +1093,7 @@ CMenuManager::Draw()
 	CFont::SetRightJustifyWrap(0.0f);
 	strcpy(gString, "V1.1");
 	AsciiToUnicode(gString, gUString);
-	CFont::PrintString(SCREEN_WIDTH / 10, SCREEN_HEIGHT / 45, gUString);
+	CFont::PrintString(HUD_LEFT + HUD_WIDTH / 10, SCREEN_HEIGHT / 45, gUString);
 #endif
 	CFont::SetWrapx(MENU_X_RIGHT_ALIGNED(MENU_X_MARGIN));
 	CFont::SetRightJustifyWrap(MENU_X_LEFT_ALIGNED(MENU_X_MARGIN - 2.0f));
@@ -4048,9 +4048,9 @@ CMenuManager::PrintErrorMessage()
 	CFont::SetBackGroundOnlyTextOn();
 	CFont::SetWrapx(SCREEN_SCALE_FROM_RIGHT(MENU_X_MARGIN));
 #ifdef FIX_BUGS
-	CFont::PrintString(SCREEN_SCALE_X(50.0f), SCREEN_SCALE_Y(180.0f), TheText.Get(CPad::bDisplayNoControllerMessage ? "NOCONT" : "WRCONT"));
+	CFont::PrintString(SCREEN_SCALE_FROM_LEFT(50.0f), SCREEN_SCALE_Y(180.0f), TheText.Get(CPad::bDisplayNoControllerMessage ? "NOCONT" : "WRCONT"));
 #else
-	CFont::PrintString(SCREEN_SCALE_X(50.0f), SCREEN_SCALE_Y(40.0f), TheText.Get(CPad::bDisplayNoControllerMessage ? "NOCONT" : "WRCONT"));
+	CFont::PrintString(SCREEN_SCALE_FROM_LEFT(50.0f), SCREEN_SCALE_Y(40.0f), TheText.Get(CPad::bDisplayNoControllerMessage ? "NOCONT" : "WRCONT"));
 #endif
 	CFont::DrawFonts();
 }

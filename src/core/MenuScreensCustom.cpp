@@ -12,6 +12,7 @@
 #include "crossplatform.h"
 #include "Renderer.h"
 #include "Frontend.h"
+#include "Draw.h"
 #include "Font.h"
 #include "Camera.h"
 #include "main.h"
@@ -163,6 +164,7 @@ void RestoreDefDisplay(int8 action) {
 		CMenuManager::m_PrefsLOD = 1.8f;
 		CRenderer::ms_lodDistScale = 1.8f;
 		CMenuManager::m_PrefsShowSubtitles = true;
+		CDraw::ms_bExtendHud = false;
 		FrontEndMenuManager.SaveSettings();
 	#endif
 }
@@ -454,6 +456,7 @@ CMenuScreenCustom aScreens[MENUPAGES] = {
 		MENUACTION_FRAMESYNC,	"FEM_VSC", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
 		MENUACTION_CFO_SELECT,	"FEM_FRM", { new CCFOSelect((int8*)&CMenuManager::m_PrefsFrameLimiter, "Graphics", "FrameLimiter", frameLimitTexts, numFrameLimits, false) },
 		MENUACTION_CFO_SELECT,	"FEM_SMA", { new CCFOSelect(&CMenuManager::m_PrefsSmoothAnims, "Graphics", "SmoothAnimations", off_on, 2, false) },
+		MENUACTION_CFO_SELECT,	"FEM_EHU", { new CCFOSelect((int8*)&CDraw::ms_bExtendHud, "Display", "ExtendHud", off_on, 2, false) },
 #ifndef EXTENDED_COLOURFILTER
 		MENUACTION_TRAILS,		"FED_TRA", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
 #endif
@@ -480,6 +483,7 @@ CMenuScreenCustom aScreens[MENUPAGES] = {
 		CUTSCENE_BORDERS_TOGGLE
 		FREE_CAM_TOGGLE
 		MENUACTION_SUBTITLES,	"FED_SUB", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
+		MENUACTION_CFO_SELECT,	"FEM_EHU", { new CCFOSelect((int8*)&CDraw::ms_bExtendHud, "Display", "ExtendHud", off_on, 2, false) },
 		MENUACTION_CFO_DYNAMIC,	"FET_DEF", { new CCFODynamic(nil, nil, nil, nil, RestoreDefDisplay) },
 		MENUACTION_CHANGEMENU,	"FEDS_TB", { nil, SAVESLOT_NONE, MENUPAGE_NONE },
 	},
