@@ -12,5 +12,5 @@
 	branch = master
 [submodule "vendor/librw"]
 	path = vendor/librw
-	url = https://github.com/aap/librw.git
-	branch = master
+	url = https://github.com/Hezkore/librw.git
+	branch = lcs
