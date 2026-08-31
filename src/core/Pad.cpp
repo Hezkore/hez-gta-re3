@@ -867,17 +867,14 @@ CMouseControllerState CMousePointerStateHelper::GetMouseSetUp()
 		}
 	}
 #else
-	// It seems there is no way to get number of buttons on mouse, so assign all buttons if we have mouse.
-	double xpos = 1.0f, ypos;
-	glfwGetCursorPos(PSGLOBAL(window), &xpos, &ypos);
-
-	if (xpos != 0.f) {
-		state.MMB = true;
-		state.RMB = true;
-		state.LMB = true;
-		state.WHEELDN = true;
-		state.WHEELUP = true;
-	}
+	// GLFW cannot say how many buttons the mouse has, so take all of them. The cursor
+	// position is no way to tell whether there is a mouse either: on Wayland it sits at
+	// 0,0 until the pointer has entered the window, which left the mouse unbound
+	state.MMB = true;
+	state.RMB = true;
+	state.LMB = true;
+	state.WHEELDN = true;
+	state.WHEELUP = true;
 #endif
 
 	return state;
