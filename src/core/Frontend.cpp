@@ -2923,7 +2923,9 @@ CMenuManager::DrawFrontEndNormal()
 		if (m_nPrevScreen == m_nCurrScreen)
 			CSprite2d::DrawRect(CRect(0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255 - m_nMenuFadeAlpha));
 		else
-			m_aMenuSprites[previousSprite].Draw(CRect(0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(255, 255, 255, 255 - m_nMenuFadeAlpha));
+			// the picture under this is black now, see Idle(), so the previous page is drawn
+			// whole and the new one fades in over it
+			m_aMenuSprites[previousSprite].Draw(CRect(0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(255, 255, 255, 255));
 	}
 
 	RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)FALSE);

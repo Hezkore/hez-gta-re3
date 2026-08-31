@@ -102,6 +102,7 @@ bool gbNoMovies;
 volatile int32 frameCount;
 
 RwRGBA gColourTop;
+RwRGBA gColourBlack = { 0, 0, 0, 255 };
 
 bool gameAlreadyInitialised;
 
@@ -1941,7 +1942,10 @@ Idle(void *arg)
 		CameraSize(Scene.camera, nil, SCREEN_VIEWWINDOW, DEFAULT_ASPECT_RATIO);
 #endif
 		CVisibilityPlugins::SetRenderWareCamera(Scene.camera);
-		RwCameraClear(Scene.camera, &gColourTop, CLEARMODE);
+		// the menu fades by drawing over what is in the buffer, and a page switch clears only
+		// two of the swap buffers to black, so with three a stale frame shows through on each
+		// third frame. Clear the picture to black here instead, each frame
+		RwCameraClear(Scene.camera, &gColourBlack, CLEARMODE | rwCAMERACLEARIMAGE);
 		if(!RsCameraBeginUpdate(Scene.camera))
 			goto popret;
 	}
@@ -2014,7 +2018,8 @@ FrontendIdle(void)
 	CameraSize(Scene.camera, nil, SCREEN_VIEWWINDOW, DEFAULT_ASPECT_RATIO);
 #endif
 	CVisibilityPlugins::SetRenderWareCamera(Scene.camera);
-	RwCameraClear(Scene.camera, &gColourTop, CLEARMODE);
+	// black each frame, see Idle()
+	RwCameraClear(Scene.camera, &gColourBlack, CLEARMODE | rwCAMERACLEARIMAGE);
 	if(!RsCameraBeginUpdate(Scene.camera))
 		return;
 
@@ -2271,7 +2276,8 @@ void TheGame(void)
 				CameraSize(Scene.camera, nil, SCREEN_VIEWWINDOW, DEFAULT_ASPECT_RATIO);
 #endif
 				CVisibilityPlugins::SetRenderWareCamera(Scene.camera);
-				RwCameraClear(Scene.camera, &gColourTop, CLEARMODE);
+				// black each frame, see Idle()
+				RwCameraClear(Scene.camera, &gColourBlack, CLEARMODE | rwCAMERACLEARIMAGE);
 				RsCameraBeginUpdate(Scene.camera);
 			}
 
