@@ -14,25 +14,16 @@ Audio is done with MSS (using dlls from original GTA) or OpenAL.
 
 ## My fixes
 
-In both games:
-
-* The camera turns as fast up and down as it does sideways, in each view, and the mouse is slower, so the sensitivity slider has a finer range.
-* The left mouse button fires on a Wayland desktop too, instead of coming up unbound.
-* Menu pages no longer flash the old page while fading into the new one at low framerates.
-* The game runs at 30 FPS internally no matter how fast it renders, so physics, scripts, weather, particles and everything else behave like they did on the PS2. Everything is drawn in between those frames, so it still looks as smooth as your monitor allows.
-* Animations are smoothed between frames as well, cutscenes included. Turn it off with the SMOOTH ANIMATIONS option if you want.
-* The motion blur works the same at any framerate, and can be set to OFF, FAINT or STRONG.
-* LIMIT FPS has a list of framerates instead of ON and OFF.
-* Menus run at the full framerate.
-* The defaults are the best the game can look: map memory usage on high, rim lights, lightmaps and road gloss on, draw distance at max, VSync on and no FPS limit.
-* Better support for ultra wide screens. The HUD, subtitles and loading screens stay inside a 16:9 box in the middle of the screen, without any stretching or scaling. Turn on EXTEND HUD under Display if you want them at the screen edges instead.
-* Cutscenes are no longer zoomed in on screens wider than 16:9.
-* The game starts on a Wayland desktop again, instead of quitting with `GLFW Error: X11: Platform not initialized`.
-
-Only in Vice City:
-
-* The camera no longer hops up and down over kerbs while driving on screens wider than 16:9.
-* The trails look the same at any framerate, and a long frame no longer pastes a stale picture over the screen.
+* The game runs at 30 FPS internally, like on the PS2, but draws in between those frames, so it is as smooth as your monitor allows.
+* Animations are smoothed the same way, cutscenes included. SMOOTH ANIMATIONS turns it off.
+* Motion blur works the same at any framerate, with OFF, FAINT and STRONG.
+* LIMIT FPS is a list of framerates.
+* Menus run at the full framerate and no longer flash the old page while fading to a new one.
+* The camera turns as fast up and down as sideways, and the mouse is slower, so the sensitivity slider has a finer range.
+* The left mouse button fires on a Wayland desktop.
+* The defaults are the best the game can look: map memory usage high, rim lights, lightmaps and road gloss on, draw distance at max, VSync on, no FPS limit.
+* On screens wider than 16:9 the HUD, subtitles and loading screens stay in a 16:9 box, and cutscenes are not zoomed in. EXTEND HUD under Display puts the HUD at the screen edges.
+* The game starts on a Wayland desktop instead of quitting with `GLFW Error: X11: Platform not initialized`.
 
 ## Installation
 
