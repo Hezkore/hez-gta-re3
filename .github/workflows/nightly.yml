@@ -1,0 +1,184 @@
+name: nightly
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.compare.outputs.build }}
+      tag: ${{ steps.compare.outputs.tag }}
+      master: ${{ steps.compare.outputs.master }}
+      miami: ${{ steps.compare.outputs.miami }}
+      prev_master: ${{ steps.compare.outputs.prev_master }}
+      prev_miami: ${{ steps.compare.outputs.prev_miami }}
+    steps:
+      - name: Compare both branches against the last nightly
+        id: compare
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          master=$(gh api repos/${{ github.repository }}/commits/master --jq .sha)
+          miami=$(gh api repos/${{ github.repository }}/commits/miami --jq .sha)
+
+          body=$(gh api repos/${{ github.repository }}/releases \
+            --jq '[.[] | select(.tag_name | startswith("nightly-"))] | first | .body // ""')
+          prev_master=$(echo "$body" | sed -n 's/^Built from master \([0-9a-f]\{40\}\) and miami \([0-9a-f]\{40\}\)\.$/\1/p')
+          prev_miami=$(echo "$body" | sed -n 's/^Built from master \([0-9a-f]\{40\}\) and miami \([0-9a-f]\{40\}\)\.$/\2/p')
+
+          if [ "$master" = "$prev_master" ] && [ "$miami" = "$prev_miami" ]; then
+            echo "No branch has moved since the last nightly."
+            echo "build=no" >> $GITHUB_OUTPUT
+          else
+            echo "build=yes" >> $GITHUB_OUTPUT
+          fi
+
+          echo "tag=nightly-$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
+          echo "master=$master" >> $GITHUB_OUTPUT
+          echo "miami=$miami" >> $GITHUB_OUTPUT
+          echo "prev_master=$prev_master" >> $GITHUB_OUTPUT
+          echo "prev_miami=$prev_miami" >> $GITHUB_OUTPUT
+
+  build:
+    needs: check
+    if: needs.check.outputs.build == 'yes'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        game:
+          - name: re3
+            branch: master
+          - name: reVC
+            branch: miami
+        os: [ubuntu-latest, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.game.branch }}
+          submodules: true
+
+      - name: Install dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglfw3-dev libopenal-dev libsndfile1-dev libmpg123-dev libgl1-mesa-dev
+
+      - name: Build
+        if: runner.os == 'Linux'
+        run: |
+          ./premake5Linux --with-librw gmake2
+          make -C build config=release_linux-amd64-librw_gl3_glfw-oal
+          mv bin/linux-amd64-librw_gl3_glfw-oal/Release/${{ matrix.game.name }} gamefiles/
+
+      - name: Add msbuild to PATH
+        if: runner.os == 'Windows'
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Download glfw
+        if: runner.os == 'Windows'
+        run: |
+          curl -L -o glfw.zip https://github.com/glfw/glfw/releases/download/3.3.2/glfw-3.3.2.bin.WIN64.zip
+          7z x glfw.zip
+
+      - name: Build
+        if: runner.os == 'Windows'
+        run: |
+          ./premake5.exe vs2019 --with-librw --no-full-paths --glfwdir64=glfw-3.3.2.bin.WIN64
+          msbuild -m build/${{ matrix.game.name }}.sln /property:Configuration=Release /property:Platform=win-amd64-librw_gl3_glfw-oal
+          mv bin/win-amd64-librw_gl3_glfw-oal/Release/${{ matrix.game.name }}.exe gamefiles/
+          mv vendor/mpg123/dist/Win64/libmpg123-0.dll gamefiles/
+          mv vendor/openal-soft/dist/Win64/OpenAL32.dll gamefiles/
+
+      - name: Pack
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            asset=${{ matrix.game.name }}-linux-amd64.zip
+            (cd gamefiles && zip -r "../$asset" .)
+          else
+            asset=${{ matrix.game.name }}-windows-amd64.zip
+            (cd gamefiles && 7z a "../$asset" .)
+          fi
+          echo "asset=$asset" >> $GITHUB_ENV
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.asset }}
+          path: ${{ env.asset }}
+
+  release:
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+
+      - name: Write the changelog
+        run: |
+          git fetch origin master miami
+
+          log() {
+            if [ -z "$1" ]; then
+              echo "* first nightly"
+            elif [ "$1" = "$2" ]; then
+              echo "* no changes"
+            else
+              git log --no-merges --pretty=format:'%B' "$1..$2" | sed '/^$/d; s/^/* /'
+            fi
+          }
+
+          {
+            echo "## GTA 3"
+            echo
+            log "${{ needs.check.outputs.prev_master }}" "${{ needs.check.outputs.master }}"
+            echo
+            echo "## GTA: Vice City"
+            echo
+            log "${{ needs.check.outputs.prev_miami }}" "${{ needs.check.outputs.miami }}"
+            echo
+            echo "Built from master ${{ needs.check.outputs.master }} and miami ${{ needs.check.outputs.miami }}."
+          } > changelog.md
+
+          cat changelog.md
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=${{ needs.check.outputs.tag }}
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release delete "$tag" --yes --cleanup-tag
+          fi
+          gh release create "$tag" assets/* \
+            --title "Nightly ${tag#nightly-}" \
+            --notes-file changelog.md \
+            --prerelease \
+            --target ${{ needs.check.outputs.master }}
+
+      - name: Keep the ten newest nightlies
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --limit 100 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | startswith("nightly-"))] | sort_by(.createdAt) | reverse | .[10:] | .[].tagName' |
+          while read -r tag; do
+            echo "Removing $tag"
+            gh release delete "$tag" --yes --cleanup-tag
+          done
