@@ -1,37 +1,61 @@
 # reLCS
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2FGTAmodding%2Fre3%2Fbadge%3Fref%3Dlcs&style=flat)](https://actions-badge.atrox.dev/GTAmodding/re3/goto?ref=lcs)
-<a href="https://discord.gg/RFNbjsUMGg"><img src="https://img.shields.io/badge/discord-join-7289DA.svg?logo=discord&longCache=true&style=flat" /></a>
 
 ## Intro
 
-The aim of this project is to reverse GTA Liberty City Stories.
+The original re3 is no longer up, its repository was taken down and GitHub answers with a legal notice now.\
+This is my fork of its unfinished lcs branch, with my fixes from the other two games ported over.
 
-## How can I try it?
+reLCS aims to bring GTA Liberty City Stories to PC by reversing its engine.
+The reversal was left unfinished when the repository went down, so pieces are missing,
+but the game starts, plays and no longer falls over on the way there.
 
-- reLCS requires game assets to work.
-- Build reLCS or download it from one of the above links (Debug or Release).
-- (Optional) If you want to use optional features, copy the files in /gamefiles folder to your game root folder.
-- Move reLCS.exe to GTA LCS directory and run it.
+## My fixes
 
-## Preparing the environment for building
+The fixes from [the master branch](https://github.com/hezkore/hez-gta-re3/tree/master/#my-fixes) are in here too. On top of those, this branch adds:
 
-You may want to point GTA_LCS_RE_DIR environment variable to GTA LCS root folder if you want executable to be moved there via post-build script.
+* The game no longer turns black when the video mode changes.
+* The menus have the text the game files are without, so the graphics page and its options read as they should.
+* The PSP hud keeps to its corners and draws at a sane size for a monitor. PSP hud scale under Render in the debug menu adjusts it.
 
-- For Linux, proceed: [Building on Linux](https://github.com/GTAmodding/re3/wiki/Building-on-Linux)
-- For FreeBSD, proceed: [Building on FreeBSD](https://github.com/GTAmodding/re3/wiki/Building-on-FreeBSD) 
-- For Windows, assuming you have Visual Studio:
-    - Clone the repo using the argument `--recursive`.
-    - Run one of the `premake-vsXXXX.cmd` variants on root folder.
-    - Open the project via Visual Studio  
-    
-**If you use 64-bit D3D9**: We don't ship 64-bit Dx9 SDK. You need to download it from Microsoft if you don't have it(although it should come pre-installed after some Windows version)  
+There are no nightlies for this branch, build it yourself.
 
-There are various settings at the very bottom of [config.h](https://github.com/GTAmodding/re3/tree/lcs/src/core/config.h), you may want to take a look there. i.e. FIX_BUGS define fixes the bugs we've come across.
+## Installation
 
-> :information_source: **If you choose OpenAL on Windows** You must read [Running OpenAL build on Windows](https://github.com/GTAmodding/re3/wiki/Running-OpenAL-build-on-Windows).
+- You **must** own the game. Liberty City Stories was not sold for PC, so that means [the mobile release](https://play.google.com/store/apps/details?id=com.rockstargames.gtalcs) or a PSP or PS2 copy.
+- The game data goes in a directory of your choice:
+  - the converted files the reLCS project made, [lcs_dist.7z](http://gta.rockstarvision.com/lcs_dist.7z), extracted to the directory, and [lcs_dist_hires.7z](http://gta.rockstarvision.com/lcs_dist_hires.7z) extracted over its `models` if you want the sharper hud textures
+  - the music, cutscene and news files from your copy into `audio`: the `AUDIO` folders of a PS2 disc, or the `MUSIC`, `CUTSCENE` and `NEWS` mp3 folders from a mobile install
+- Copy the files in `gamefiles` to the directory, then build and put the `reLCS` binary next to them and run it.
 
-> :information_source: **Did you notice librw?** reLCS uses completely homebrew RenderWare-replacement rendering engine; [librw](https://github.com/aap/librw/). librw comes as submodule of reLCS, but you also can use LIBRW enviorenment variable to specify path to your own librw.
+## Building from Source
 
-## Contributing
-Please read the [Coding Style](https://github.com/GTAmodding/re3/blob/master/CODING_STYLE.md) Document
+When using premake, you may want to point GTA_LCS_RE_DIR environment variable to GTA LCS root folder if you want the executable to be moved there via post-build script.
 
+Clone the repository with `git clone --recursive -b lcs https://github.com/hezkore/hez-gta-re3.git`. Then `cd hez-gta-re3` into the cloned repository.
+
+<details><summary>Linux Premake</summary>
+
+You need the development files for glfw, OpenAL, libsndfile, mpg123 and OpenGL. On Debian and Ubuntu that is:
+```
+sudo apt install libglfw3-dev libopenal-dev libsndfile1-dev libmpg123-dev libgl1-mesa-dev
+```
+Then generate the makefiles and build:
+```
+./premake5Linux --with-librw gmake2
+make -C build config=release_linux-amd64-librw_gl3_glfw-oal
+```
+The binary ends up in `bin/linux-amd64-librw_gl3_glfw-oal/Release`. Swap `amd64` for `x86`, `arm` or `arm64`, and `release` for `debug`.
+
+Reading the keyboard from the X server needs glfw 3.4 or newer. On anything older the build stops with an error, add `--no-x11-keyboard` to premake and GLFW handles the keys instead.
+
+</details>
+
+<details><summary>Windows</summary>
+
+Assuming you have Visual Studio:
+- Run one of the `premake-vsXXXX.cmd` variants on root folder.
+- Open the project via Visual Studio.
+
+</details>
+
+There are various settings at the very bottom of [config.h](https://github.com/hezkore/hez-gta-re3/tree/lcs/src/core/config.h), you may want to take a look there.
