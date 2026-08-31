@@ -24,7 +24,8 @@ uint8 CDraw::FadeBlue;
 bool CDraw::ms_bProperScaling = true;
 #endif
 #ifdef  FIX_RADAR
-bool CDraw::ms_bFixRadar = true;	
+bool CDraw::ms_bFixRadar = true;
+bool CDraw::ms_bExtendHud = false;
 #endif
 #ifdef FIX_SPRITES
 bool CDraw::ms_bFixSprites = true;	
@@ -80,11 +81,11 @@ CDraw::CalculateAspectRatio(void)
 // then convert that vFOV to hFOV for our aspect ratio,
 // i.e. HOR+
 float
-CDraw::ConvertFOV(float hfov)
+CDraw::ConvertFOV(float hfov, float fromAspect)
 {
 	// => tan(hFOV/2) = tan(vFOV/2)*aspectRatio
 	// => tan(vFOV/2) = tan(hFOV/2)/aspectRatio
-	float ar1 = DEFAULT_ASPECT_RATIO;
+	float ar1 = fromAspect;
 	float ar2 = GetAspectRatio();
 	hfov = DEGTORAD(hfov);
 	float vfov = Atan(tan(hfov/2) / ar1) *2;
@@ -99,6 +100,11 @@ CDraw::SetFOV(float fov)
 #ifdef ASPECT_RATIO_SCALE
 	if (!CCutsceneMgr::IsRunning())
 		ms_fScaledFOV = ConvertFOV(fov);
+	else if (GetAspectRatio() > 16.0f/9.0f)
+		// a cutscene keeps its horizontal view and lets a screen wider than 4:3 crop the
+		// top and bottom, which is about what the letterbox hides at 16:9. wider than
+		// that it would crop the faces, so from 16:9 on the view gets wider instead
+		ms_fScaledFOV = ConvertFOV(fov, 16.0f/9.0f);
 	else
 		ms_fScaledFOV = fov;
 #endif

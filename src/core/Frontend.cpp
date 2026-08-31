@@ -108,6 +108,19 @@ CVector2D mapCrosshair;
 
 #ifdef CUTSCENE_BORDERS_SWITCH
 bool CMenuManager::m_PrefsCutsceneBorders = true;
+
+// index of m_PrefsFrameLimiter, 0 is no limit
+const int32 frameLimits[] = { 0, 30, 60, 75, 90, 120, 144, 165, 240 };
+const char *frameLimitTexts[] = { "FEM_OFF", "FEM_30", "FEM_60", "FEM_75", "FEM_90", "FEM_120", "FEM_144", "FEM_165", "FEM_240" };
+int32 numFrameLimits = ARRAY_SIZE(frameLimits);
+
+int32
+CMenuManager::GetFrameLimit(void)
+{
+	if (m_PrefsFrameLimiter < 1 || m_PrefsFrameLimiter >= ARRAY_SIZE(frameLimits))
+		return 0;
+	return frameLimits[m_PrefsFrameLimiter];
+}
 #endif
 
 bool holdingScrollBar; // *(bool*)0x7039B9; // not original name
@@ -484,9 +497,10 @@ CMenuManager::CMenuManager()
 #else
 	m_PrefsUseWideScreen = 0;
 #endif
-	m_PrefsVsync = 0;
+	m_PrefsVsync = 1;
 	m_PrefsVsyncDisp = 1;
-	m_PrefsFrameLimiter = 1;
+	m_PrefsFrameLimiter = 0;
+	m_PrefsSmoothAnims = 1;
 	m_PrefsLanguage = 0;
 	field_54 = 0;
 	m_PrefsAllowNastyGame = 1;
@@ -536,7 +550,7 @@ CMenuManager::CMenuManager()
 	DMAudio.SetEffectsMasterVolume(m_PrefsSfxVolume);
 
 #ifdef NO_ISLAND_LOADING
-	m_PrefsIslandLoading = ISLAND_LOADING_LOW;
+	m_PrefsIslandLoading = ISLAND_LOADING_HIGH;
 #endif
 
 #ifdef GAMEPAD_MENU
@@ -1167,7 +1181,7 @@ CMenuManager::DrawStandardMenus(bool activeScreen)
 					rightText = TheText.Get(m_PrefsVsyncDisp ? "FEM_ON" : "FEM_OFF");
 					break;
 				case MENUACTION_FRAMELIMIT:
-					rightText = TheText.Get(m_PrefsFrameLimiter ? "FEM_ON" : "FEM_OFF");
+					rightText = TheText.Get(frameLimitTexts[m_PrefsFrameLimiter]);
 					break;
 				case MENUACTION_TRAILS:
 					rightText = TheText.Get(CMBlur::BlurOn ? "FEM_ON" : "FEM_OFF");
@@ -5218,7 +5232,7 @@ CMenuManager::ProcessOnOffMenuOptions()
 		SaveSettings(); // FIX: Again... This makes me very unhappy
 		break;
 	case MENUACTION_FRAMELIMIT:
-		m_PrefsFrameLimiter = !m_PrefsFrameLimiter;
+		m_PrefsFrameLimiter = (m_PrefsFrameLimiter + 1) % numFrameLimits;
 		SaveSettings();
 		break;
 	case MENUACTION_TRAILS:

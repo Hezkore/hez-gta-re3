@@ -128,7 +128,7 @@ CQuaternion::Set(const RwMatrix &matrix)
 		y = 0.5f * s;
 		m = 0.5f / s;
 		w = (matrix.at.x - matrix.right.z) * m;
-		x = (matrix.up.x - matrix.right.y) * m;
+		x = (matrix.up.x + matrix.right.y) * m;
 		z = (matrix.at.y + matrix.up.z) * m;
 		return;
 	}

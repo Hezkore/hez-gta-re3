@@ -37,6 +37,11 @@ CAnimBlendAssociation *RpAnimBlendClumpGetFirstAssociation(RpClump *clump, uint3
 CAnimBlendAssociation *RpAnimBlendClumpGetFirstAssociation(RpClump *clump);
 void RpAnimBlendNodeUpdateKeyframes(AnimBlendFrameData *frames, AnimBlendFrameUpdateData *updateData, int32 numNodes);
 void RpAnimBlendClumpUpdateAnimations(RpClump* clump, float timeDelta, bool doRender = true);
+void RpAnimBlendClumpApplyAnimations(RpClump *clump);
+void RpAnimBlendClumpStoreFrames(RpClump *clump);
+void RpAnimBlendClumpInterpolateFrames(RpClump *clump, float t, const CMatrix *prevEnt, const CMatrix *curEnt, const CMatrix *drawnEnt);
+void RpAnimBlendClumpRestoreFrames(RpClump *clump);
+bool RpAnimBlendClumpGetRootPositions(RpClump *clump, CVector *prev, CVector *cur);
 
 
 extern CAnimBlendClumpData *gpAnimBlendClump;

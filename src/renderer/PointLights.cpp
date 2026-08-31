@@ -12,6 +12,7 @@
 #include "PointLights.h"
 
 int16 CPointLights::NumLights;
+int16 CPointLights::NumLogicalFrameLights;
 CRegisteredPointLight CPointLights::aLights[NUMPOINTLIGHTS];
 CVector CPointLights::aCachedMapReads[32];
 float CPointLights::aCachedMapReadResults[32];
@@ -28,9 +29,22 @@ CPointLights::Init(void)
 }
 
 void
-CPointLights::InitPerFrame(void)
+CPointLights::InitPerLogicalFrame(void)
 {
 	NumLights = 0;
+}
+
+void
+CPointLights::EndLogicalFrame(void)
+{
+	NumLogicalFrameLights = NumLights;
+}
+
+void
+CPointLights::InitPerFrame(void)
+{
+	// keep what the logical frame put in, drop what the last rendered frame added
+	NumLights = NumLogicalFrameLights;
 }
 
 #define MAX_DIST 22.0f

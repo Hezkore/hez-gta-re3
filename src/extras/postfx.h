@@ -6,6 +6,11 @@ class CPostFX
 {
 public:
 	enum {
+		MBLUR_OFF,
+		MBLUR_FAINT,
+		MBLUR_STRONG
+	};
+	enum {
 		POSTFX_OFF,
 		POSTFX_SIMPLE,
 		POSTFX_NORMAL,
@@ -16,7 +21,7 @@ public:
 	static bool bJustInitialised;
 	static int EffectSwitch;
 	static bool BlurOn;	// or use CMblur for that?
-	static bool MotionBlurOn;	// or use CMblur for that?
+	static int8 MotionBlur;	// MBLUR_OFF, MBLUR_FAINT or MBLUR_STRONG
 	static float Intensity;
 
 	// smooth blur color

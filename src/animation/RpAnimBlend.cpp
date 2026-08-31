@@ -6,6 +6,7 @@
 #include "VisibilityPlugins.h"
 #include "Bones.h"
 #include "AnimBlendClumpData.h"
+#include "Timer.h"
 #include "AnimBlendHierarchy.h"
 #include "AnimBlendAssociation.h"
 #include "AnimManager.h"
@@ -175,6 +176,7 @@ RpAnimBlendClumpInitSkinned(RpClump *clump)
 #endif
 	}
 	clumpData->ForAllFrames(FrameInitCBskin, nil);
+	clumpData->AllocInterpolationMatrices(true);
 	clumpData->frames[0].flag |= AnimBlendFrameData::VELOCITY_EXTRACTION;
 }
 
@@ -194,6 +196,7 @@ RpAnimBlendClumpInitNotSkinned(RpClump *clump)
 	frames = clumpData->frames;
 	RwFrameForAllChildren(root, FrameForAllChildrenFillFrameArrayCallBack, &frames);
 	clumpData->ForAllFrames(FrameInitCBnonskin, nil);
+	clumpData->AllocInterpolationMatrices(false);
 	clumpData->frames[0].flag |= AnimBlendFrameData::VELOCITY_EXTRACTION;
 }
 
@@ -514,4 +517,175 @@ RpAnimBlendClumpUpdateAnimations(RpClump *clump, float timeDelta, bool doRender)
 		assoc->UpdateTime(timeDelta, totalLength == 0.0f ? 1.0f : totalBlend/totalLength);
 	}
 	RwFrameUpdateObjects(RpClumpGetFrame(clump));
+}
+
+// The bones are animated once per logical frame. To draw a clump between two logical
+// frames, the bones at the end of the previous one are remembered and the ones drawn
+// are put between those and the current ones. The real ones are put back before the
+// next logical frame so the game itself only works with those. A skinned clump keeps
+// its bones in the interp frames of its hierarchy, any other in the matrices of its
+// RwFrames.
+void
+RpAnimBlendClumpStoreFrames(RpClump *clump)
+{
+	int i;
+	CAnimBlendClumpData *clumpData = *RPANIMBLENDCLUMPDATA(clump);
+
+	if(clumpData->prevMatrices == nil && clumpData->prevFrames == nil)
+	if(clumpData->prevMatrices == nil && clumpData->prevFrames == nil)
+		return;
+	if(clumpData->skinned)
+		for(i = 0; i < clumpData->numFrames; i++)
+			clumpData->prevFrames[i] = *clumpData->frames[i].hanimFrame;
+	else
+		for(i = 0; i < clumpData->numFrames; i++)
+			clumpData->prevMatrices[i] = *RwFrameGetMatrix(clumpData->frames[i].frame);
+	clumpData->prevMatricesValid = true;
+}
+
+// an interp frame as a matrix and back, so both kinds of bones go through the same blend
+static void
+InterpFrameToMatrix(const RpHAnimStdInterpFrame *xform, CMatrix &m)
+{
+	RwMatrix rw;
+	CQuaternion q(xform->q.imag.x, xform->q.imag.y, xform->q.imag.z, xform->q.real);
+
+	q.Get(&rw);
+	m.GetRight() = rw.right;
+	m.GetForward() = rw.up;
+	m.GetUp() = rw.at;
+	m.GetPosition() = xform->t;
+}
+
+static void
+MatrixToInterpFrame(const CMatrix &m, RpHAnimStdInterpFrame *xform)
+{
+	RwMatrix rw;
+	CQuaternion q;
+
+	rw.right = m.GetRight();
+	rw.up = m.GetForward();
+	rw.at = m.GetUp();
+	q.Set(rw);
+	xform->q.imag.x = q.x;
+	xform->q.imag.y = q.y;
+	xform->q.imag.z = q.z;
+	xform->q.real = q.w;
+	xform->t = m.GetPosition();
+}
+
+// The first frame is the root and, with the entity matrix, puts the body in the world.
+// The game and the animation hand offsets between the two, a ped is put in the seat as
+// the animation gives up the way there, so the root is interpolated in world space and
+// then taken back into the drawn entity matrix, prevEnt and curEnt being the entity
+// matrix at the two logical frames and drawnEnt the one drawn now. Without them the root
+// is interpolated like the rest, which hangs under it.
+void
+RpAnimBlendClumpInterpolateFrames(RpClump *clump, float t, const CMatrix *prevEnt, const CMatrix *curEnt, const CMatrix *drawnEnt)
+{
+	int i;
+	CAnimBlendClumpData *clumpData = *RPANIMBLENDCLUMPDATA(clump);
+
+	if(!clumpData->prevMatricesValid || clumpData->matricesInterpolated)
+		return;
+	clumpData->matricesInterpolated = true;
+
+	for(i = 0; i < clumpData->numFrames; i++){
+		CMatrix prev, cur, drawn;
+		RwMatrix *mat = nil;
+
+		if(clumpData->skinned){
+			clumpData->realFrames[i] = *clumpData->frames[i].hanimFrame;
+			InterpFrameToMatrix(&clumpData->prevFrames[i], prev);
+			InterpFrameToMatrix(&clumpData->realFrames[i], cur);
+		}else{
+			mat = RwFrameGetMatrix(clumpData->frames[i].frame);
+			clumpData->realMatrices[i] = *mat;
+			prev.Attach(&clumpData->prevMatrices[i]);
+			cur.Attach(&clumpData->realMatrices[i]);
+		}
+		if(i == 0 && prevEnt){
+			CMatrix world;
+			world.Interpolate(*prevEnt * prev, *curEnt * cur, t);
+			drawn = Invert(*drawnEnt) * world;
+		}else
+			drawn.Interpolate(prev, cur, t);
+		if(clumpData->skinned)
+			MatrixToInterpFrame(drawn, clumpData->frames[i].hanimFrame);
+		else{
+			CMatrix out(mat);
+			out = drawn;
+		}
+	}
+	if(clumpData->skinned)
+		RpHAnimHierarchyUpdateMatrices(GetAnimHierarchyFromSkinClump(clump));
+	else
+		RwFrameUpdateObjects(RpClumpGetFrame(clump));
+}
+
+void
+RpAnimBlendClumpRestoreFrames(RpClump *clump)
+{
+	int i;
+	CAnimBlendClumpData *clumpData = *RPANIMBLENDCLUMPDATA(clump);
+
+	if(!clumpData->matricesInterpolated)
+		return;
+	clumpData->matricesInterpolated = false;
+
+	if(clumpData->skinned){
+		for(i = 0; i < clumpData->numFrames; i++)
+			*clumpData->frames[i].hanimFrame = clumpData->realFrames[i];
+		RpHAnimHierarchyUpdateMatrices(GetAnimHierarchyFromSkinClump(clump));
+	}else{
+		for(i = 0; i < clumpData->numFrames; i++){
+			RwMatrix *mat = RwFrameGetMatrix(clumpData->frames[i].frame);
+			*mat = clumpData->realMatrices[i];
+			RwMatrixUpdate(mat);
+		}
+		RwFrameUpdateObjects(RpClumpGetFrame(clump));
+	}
+}
+
+// Where the root bone was at the end of the previous logical frame and where it is now,
+// in clump space. An animation can hand its offset over to the entity, so only the two
+// together tell whether the body moved or was put somewhere else. False when the clump
+// has no earlier frame to compare with
+bool
+RpAnimBlendClumpGetRootPositions(RpClump *clump, CVector *prev, CVector *cur)
+{
+	CAnimBlendClumpData *clumpData = *RPANIMBLENDCLUMPDATA(clump);
+
+	if(!clumpData->prevMatricesValid)
+		return false;
+	if(clumpData->skinned){
+		*prev = clumpData->prevFrames[0].t;
+		*cur = clumpData->matricesInterpolated ? clumpData->realFrames[0].t : clumpData->frames[0].hanimFrame->t;
+	}else{
+		*prev = clumpData->prevMatrices[0].pos;
+		if(clumpData->matricesInterpolated)
+			*cur = clumpData->realMatrices[0].pos;
+		else
+			*cur = RwFrameGetMatrix(clumpData->frames[0].frame)->pos;
+	}
+	return true;
+}
+
+// Puts the animations as they are now into the bones without moving them on. For when
+// the animations are swapped after the bones were worked out for this logical frame
+// and the entity is moved to fit the new ones in the same frame. An animation cut off
+// with a blend delta that has it faded out by the end of the frame is left out
+void
+RpAnimBlendClumpApplyAnimations(RpClump *clump)
+{
+	CAnimBlendClumpData *clumpData = *RPANIMBLENDCLUMPDATA(clump);
+
+	if(clumpData->link.next == nil)
+		return;
+	for(CAnimBlendLink *link = clumpData->link.next; link; link = link->next){
+		CAnimBlendAssociation *assoc = CAnimBlendAssociation::FromLink(link);
+		if(assoc->blendDelta < 0.0f && assoc->blendAmount + assoc->blendDelta*CTimer::GetTimeStepInSeconds() <= 0.0f)
+			assoc->blendAmount = 0.0f;
+	}
+	RpAnimBlendClumpUpdateAnimations(clump, 0.0f, true);
 }

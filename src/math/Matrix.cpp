@@ -1,4 +1,5 @@
 #include "common.h"
+#include "Quaternion.h"
 
 CMatrix::CMatrix(void)
 {
@@ -414,6 +415,29 @@ CMatrix::operator*=(CMatrix const &rhs)
 	// TODO: VU0 code
 	*this = *this * rhs;
 	return *this;
+}
+
+// Puts this between a and b, at b for t = 1. The rotation goes the shorter way round as a
+// quaternion, a plain blend of two matrices that differ a lot collapses towards zero
+void
+CMatrix::Interpolate(const CMatrix &a, const CMatrix &b, float t)
+{
+	RwMatrix ma, mb, m;
+	CQuaternion qa, qb, q;
+
+	ma.right = a.GetRight(); ma.up = a.GetForward(); ma.at = a.GetUp();
+	mb.right = b.GetRight(); mb.up = b.GetForward(); mb.at = b.GetUp();
+	qa.Set(ma);
+	qb.Set(mb);
+	if(qa.x*qb.x + qa.y*qb.y + qa.z*qb.z + qa.w*qb.w < 0.0f)
+		qb = -qb;
+	q = qa*(1.0f - t) + qb*t;
+	q.Normalise();
+	q.Get(&m);
+	GetRight() = m.right;
+	GetForward() = m.up;
+	GetUp() = m.at;
+	GetPosition() = a.GetPosition() + (b.GetPosition() - a.GetPosition())*t;
 }
 
 void

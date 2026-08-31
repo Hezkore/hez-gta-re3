@@ -161,9 +161,14 @@ ScreenDroplets::Shutdown(void)
 void
 ScreenDroplets::Process(void)
 {
-	ProcessCameraMovement();
-	SprayDrops();
-	ProcessMoving();
+	// the screen was sprayed and the water moved once per frame, which was once per logical frame.
+	// keep it that way, or a faster frame rate floods the screen. the fade runs on
+	// real time so it goes on each frame
+	if(CTimer::GetLogicalFramesPassed() != 0){
+		ProcessCameraMovement();
+		SprayDrops();
+		ProcessMoving();
+	}
 	Fade();
 }
 

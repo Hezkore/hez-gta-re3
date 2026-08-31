@@ -667,51 +667,27 @@ CShadows::StoreShadowForVehicle(CVehicle *pCar, VEH_SHD_TYPE type)
 				bDrawOnBuildings = true;
 			}
 			
-			if ( pCar->m_vecMoveSpeed.Magnitude() * CTimeStep::ms_fTimeStep > 0.1f || bDrawOnBuildings )
+			// a slow car got a static shadow, cheaper, but one that only moved once the car had
+			// come a little way, which shows now that the car itself is drawn between logical frames
+			if ( pCar->GetUp().z > 0.0f )
 			{
-				if ( pCar->GetUp().z > 0.0f )
-				{
-					StoreShadowToBeRendered(SHADOWTYPE_DARK, tex, &CarPos,
-						frontx * (fVehicleHeight / 2),
-						fronty * (fVehicleHeight / 2),
-						sidex  * (fVehicleWidth  / 2),
-						sidey  * (fVehicleWidth  / 2),
-						nColorStrength, nColorStrength, nColorStrength, nColorStrength,
-						4.5f, false, 1.0f, nil, bDrawOnBuildings);
-				}
-				else
-				{
-					StoreShadowToBeRendered(SHADOWTYPE_DARK, tex, &CarPos,
-						frontx * (fVehicleHeight / 2),
-						fronty * (fVehicleHeight / 2),
-						-sidex * (fVehicleWidth  / 2),
-						-sidey * (fVehicleWidth  / 2),
-						nColorStrength, nColorStrength, nColorStrength, nColorStrength,
-						4.5f, false, 1.0f, nil, bDrawOnBuildings);
-				}
+				StoreShadowToBeRendered(SHADOWTYPE_DARK, tex, &CarPos,
+					frontx * (fVehicleHeight / 2),
+					fronty * (fVehicleHeight / 2),
+					sidex  * (fVehicleWidth  / 2),
+					sidey  * (fVehicleWidth  / 2),
+					nColorStrength, nColorStrength, nColorStrength, nColorStrength,
+					4.5f, false, 1.0f, nil, bDrawOnBuildings);
 			}
 			else
 			{
-				if ( pCar->GetUp().z > 0.0f )
-				{
-					StoreStaticShadow((uintptr)pCar + 1, SHADOWTYPE_DARK, tex, &CarPos,
-						frontx * (fVehicleHeight / 2),
-						fronty * (fVehicleHeight / 2),
-						sidex  * (fVehicleWidth  / 2),
-						sidey  * (fVehicleWidth  / 2),
-						nColorStrength, nColorStrength, nColorStrength, nColorStrength,
-						4.5f, 1.0f, 0.0f, false, 0.1f);
-				}
-				else
-				{
-					StoreStaticShadow((uintptr)pCar + 1, SHADOWTYPE_DARK, tex, &CarPos,
-						frontx * (fVehicleHeight / 2),
-						fronty * (fVehicleHeight / 2),
-						-sidex * (fVehicleWidth  / 2),
-						-sidey * (fVehicleWidth  / 2),
-						nColorStrength, nColorStrength, nColorStrength, nColorStrength,
-						4.5f, 1.0f, 0.0f, false, 0.1f);
-				}
+				StoreShadowToBeRendered(SHADOWTYPE_DARK, tex, &CarPos,
+					frontx * (fVehicleHeight / 2),
+					fronty * (fVehicleHeight / 2),
+					-sidex * (fVehicleWidth  / 2),
+					-sidey * (fVehicleWidth  / 2),
+					nColorStrength, nColorStrength, nColorStrength, nColorStrength,
+					4.5f, false, 1.0f, nil, bDrawOnBuildings);
 			}
 		}
 	}
@@ -751,24 +727,14 @@ CShadows::StoreCarLightShadow(CVehicle *pCar, int32 nID, RwTexture *pTexture, CV
 				nBlue  = (int32)(nBlue  * fMult);
 			}
 
-			if ( pCar->m_vecMoveSpeed.Magnitude() * CTimeStep::ms_fTimeStep > 0.4f || pCar == FindPlayerVehicle() )
-			{
-				StoreShadowToBeRendered(SHADOWTYPE_ADDITIVE, pTexture, pPosn,
-						fFrontX, fFrontY,
-						fSideX, fSideY,
-						128, nRed, nGreen, nBlue,
-						6.0f, false, 1.0f,
-						nil, pCar == FindPlayerVehicle());
-			}
-			else
-			{
-				StoreStaticShadow((uintptr)pCar + nID, SHADOWTYPE_ADDITIVE, pTexture, pPosn,
-						fFrontX, fFrontY,
-						fSideX, fSideY,
-						128, nRed, nGreen, nBlue,
-						6.0f, 1.0f, 27.0f,
-						false, 0.4f);
-			}
+			// a slow car got a static shadow, cheaper, but one that only moved once the car had
+			// come a little way, which shows now that the car itself is drawn between logical frames
+			StoreShadowToBeRendered(SHADOWTYPE_ADDITIVE, pTexture, pPosn,
+					fFrontX, fFrontY,
+					fSideX, fSideY,
+					128, nRed, nGreen, nBlue,
+					6.0f, false, 1.0f,
+					nil, pCar == FindPlayerVehicle());
 		}
 	}
 }

@@ -863,6 +863,8 @@ void CParticle::AddParticlesAlongLine(tParticleType type, CVector const &vecStar
 	}
 }
 
+bool CParticle::ms_bAddBlocked;
+
 CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVector const &vecDir, CEntity *pEntity, float fSize, int32 nRotationSpeed, int32 nRotation, int32 nCurFrame, int32 nLifeSpan)
 {
 	CRGBA color(0, 0, 0, 0);
@@ -871,7 +873,7 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 
 CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVector const &vecDir, CEntity *pEntity, float fSize, RwRGBA const &color, int32 nRotationSpeed, int32 nRotation, int32 nCurFrame, int32 nLifeSpan)
 {
-	if ( CTimer::GetIsPaused() )
+	if ( CTimer::GetIsPaused() || ms_bAddBlocked )
 		return nil;
 
 	if ( ( type == PARTICLE_ENGINE_SMOKE
@@ -1112,7 +1114,9 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	
 	if ( fSize != 0.0f )
 		pParticle->m_fSize = fSize;
-	
+
+	pParticle->m_vecPrevPosition = pParticle->m_vecPosition;
+
 	m_pUnusedListHead = pParticle->m_pNext;
 
 	pParticle->m_pNext = psystem->m_pParticles;
@@ -1173,6 +1177,7 @@ void CParticle::Update()
 			
 			bRemoveParticle = false;
 
+			particle->m_vecPrevPosition = particle->m_vecPosition;
 			CVector vecMoveStep = particle->m_vecVelocity * CTimer::GetTimeStep();
 			CVector vecPos = particle->m_vecPosition;
 			
@@ -1802,6 +1807,11 @@ void CParticle::Render()
 	uint32 flags = DRAW_OPAQUE;
 	
 	RwRaster *prevFrame = nil;
+
+	// particles move in logical frames, so draw each one between where it was and where
+	// it is by how far into the logical frame this rendered frame is. while paused the
+	// game clock still runs for the menu, so hold them where they are
+	float fLogicalFrameFraction = CTimer::GetIsPaused() ? 1.0f : CTimer::GetLogicalFrameFraction();
 	
 	for ( int32 i = 0; i < MAX_PARTICLES; i++ )
 	{
@@ -1864,6 +1874,8 @@ void CParticle::Render()
 		while ( particle != nil )
 		{
 			bool canDraw = true;
+			CVector vecDrawPos = particle->m_vecPrevPosition
+				+ (particle->m_vecPosition - particle->m_vecPrevPosition) * fLogicalFrameFraction;
 
 			if ( particle->m_nAlpha == 0 )
 				canDraw = false;
@@ -1884,12 +1896,12 @@ void CParticle::Render()
 				float screenZ;
 #ifdef FIX_BUGS
 				bool zIsZero = true;
-				if ( particle->m_vecPosition.z != 0.0f ) {
+				if ( vecDrawPos.z != 0.0f ) {
 #endif
-				screenZ = (particle->m_vecPosition.z - CDraw::GetNearClipZ())
+				screenZ = (vecDrawPos.z - CDraw::GetNearClipZ())
 					* (CSprite::GetFarScreenZ() - CSprite::GetNearScreenZ())
 					* CDraw::GetFarClipZ()
-					/ ( (CDraw::GetFarClipZ() - CDraw::GetNearClipZ()) * particle->m_vecPosition.z )
+					/ ( (CDraw::GetFarClipZ() - CDraw::GetNearClipZ()) * vecDrawPos.z )
 					+ CSprite::GetNearScreenZ();
 #ifdef FIX_BUGS
 				zIsZero = false;
@@ -1922,10 +1934,10 @@ void CParticle::Render()
 					
 					RwRect rect;
 					
-					rect.x = int32(particle->m_vecPosition.x - SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
-					rect.y = int32(particle->m_vecPosition.y - SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH));
-					rect.w = int32(particle->m_vecPosition.x + SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
-					rect.h = int32(particle->m_vecPosition.y + SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH));
+					rect.x = int32(vecDrawPos.x - SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
+					rect.y = int32(vecDrawPos.y - SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH));
+					rect.w = int32(vecDrawPos.x + SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
+					rect.h = int32(vecDrawPos.y + SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH));
 					
 					FxType fxtype;
 
@@ -1948,10 +1960,10 @@ void CParticle::Render()
 
 					RwRect rect;
 
-					rect.x = int32(particle->m_vecPosition.x - SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
-					rect.y = int32(particle->m_vecPosition.y - SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH));
-					rect.w = int32(particle->m_vecPosition.x + SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
-					rect.h = int32(particle->m_vecPosition.y + SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH));
+					rect.x = int32(vecDrawPos.x - SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
+					rect.y = int32(vecDrawPos.y - SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH));
+					rect.w = int32(vecDrawPos.x + SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
+					rect.h = int32(vecDrawPos.y + SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH));
 					
 					FxType fxtype;
 					
@@ -1969,10 +1981,10 @@ void CParticle::Render()
 				{
 					RwRect rect;
 					
-					rect.x = int32(particle->m_vecPosition.x - SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
-					rect.y = int32(particle->m_vecPosition.y - SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH * 0.15f));
-					rect.w = int32(particle->m_vecPosition.x + SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
-					rect.h = int32(particle->m_vecPosition.y + SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH * 0.15f));
+					rect.x = int32(vecDrawPos.x - SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
+					rect.y = int32(vecDrawPos.y - SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH * 0.15f));
+					rect.w = int32(vecDrawPos.x + SCREEN_STRETCH_X(particle->m_fSize * stretchTexW));
+					rect.h = int32(vecDrawPos.y + SCREEN_STRETCH_Y(particle->m_fSize * stretchTexH * 0.15f));
 					
 					CMBlur::AddRenderFx(Scene.camera, &rect, screenZ, FXTYPE_HEATHAZE);
 					
@@ -1986,26 +1998,26 @@ void CParticle::Render()
 					switch ( TheCamera.GetLookDirection() )
 					{
 						case LOOKING_LEFT:
-							rect.x = int32(particle->m_vecPosition.x - SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x * 2.0f));
-							rect.y = int32(particle->m_vecPosition.y - SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
-							rect.w = int32(particle->m_vecPosition.x - SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x));
-							rect.h = int32(particle->m_vecPosition.y + SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
+							rect.x = int32(vecDrawPos.x - SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x * 2.0f));
+							rect.y = int32(vecDrawPos.y - SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
+							rect.w = int32(vecDrawPos.x - SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x));
+							rect.h = int32(vecDrawPos.y + SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
 					
 							break;
 
 						case LOOKING_RIGHT:
-							rect.x = int32(particle->m_vecPosition.x + SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x));
-							rect.y = int32(particle->m_vecPosition.y - SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
-							rect.w = int32(particle->m_vecPosition.x + SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x * 4.0f));
-							rect.h = int32(particle->m_vecPosition.y + SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
+							rect.x = int32(vecDrawPos.x + SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x));
+							rect.y = int32(vecDrawPos.y - SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
+							rect.w = int32(vecDrawPos.x + SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x * 4.0f));
+							rect.h = int32(vecDrawPos.y + SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
 					
 							break;
 
 						default:
-							rect.x = int32(particle->m_vecPosition.x - SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x));
-							rect.y = int32(particle->m_vecPosition.y - SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
-							rect.w = int32(particle->m_vecPosition.x + SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x));
-							rect.h = int32(particle->m_vecPosition.y + SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
+							rect.x = int32(vecDrawPos.x - SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x));
+							rect.y = int32(vecDrawPos.y - SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
+							rect.w = int32(vecDrawPos.x + SCREEN_STRETCH_X(particle->m_fSize * psystem->m_vecTextureStretch.x));
+							rect.h = int32(vecDrawPos.y + SCREEN_STRETCH_Y(particle->m_fSize * psystem->m_vecTextureStretch.y));
 					
 							break;
 					}
@@ -2023,8 +2035,8 @@ void CParticle::Render()
 					if ( particle->m_nRotation != 0 )
 					{
 						CSprite::RenderBufferedOneXLUSprite2D_Rotate_Dimension(
-								particle->m_vecPosition.x,
-								particle->m_vecPosition.y,
+								vecDrawPos.x,
+								vecDrawPos.y,
 								particle->m_fSize * stretchTexW,
 								particle->m_fSize * stretchTexH,
 								particle->m_Color,
@@ -2035,8 +2047,8 @@ void CParticle::Render()
 					else
 					{
 						CSprite::RenderBufferedOneXLUSprite2D(
-								particle->m_vecPosition.x,
-								particle->m_vecPosition.y,
+								vecDrawPos.x,
+								vecDrawPos.y,
 								particle->m_fSize * stretchTexW,
 								particle->m_fSize * stretchTexH,
 								particle->m_Color,
@@ -2054,7 +2066,7 @@ void CParticle::Render()
 				float w;
 				float h;
 
-				if ( CSprite::CalcScreenCoors(particle->m_vecPosition, &coors, &w, &h, true) )
+				if ( CSprite::CalcScreenCoors(vecDrawPos, &coors, &w, &h, true) )
 				{
 					
 					if ( i == PARTICLE_ENGINE_STEAM
@@ -2204,7 +2216,7 @@ void CParticle::Render()
 							}
 							else if ( psystem->Flags & SPEED_TRAIL )
 							{
-								CVector vecPrevPos = particle->m_vecPosition - particle->m_vecVelocity;
+								CVector vecPrevPos = vecDrawPos - particle->m_vecVelocity;
 								float fRotation;
 								float fTrailLength;
 								CVector vecScreenPosition;

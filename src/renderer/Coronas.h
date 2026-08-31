@@ -85,6 +85,9 @@ public:
 	static int MoonSize;
 	static bool SunBlockedByClouds;
 	static int bChangeBrightnessImmediately;
+	// Update() runs each logical frame but coronas are registered each rendered frame,
+	// so an unregistered one only counts as such once a frame has been rendered
+	static bool bFrameRenderedSinceUpdate;
 
 	static void Init(void);
 	static void Shutdown(void);

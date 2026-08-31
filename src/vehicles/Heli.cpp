@@ -570,7 +570,7 @@ CHeli::Render(void)
 	mat.Translate(pos);
 	mat.UpdateRW();
 
-	m_fRotorRotation += 3.14f/6.5f;
+	m_fRotorRotation += 3.14f/6.5f * CTimer::GetTimeStepFix();
 	if(m_fRotorRotation > 6.28f)
 		m_fRotorRotation -= 6.28f;
 

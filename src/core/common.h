@@ -191,16 +191,24 @@ inline uint32 ldb(uint32 p, uint32 s, uint32 w)
 #define SCREEN_ASPECT_RATIO (CDraw::GetAspectRatio())
 #define SCREEN_VIEWWINDOW (Tan(DEGTORAD(CDraw::GetScaledFOV() * 0.5f)))
 
+// The interface is kept to a 16:9 box in the middle of a wider screen unless it is
+// extended. What is placed from the left or right edge goes from the edge of that box
+#define HUD_WIDTH (CDraw::ms_bExtendHud ? SCREEN_WIDTH : Min(SCREEN_WIDTH, SCREEN_HEIGHT * 16.0f / 9.0f))
+#define HUD_LEFT ((SCREEN_WIDTH - HUD_WIDTH) / 2)
+#define HUD_RIGHT (SCREEN_WIDTH - HUD_LEFT)
+
 // This scales from PS2 pixel coordinates to the real resolution
 #define SCREEN_STRETCH_X(a)   ((a) * (float) SCREEN_WIDTH / DEFAULT_SCREEN_WIDTH)
 #define SCREEN_STRETCH_Y(a)   ((a) * (float) SCREEN_HEIGHT / DEFAULT_SCREEN_HEIGHT)
-#define SCREEN_STRETCH_FROM_RIGHT(a)  (SCREEN_WIDTH - SCREEN_STRETCH_X(a))
+#define SCREEN_STRETCH_FROM_LEFT(a)   (HUD_LEFT + SCREEN_STRETCH_X(a))
+#define SCREEN_STRETCH_FROM_RIGHT(a)  (HUD_RIGHT - SCREEN_STRETCH_X(a))
 #define SCREEN_STRETCH_FROM_BOTTOM(a) (SCREEN_HEIGHT - SCREEN_STRETCH_Y(a))
 
 // This scales from PS2 pixel coordinates while optionally maintaining the aspect ratio
 #define SCREEN_SCALE_X(a) SCREEN_SCALE_AR(SCREEN_STRETCH_X(a))
 #define SCREEN_SCALE_Y(a) SCREEN_STRETCH_Y(a)
-#define SCREEN_SCALE_FROM_RIGHT(a) (SCREEN_WIDTH - SCREEN_SCALE_X(a))
+#define SCREEN_SCALE_FROM_LEFT(a) (HUD_LEFT + SCREEN_SCALE_X(a))
+#define SCREEN_SCALE_FROM_RIGHT(a) (HUD_RIGHT - SCREEN_SCALE_X(a))
 #define SCREEN_SCALE_FROM_BOTTOM(a) (SCREEN_HEIGHT - SCREEN_SCALE_Y(a))
 
 #ifdef ASPECT_RATIO_SCALE

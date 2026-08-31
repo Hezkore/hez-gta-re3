@@ -205,7 +205,7 @@ psCameraShowRaster(RwCamera *camera)
 #ifdef LEGACY_MENU_OPTIONS
 	if (FrontEndMenuManager.m_PrefsVsync || FrontEndMenuManager.m_bMenuActive)
 #else
-	if (FrontEndMenuManager.m_PrefsFrameLimiter || FrontEndMenuManager.m_bMenuActive)
+	if (FrontEndMenuManager.m_PrefsVsync || FrontEndMenuManager.m_bMenuActive)
 #endif
 		RwCameraShowRaster(camera, PSGLOBAL(window), rwRASTERFLIPWAITVSYNC);
 	else
@@ -2336,7 +2336,10 @@ main(int argc, char *argv[])
 						float ms = (float)CTimer::GetCurrentTimeInCycles() / (float)CTimer::GetCyclesPerMillisecond();
 						if ( RwInitialised )
 						{
-							if (!FrontEndMenuManager.m_PrefsFrameLimiter || (1000.0f / (float)RsGlobal.maxFPS) < ms)
+							// at the logical frame rate each rendered frame is one logical frame, so wait for
+							// one instead of for a fixed time, or the two drift and a frame gets none or two
+							int32 frameLimit = FrontEndMenuManager.GetFrameLimit();
+							if (frameLimit == 0 || (frameLimit == LOGICAL_FRAME_RATE ? CTimer::IsLogicalFrameDue(ms) : (1000.0f / (float)frameLimit) < ms))
 								RsEventHandler(rsIDLE, (void *)TRUE);
 						}
 						break;

@@ -4513,6 +4513,10 @@ CPed::SetExitCar(CVehicle *veh, uint32 wantedDoorNode)
 			}
 		}
 		bChangedSeat = false;
+		// the bones were worked out for this frame with the old animations, and ExitCar()
+		// puts the ped at the door to fit the new ones this same frame. put the new ones in
+		// now, or the ped is drawn at the door in the seat pose for a frame
+		RpAnimBlendClumpApplyAnimations(GetClump());
 		if (veh->bIsBus)
 			bRenderPedInCar = true;
 

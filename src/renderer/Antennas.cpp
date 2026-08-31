@@ -1,9 +1,11 @@
 #include "common.h"
 
 #include "main.h"
+#include "Timer.h"
 #include "Antennas.h"
 
 CAntenna CAntennas::aAntennas[NUMANTENNAS];
+bool CAntennas::bFrameRenderedSinceUpdate;
 
 void
 CAntennas::Init(void)
@@ -20,6 +22,12 @@ void
 CAntennas::Update(void)
 {
 	int i;
+
+	// antennas are registered each rendered frame, so one only counts as removed
+	// once a frame has been rendered
+	if(!bFrameRenderedSinceUpdate)
+		return;
+	bFrameRenderedSinceUpdate = false;
 
 	for(i = 0; i < NUMANTENNAS; i++){
 		if(aAntennas[i].active && !aAntennas[i].updatedLastFrame)
@@ -105,6 +113,7 @@ CAntennas::Render(void)
 	RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)FALSE);
 
 	POP_RENDERGROUP();
+	bFrameRenderedSinceUpdate = true;
 }
 
 void
@@ -114,6 +123,10 @@ CAntenna::Update(CVector dir, CVector basepos)
 
 	pos[0] = basepos;
 	pos[1] = basepos + dir*segmentLength;
+
+	// the base follows the car each rendered frame, the rest only swings in logical frames
+	if(CTimer::GetLogicalFramesPassed() == 0)
+		return;
 
 	for(i = 2; i < 6; i++){
 		CVector basedir = pos[i-1] - pos[i-2];

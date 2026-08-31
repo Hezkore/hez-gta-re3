@@ -528,9 +528,6 @@ cAudioManager::IsAudioInitialised()
 void
 cAudioManager::ServiceSoundEffects()
 {
-#ifdef FIX_BUGS
-	if(CTimer::GetLogicalFramesPassed() != 0)
-#endif
 	m_bReduceReleasingPriority = (m_FrameCounter++ % 5) == 0;
 	if (m_bIsPaused && !m_bWasPaused) {
 #ifdef GTA_PS2

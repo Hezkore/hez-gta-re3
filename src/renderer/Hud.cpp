@@ -36,11 +36,7 @@
 	#define SCALE_AND_CENTER_X_FIX(a) (a)
 #endif
 
-#ifdef FIX_BUGS
-#define FRAMECOUNTER CTimer::GetLogicalFrameCounter()
-#else
 #define FRAMECOUNTER CTimer::GetFrameCounter()
-#endif
 
 // Game has colors inlined in code.
 // For easier modification we collect them here:
@@ -1067,7 +1063,7 @@ void CHud::Draw()
 			if (FrontEndMenuManager.m_PrefsRadarMode != 1) {
 				CRect rect(0.0f, 0.0f, SCREEN_SCALE_X(RADAR_WIDTH), SCREEN_SCALE_Y(RADAR_HEIGHT));
 				
-				rect.Translate(SCREEN_SCALE_X_FIX(RADAR_LEFT), SCREEN_SCALE_FROM_BOTTOM(RADAR_BOTTOM + RADAR_HEIGHT));
+				rect.Translate(HUD_LEFT + SCREEN_SCALE_X_FIX(RADAR_LEFT), SCREEN_SCALE_FROM_BOTTOM(RADAR_BOTTOM + RADAR_HEIGHT));
 
 #ifdef FIX_BUGS
 				rect.Grow(SCREEN_SCALE_X(6.0f), SCREEN_SCALE_X(6.0f), SCREEN_SCALE_Y(6.0f), SCREEN_SCALE_Y(6.0f));
@@ -1209,8 +1205,8 @@ void CHud::Draw()
 				CFont::SetDropColor(CRGBA(0, 0, 0, 255));
 				CFont::SetScale(SCREEN_SCALE_X(0.58f), SCREEN_SCALE_Y(1.22f));
 
-				float radarBulge = SCREEN_SCALE_X(140.0f) + SCREEN_SCALE_X(8.0f);
-				float rectWidth = SCREEN_WIDTH - SCREEN_SCALE_X(20.0f) - SCREEN_SCALE_X(8.0f) - radarBulge;
+				float radarBulge = SCREEN_SCALE_FROM_LEFT(140.0f) + SCREEN_SCALE_X(8.0f);
+				float rectWidth = HUD_RIGHT - SCREEN_SCALE_X(20.0f) - SCREEN_SCALE_X(8.0f) - radarBulge;
 				CFont::SetCentreSize(rectWidth);
 
 				CFont::PrintString(rectWidth / 2.0f + radarBulge, SCREEN_SCALE_FROM_BOTTOM(105.f + 2.0f), m_Message);
@@ -1315,17 +1311,17 @@ void CHud::Draw()
 					CFont::SetJustifyOff();
 #ifdef MORE_LANGUAGES
 					if (CFont::IsJapanese())
-						CFont::SetWrapx(SCREEN_SCALE_X(229.0f + 34.0f - 4.0f));
+						CFont::SetWrapx(SCREEN_SCALE_FROM_LEFT(229.0f + 34.0f - 4.0f));
 					else
 #endif
-						CFont::SetWrapx(SCREEN_SCALE_X(200.0f + 34.0f - 4.0f));
+						CFont::SetWrapx(SCREEN_SCALE_FROM_LEFT(200.0f + 34.0f - 4.0f));
 					CFont::SetFontStyle(FONT_LOCALE(FONT_STANDARD));
 					CFont::SetBackgroundOn();
 					CFont::SetBackGroundOnlyTextOff();
 					CFont::SetDropShadowPosition(0);
 					CFont::SetBackgroundColor(CRGBA(0, 0, 0, fAlpha * 0.9f));
 					CFont::SetColor(CRGBA(175, 175, 175, 255));
-					CFont::PrintString(SCREEN_SCALE_X(34.0f), SCREEN_SCALE_Y(28.0f + (150.0f - PagerXOffset) * 0.6f), m_HelpMessageToPrint);
+					CFont::PrintString(SCREEN_SCALE_FROM_LEFT(34.0f), SCREEN_SCALE_Y(28.0f + (150.0f - PagerXOffset) * 0.6f), m_HelpMessageToPrint);
 					CFont::SetAlphaFade(255.0f);
 					CFont::SetWrapx(SCREEN_WIDTH);
 				}

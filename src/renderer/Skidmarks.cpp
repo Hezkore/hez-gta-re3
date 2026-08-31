@@ -7,6 +7,7 @@
 #include "Skidmarks.h"
 
 CSkidmark CSkidmarks::aSkidmarks[NUMSKIDMARKS];
+bool CSkidmarks::bFrameRenderedSinceUpdate;
 
 RwImVertexIndex SkidmarkIndexList[SKIDMARK_LENGTH * 6];
 RwIm3DVertex SkidmarkVertices[SKIDMARK_LENGTH * 2];
@@ -67,7 +68,7 @@ CSkidmarks::Update(void)
 	for(i = 0; i < NUMSKIDMARKS; i++){
 		switch(aSkidmarks[i].m_state){
 		case 1:
-			if(!aSkidmarks[i].m_wasUpdated){
+			if(bFrameRenderedSinceUpdate && !aSkidmarks[i].m_wasUpdated){
 				// Didn't continue this one last time, so finish it and set fade times
 				aSkidmarks[i].m_state = 2;
 				if(aSkidmarks[i].m_last < 4){
@@ -87,8 +88,10 @@ CSkidmarks::Update(void)
 				aSkidmarks[i].m_state = 0;
 			break;
 		}
-		aSkidmarks[i].m_wasUpdated = false;
+		if(bFrameRenderedSinceUpdate)
+			aSkidmarks[i].m_wasUpdated = false;
 	}
+	bFrameRenderedSinceUpdate = false;
 }
 
 void
@@ -119,6 +122,8 @@ CSkidmarks::Render(void)
 		uint32 fade, alpha;
 		if(aSkidmarks[i].m_state == 1 || CTimer::GetTimeInMilliseconds() < aSkidmarks[i].m_fadeStart)
 			fade = 255;
+		else if(CTimer::GetTimeInMilliseconds() >= aSkidmarks[i].m_fadeEnd)
+			fade = 0;	// the clock runs on between logical frames, the next one takes the mark out
 		else
 			fade = 255*(aSkidmarks[i].m_fadeEnd - CTimer::GetTimeInMilliseconds()) / (aSkidmarks[i].m_fadeEnd - aSkidmarks[i].m_fadeStart);
 
@@ -156,6 +161,7 @@ CSkidmarks::Render(void)
 	RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
 
 	POP_RENDERGROUP();
+	bFrameRenderedSinceUpdate = true;
 }
 
 void

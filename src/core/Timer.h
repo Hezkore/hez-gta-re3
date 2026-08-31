@@ -1,5 +1,17 @@
 #pragma once
 
+// The game runs in logical frames at a fixed rate while rendering runs as fast as it can.
+// Update() measures the rendered frame and works out how many logical frames it covers,
+// UpdateLogicalFrame() moves the game clock on by one of them. The clock the game reads,
+// time in milliseconds, frame counter and time step, only moves in logical frames, save
+// for the part of the next one a rendered frame is into, which the camera gets.
+// After the logical frames the time step is switched to the rendered frame for the camera.
+#define LOGICAL_FRAME_RATE 30
+#define LOGICAL_FRAME_MS (1000.0/LOGICAL_FRAME_RATE)
+// how many logical frames a single rendered frame may cover. any more are thrown away,
+// or the game would run at full speed after a long load to make up the time
+#define MAX_LOGICAL_FRAMES_PER_UPDATE 2
+
 class CTimer
 {
 
@@ -11,10 +23,11 @@ class CTimer
 	static float ms_fTimeScale;
 	static float ms_fTimeStep;
 	static float ms_fTimeStepNonClipped;
-#ifdef FIX_BUGS
-	static uint32 m_LogicalFrameCounter;
 	static uint32 m_LogicalFramesPassed;
-#endif
+	static float ms_fLogicalFrameFraction;
+	static float ms_fRenderFrameLength;
+	static float ms_fRenderTimeStep;
+	static float ms_fRenderTimeStepNonClipped;
 public:
 	static bool  m_UserPause;
 	static bool  m_CodePause;
@@ -45,10 +58,13 @@ public:
 	static bool GetIsUserPaused() { return m_UserPause; }
 	static bool GetIsCodePaused() { return m_CodePause; }
 	static void SetCodePause(bool pause) { m_CodePause = pause; }
-	
+
 	static void Initialise(void);
 	static void Shutdown(void);
 	static void Update(void);
+	static void UpdateLogicalFrame(void);
+	static void SetTimeStepForRender(void);
+	static bool IsLogicalFrameDue(float msSinceUpdate);
 	static void Suspend(void);
 	static void Resume(void);
 	static uint32 GetCyclesPerMillisecond(void);
@@ -62,10 +78,12 @@ public:
 	friend bool GenericSave(int file);
 	friend class CMemoryCard;
 
-#ifdef FIX_BUGS
-	static float GetDefaultTimeStep(void) { return 50.0f / 30.0f; }
+	static float GetDefaultTimeStep(void) { return 50.0f / LOGICAL_FRAME_RATE; }
 	static float GetTimeStepFix(void) { return GetTimeStep() / GetDefaultTimeStep(); }
-	static uint32 GetLogicalFrameCounter(void) { return m_LogicalFrameCounter; }
+	// logical frames covered by the rendered frame Update() timed
 	static uint32 GetLogicalFramesPassed(void) { return m_LogicalFramesPassed; }
-#endif
+	// how far into the next logical frame that rendered frame is, 0 to 1
+	static float GetLogicalFrameFraction(void) { return ms_fLogicalFrameFraction; }
+	// length of the rendered frame in logical frames, not scaled by the time scale
+	static float GetRenderFrameLength(void) { return ms_fRenderFrameLength; }
 };

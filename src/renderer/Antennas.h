@@ -17,6 +17,7 @@ class CAntennas
 {
 	// no need to use game's array
 	static CAntenna aAntennas[NUMANTENNAS];
+	static bool bFrameRenderedSinceUpdate;
 public:
 	static void Init(void);
 	static void Update(void);
