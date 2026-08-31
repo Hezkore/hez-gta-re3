@@ -290,6 +290,11 @@ void CGame::ShutdownRenderWare(void)
 	CustomPipes::CustomPipeShutdown();
 #endif
 
+	// these hold rasters and shaders. Left alive, they are destroyed later, after the
+	// new context of a video mode change has given their GL names to new textures,
+	// and the deletes then hit those
+	CMBlur::MotionBlurClose();
+
 	DestroySplashScreen();
 	CHud::Shutdown();
 	CFont::Shutdown();

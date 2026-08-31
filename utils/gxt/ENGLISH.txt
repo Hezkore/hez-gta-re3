@@ -18294,3 +18294,115 @@ CAR DENSITY
 [DUMMY]
 THIS LABEL NEEDS TO BE HERE !!!
 AS THE LAST LABEL DOES NOT GET COMPILED
+{ keys the menus ask for that the mobile gxt left out }
+
+[FEA_UP]
+;
+
+[FEA_DO]
+=
+
+[FEA_LE]
+<
+
+[FEA_RI]
+>
+
+[FEB_SAV]
+Load
+
+[FEC_CR3]
+Crouch (L3 button)
+
+[FEC_GSL]
+Show head bob:
+
+[FEC_LB3]
+Look behind
+
+[FEC_NSW]
+NINTENDO SWITCH CONTROLLER
+
+[FEC_R3]
+(R3 button)
+
+[FEC_SLC]
+Slot is corrupted
+
+[FED_LFL]
+Loading save game has failed. The game will restart now.
+
+[FED_LWR]
+ 
+
+[FED_MOB]
+MOBILE
+
+[FED_PS2]
+PS2
+
+[FED_PSP]
+PSP
+
+[FED_WPL]
+WORLD PIPELINE:
+
+[FEDSAS3]
+- CHANGE SELECTION
+
+[FEDS_SB]
+/ button - SELECT " button - BACK
+
+[FEDS_SE]
+/ button - SELECT
+
+[FEFD_WR]
+Formatting Memory Card (PS2) in MEMORY CARD slot 1. Please do not remove the Memory Card (PS2), reset or switch off the console.
+
+[FEP_SAV]
+LOAD GAME
+
+[FERRY]
+Ferry
+
+[FES_AFO]
+This Memory Card (PS2) is already formatted.
+
+[FES_CHE]
+Warning! One or more cheats have been activated. This may affect your save game. It is recommended that you do not save this game.
+
+[FES_GME]
+Error Reading Memory Card (PS2) in MEMORY CARD slot 1 please check and try again.
+
+[FES_ISF]
+NOT PRESENT
+
+[FES_SAG]
+PRESENT
+
+[FEST_BB]
+Bling-bling Scramble:
+
+[FEST_H1]
+Diablo destruction
+
+[FEST_H2]
+Mafia Massacre
+
+[FEST_H3]
+Casino Calamity
+
+[FEST_H4]
+Rumpo Wrecker
+
+[FESZ_FM]
+Memory Card (PS2) in MEMORY CARD slot 1 is unformatted. Would you like to format Memory Card (PS2) in MEMORY CARD slot 1?
+
+[FESZ_OW]
+Overwriting data. Please do not remove the Memory Card (PS2) in MEMORY CARD slot 1, reset or switch off the console.
+
+[FESZ_QF]
+Are you sure you wish to format the Memory Card (PS2) in MEMORY CARD slot 1?
+
+[FESZ_SR]
+Save Failed! Check Memory Card (PS2) in MEMORY CARD slot 1 and please try again.
