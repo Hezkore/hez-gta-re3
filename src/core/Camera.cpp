@@ -197,7 +197,7 @@ CCamera::Init(void)
 		m_bMusicFading = false;
 		m_fTimeToFadeMusic = 0.0f;
 		m_fFLOATingFadeMusic = 0.0f;
-		m_fMouseAccelVertical = 0.003f;
+		m_fMouseAccelVertical = 0.0025f;
 		m_fMouseAccelHorzntl = 0.0025f;
 	}
 	if(FrontEndMenuManager.m_bWantToRestart)
