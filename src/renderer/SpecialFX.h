@@ -94,6 +94,7 @@ public:
 	uint16 m_nType;
 	bool m_bIsUsed;
 	bool m_bFindZOnNextPlacement;
+	uint32 m_nLastPlacedFrame;	// scripts place markers once per logical frame, this keeps them drawn in between
 	uint32 m_nIdentifier;
 	RwRGBA m_Color;
 	uint16 m_nPulsePeriod;

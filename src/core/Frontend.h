@@ -609,6 +609,7 @@ public:
 	int8 m_PrefsVsync;
 	int8 m_PrefsVsyncDisp;
 	int8 m_PrefsFrameLimiter;
+	int8 m_PrefsSmoothAnims;
 	int8 m_nPrefsAudio3DProviderIndex;
 	int8 m_PrefsSpeakers;
 	int8 m_PrefsDMA;
@@ -797,6 +798,7 @@ public:
 #endif
 
 	void Initialise();
+	int32 GetFrameLimit(void);
 	void PrintMap();
 	void SetFrontEndRenderStates();
 	static void CentreMousePointer();

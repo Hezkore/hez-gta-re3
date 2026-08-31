@@ -102,6 +102,7 @@ public:
 	void RotateZ(float z);
 
 	void Reorthogonalise(void);
+	void Interpolate(const CMatrix &a, const CMatrix &b, float t);
 	void CopyOnlyMatrix(const CMatrix &other);
 	void SetUnity(void);
 	void ResetOrientation(void);

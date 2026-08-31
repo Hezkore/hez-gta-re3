@@ -13,7 +13,6 @@ CDoor::Open(float ratio)
 {
 	float open;
 
-	m_fPrevAngle = m_fAngle;
 	open = RetAngleWhenOpen();
 	if(ratio < 1.0f){
 		m_fAngle = open*ratio;

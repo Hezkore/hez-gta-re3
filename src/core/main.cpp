@@ -48,6 +48,7 @@
 #include "NodeName.h"
 #include "DMAudio.h"
 #include "CutsceneMgr.h"
+#include "CutsceneObject.h"
 #include "Lights.h"
 #include "Credits.h"
 #include "ZoneCull.h"
@@ -1528,10 +1529,202 @@ Render2dStuffAfterFade(void)
 	POP_RENDERGROUP();
 }
 
+// The world moves in logical frames while we render as often as we can, so between two
+// logical frames everything would stand still and then jump. Instead, remember where each
+// moving thing was at the end of the previous logical frame and draw it somewhere between
+// there and where it is now, by how far into the current logical frame the rendered frame
+// is. The real matrix is put back before the next logical frame so the game logic only
+// works with real positions. With smooth animations on the bones of animated clumps get
+// the same treatment, see RpAnimBlendClumpInterpolateFrames(). Cutscene objects are moved
+// by their animation outside the moving list, so they get the same treatment here.
+static RpClump *
+AnimatedClump(CEntity *ent)
+{
+	if(ent->m_rwObject == nil || RwObjectGetType(ent->m_rwObject) != rpCLUMP)
+		return nil;
+	if(!RpAnimBlendClumpIsInitialized(ent->GetClump()))
+		return nil;
+	return ent->GetClump();
+}
+
+static void
+SnapshotEntity(CPhysical *ent, float)
+{
+	RpClump *clump;
+
+	ent->m_prevMatrix.CopyOnlyMatrix(ent->GetMatrix());
+	ent->m_bPrevMatrixValid = true;
+	if(ent->IsVehicle() && ((CVehicle*)ent)->IsCar())
+		((CAutomobile*)ent)->StoreDoorAngles();
+	if(FrontEndMenuManager.m_PrefsSmoothAnims && (clump = AnimatedClump(ent)))
+		RpAnimBlendClumpStoreFrames(clump);
+}
+
+// The moving list, the cutscene objects and the garage doors are what moves in logical
+// frames and is drawn in between
+static void
+ForAllDrawnEntities(void (*func)(CPhysical *ent, float t), float t)
+{
+	int i;
+
+	for(CPtrNode *node = CWorld::GetMovingEntityList().first; node; node = node->next)
+		func((CPhysical*)node->item, t);
+	for(i = 0; i < NUMCUTSCENEOBJECTS; i++)
+		if(CCutsceneMgr::GetCutsceneObject(i))
+			func(CCutsceneMgr::GetCutsceneObject(i), t);
+	for(i = 0; i < NUM_GARAGES; i++){
+		CGarage &garage = CGarages::aGarages[i];
+		if(garage.m_pDoor1 && garage.m_pDoor1->IsObject())
+			func((CPhysical*)garage.m_pDoor1, t);
+		if(garage.m_pDoor2 && garage.m_pDoor2->IsObject())
+			func((CPhysical*)garage.m_pDoor2, t);
+	}
+}
+
+static void
+SnapshotMovingEntities(void)
+{
+	ForAllDrawnEntities(SnapshotEntity, 0.0f);
+}
+
+// A ped in a car is put where the car is each logical frame, so it has to be drawn
+// where it is in the car as the car is drawn, or it would sit at the car's real
+// position while the car itself is drawn somewhere behind that.
+static bool
+IsCarriedByVehicle(CPhysical *ent)
+{
+	CPed *ped;
+
+	if(!ent->IsPed())
+		return false;
+	ped = (CPed*)ent;
+	return ped->m_pMyVehicle &&
+		(ped->bInVehicle && ped->m_nPedState != PED_EXIT_TRAIN || ped->EnteringCar());
+}
+
+static void
+DrawEntityAt(CPhysical *ent, const CMatrix &m)
+{
+	ent->m_realMatrix.CopyOnlyMatrix(ent->GetMatrix());
+	ent->GetMatrix().CopyOnlyMatrix(m);
+	ent->GetMatrix().UpdateRW();
+	ent->UpdateRwFrame();
+	ent->m_bInterpolated = true;
+}
+
+// Whether the body moved further since the previous logical frame than its own speed
+// can account for, in which case it was put there instead of having moved there and is
+// drawn there, not on the way. The body is the matrix and the root bone together:
+// getting into a car, say, moves the matrix a metre into the seat and the root bone a
+// metre back in the same logical frame, and the body is still where it is. A fixed
+// distance cannot tell a jump from a fast car, but the speed can.
+static bool
+BodyJumped(CPhysical *ent)
+{
+	const CMatrix &cur = ent->m_bInterpolated ? ent->m_realMatrix : ent->GetMatrix();
+	RpClump *clump = AnimatedClump(ent);
+	CVector prevRoot(0.0f, 0.0f, 0.0f), curRoot(0.0f, 0.0f, 0.0f);
+
+	if(clump)
+		RpAnimBlendClumpGetRootPositions(clump, &prevRoot, &curRoot);
+	CVector moved = cur*curRoot - ent->m_prevMatrix*prevRoot;
+	float canExplain = ent->m_vecMoveSpeed.Magnitude()*CTimer::GetDefaultTimeStep()*2.0f + 0.5f;
+	return moved.MagnitudeSqr() > sq(canExplain);
+}
+
+static void
+InterpolateEntityMatrix(CPhysical *ent, float t)
+{
+	if(!ent->m_bPrevMatrixValid || ent->m_bInterpolated)
+		return;
+	if(BodyJumped(ent)){
+		ent->m_prevMatrix.CopyOnlyMatrix(ent->GetMatrix());
+		return;
+	}
+
+	CMatrix m;
+	m.Interpolate(ent->m_prevMatrix, ent->GetMatrix(), t);
+	DrawEntityAt(ent, m);
+}
+
+static void
+InterpolateEntity(CPhysical *ent, float t)
+{
+	if(ent->m_rwObject == nil || IsCarriedByVehicle(ent))
+		return;
+	InterpolateEntityMatrix(ent, t);
+}
+
+// once the entity matrix is where it will be drawn, the bones follow
+static void
+InterpolateEntityFrames(CPhysical *ent, float t)
+{
+	RpClump *clump;
+
+	if(!FrontEndMenuManager.m_PrefsSmoothAnims || ent->m_rwObject == nil || (clump = AnimatedClump(ent)) == nil)
+		return;
+	if(ent->m_bPrevMatrixValid){
+		// a ped in a car has its matrix placed by the car, so the bones are
+		// where a jump would be blended across, and they are not either
+		if(BodyJumped(ent))
+			return;
+		const CMatrix &cur = ent->m_bInterpolated ? ent->m_realMatrix : ent->GetMatrix();
+		RpAnimBlendClumpInterpolateFrames(clump, t, &ent->m_prevMatrix, &cur, &ent->GetMatrix());
+	}else
+		RpAnimBlendClumpInterpolateFrames(clump, t, nil, nil, nil);
+}
+
+static void
+InterpolateMovingEntities(void)
+{
+	float t = CTimer::GetLogicalFrameFraction();
+	CPtrNode *node;
+
+	ForAllDrawnEntities(InterpolateEntity, t);
+
+	// now that the cars are where they will be drawn, put their peds in them
+	for(node = CWorld::GetMovingEntityList().first; node; node = node->next){
+		CPhysical *ent = (CPhysical*)node->item;
+		if(ent->m_rwObject == nil || !IsCarriedByVehicle(ent))
+			continue;
+		CVehicle *veh = ((CPed*)ent)->m_pMyVehicle;
+		// in a car that is not going anywhere the ped follows its own animation
+		if(!veh->m_bInterpolated){
+			InterpolateEntityMatrix(ent, t);
+			continue;
+		}
+		CMatrix inVehicle = Invert(veh->m_realMatrix) * ent->GetMatrix();
+		DrawEntityAt(ent, veh->GetMatrix() * inVehicle);
+	}
+
+	ForAllDrawnEntities(InterpolateEntityFrames, t);
+}
+
+static void
+RestoreEntity(CPhysical *ent, float)
+{
+	RpClump *clump;
+
+	if((clump = AnimatedClump(ent)))
+		RpAnimBlendClumpRestoreFrames(clump);
+	if(!ent->m_bInterpolated)
+		return;
+	ent->GetMatrix().CopyOnlyMatrix(ent->m_realMatrix);
+	ent->GetMatrix().UpdateRW();
+	ent->UpdateRwFrame();
+	ent->m_bInterpolated = false;
+}
+
+static void
+RestoreMovingEntities(void)
+{
+	ForAllDrawnEntities(RestoreEntity, 0.0f);
+}
 void
 Idle(void *arg)
 {
 	CTimer::Update();
+	CPad::GetPad(0)->UpdateMouse();
 
 	tbInit();
 
@@ -1539,16 +1732,41 @@ Idle(void *arg)
 	CFont::InitPerFrame();
 
 	PUSH_MEMID(MEMID_GAME_PROCESS);
-	CPointLights::InitPerFrame();
 
 	tbStartTimer(0, "CGame::Process");
-	CGame::Process();
+	// The game runs in logical frames, not once per rendered frame. Everything that reads
+	// a button press has to run on that clock, or it gets the same press again on each
+	// rendered frame until the next logical frame. So anything that used to run once per
+	// frame next to CGame::Process belongs in here with it.
+	// The count is taken once, loading in the middle of a frame calls CTimer::Update()
+	{
+		uint32 logicalFrames = CTimer::GetLogicalFramesPassed();
+		RestoreMovingEntities();
+		for(uint32 i = 0; i < logicalFrames; i++){
+			CTimer::UpdateLogicalFrame();
+			SnapshotMovingEntities();
+			CPointLights::InitPerLogicalFrame();
+			CGame::Process();
+			CPointLights::EndLogicalFrame();
+			DMAudio.Service();
+		}
+		CTimer::SetTimeStepForRender();
+		InterpolateMovingEntities();
+	}
+
+	// with the menu up the game is paused, so the pads and the menu run once per rendered
+	// frame here instead of in logical frames
+	if(FrontEndMenuManager.m_bMenuActive){
+		CPad::UpdatePads();
+		FrontEndMenuManager.Process();
+	}
+
+	// the camera runs each rendered frame, it has to be smooth whatever the gap between
+	// logical frames
+	if(!CTimer::GetIsPaused() && CReplay::ShouldStandardCameraBeProcessed())
+		TheCamera.Process();
 	tbEndTimer("CGame::Process");
 	POP_MEMID();
-
-	tbStartTimer(0, "DMAudio.Service");
-	DMAudio.Service();
-	tbEndTimer("DMAudio.Service");
 
 	if(CGame::bDemoMode && CTimer::GetTimeInMilliseconds() > (3*60 + 30)*1000 && !CCutsceneMgr::IsCutsceneProcessing()){
 		WANT_TO_LOAD = false;
@@ -1584,6 +1802,9 @@ Idle(void *arg)
 #endif
 		CWorld::AdvanceCurrentScanCode();
 		CRenderer::ClearForFrame();
+		CWorld::AdvanceCurrentScanCode();
+		CRenderer::ClearForFrame();
+		CPointLights::InitPerFrame();
 		CRenderer::ConstructRenderList();
 		tbEndTimer("CnstrRenderList");
 
@@ -1699,6 +1920,13 @@ FrontendIdle(void)
 	CSprite2d::SetRecipNearClip(); // this should be on InitialiseRenderWare according to PS2 asm. seems like a bug fix
 	CSprite2d::InitPerFrame();
 	CFont::InitPerFrame();
+	CPad::GetPad(0)->UpdateMouse();
+	{
+		uint32 logicalFrames = CTimer::GetLogicalFramesPassed();
+		for(uint32 i = 0; i < logicalFrames; i++)
+			CTimer::UpdateLogicalFrame();
+		CTimer::SetTimeStepForRender();
+	}
 	CPad::UpdatePads();
 	FrontEndMenuManager.Process();
 

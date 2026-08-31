@@ -735,6 +735,7 @@ C3dMarkers::Init()
 		m_aMarkerArray[i].m_nType = MARKERTYPE_INVALID;
 		m_aMarkerArray[i].m_bIsUsed = false;
 		m_aMarkerArray[i].m_bFindZOnNextPlacement = false;
+		m_aMarkerArray[i].m_nLastPlacedFrame = 0;
 		m_aMarkerArray[i].m_nIdentifier = 0;
 		m_aMarkerArray[i].m_Color.red = 255;
 		m_aMarkerArray[i].m_Color.green = 255;
@@ -779,7 +780,7 @@ C3dMarkers::Render()
 	NumActiveMarkers = 0;
 	ActivateDirectional();
 	for (int i = 0; i < NUM3DMARKERS; i++) {
-		if (m_aMarkerArray[i].m_bIsUsed) {
+		if (m_aMarkerArray[i].m_bIsUsed || m_aMarkerArray[i].m_nLastPlacedFrame == CTimer::GetFrameCounter()) {
 			if (m_aMarkerArray[i].m_fCameraRange < 150.0f) {
 				m_aMarkerArray[i].Render();
 				if (m_aMarkerArray[i].m_nType == MARKERTYPE_ARROW) {
@@ -886,6 +887,7 @@ C3dMarkers::PlaceMarker(uint32 identifier, uint16 type, CVector &pos, float size
 			}
 		}
 		pMarker->m_bIsUsed = true;
+		pMarker->m_nLastPlacedFrame = CTimer::GetFrameCounter();
 		return pMarker;
 	}
 
@@ -929,6 +931,7 @@ C3dMarkers::PlaceMarker(uint32 identifier, uint16 type, CVector &pos, float size
 		}
 	}
 	pMarker->m_bIsUsed = true;
+	pMarker->m_nLastPlacedFrame = CTimer::GetFrameCounter();
 	return pMarker;
 }
 

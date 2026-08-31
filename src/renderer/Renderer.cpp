@@ -23,6 +23,8 @@
 #include "Shadows.h"
 #include "Coronas.h"
 #include "PointLights.h"
+#include "Particle.h"
+#include "Timer.h"
 #include "Occlusion.h"
 #include "Renderer.h"
 #include "custompipes.h"
@@ -79,7 +81,7 @@ CEntity *CRenderer::ms_aVisibleBuildingPtrs[NUMVISIBLEENTITIES];
 CVector CRenderer::ms_vecCameraPosition;
 CVehicle *CRenderer::m_pFirstPersonVehicle;
 bool CRenderer::m_loadingPriority;
-float CRenderer::ms_lodDistScale = 1.2f;
+float CRenderer::ms_lodDistScale = 1.8f;
 
 void
 CRenderer::Init(void)
@@ -100,6 +102,10 @@ CRenderer::PreRender(void)
 {
 	int i;
 	CLink<CVisibilityPlugins::AlphaObjectInfo> *node;
+
+	// PreRender adds smoke, rain, exhaust and such once per frame, which was once per
+	// logical frame. keep it that way, or a faster frame rate spawns that much more
+	CParticle::ms_bAddBlocked = CTimer::GetLogicalFramesPassed() == 0;
 
 	for(i = 0; i < ms_nNoOfVisibleEntities; i++)
 		ms_aVisibleEntityPtrs[i]->PreRender();
@@ -131,6 +137,8 @@ CRenderer::PreRender(void)
 		((CEntity*)node->item.entity)->PreRender();
 
 	CHeli::SpecialHeliPreRender();
+
+	CParticle::ms_bAddBlocked = false;
 	CShadows::RenderExtraPlayerShadows();
 }
 

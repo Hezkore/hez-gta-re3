@@ -61,6 +61,7 @@ public:
 	float m_fFrontForkSlope;
 	float m_fWheelAngle;
 	float m_fLeanLRAngle;
+	float m_fPrevLeanLRAngle;	// at the end of the previous logical frame, PreRender draws between the two
 	float m_fLeanLRAngle2;
 	float m_fLeanInput;
 	float m_fPedLeanAmountLR;

@@ -34,6 +34,7 @@ public:
 	static uint8 FadeRed;
 	static uint8 FadeGreen;
 	static uint8 FadeBlue;
+	static bool ms_bExtendHud;
 	
 #ifdef PROPER_SCALING	
 	static bool ms_bProperScaling;
@@ -60,7 +61,7 @@ public:
 
 	static float CalculateAspectRatio(void);
 #ifdef ASPECT_RATIO_SCALE
-	static float ConvertFOV(float fov);
+	static float ConvertFOV(float fov, float fromAspect = 4.0f/3.0f);
 #endif
 	static float GetAspectRatio(void) { return ms_fAspectRatio; }
 	static void SetAspectRatio(float ratio) { ms_fAspectRatio = ratio; }

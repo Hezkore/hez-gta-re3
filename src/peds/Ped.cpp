@@ -4238,6 +4238,7 @@ CPed::PedSetDraggedOutCarCB(CAnimBlendAssociation *dragAssoc, void *arg)
 	ped->bVehExitWillBeInstant = false;
 }
 
+
 void
 CPed::PedSetInCarCB(CAnimBlendAssociation *animAssoc, void *arg)
 {

@@ -188,6 +188,11 @@ public:
 	static CMouseControllerState OldMouseControllerState;
 	static CMouseControllerState NewMouseControllerState;
 	static CMouseControllerState PCTempMouseControllerState;
+	// mouse movement in the last rendered frame. the camera runs each rendered frame and
+	// reads this, everything else runs in logical frames and reads the movement since the
+	// last one through GetMouseX() and GetMouseY()
+	static float MouseXThisFrame;
+	static float MouseYThisFrame;
 	
 	
 #ifdef GTA_PS2_STUFF
@@ -197,6 +202,7 @@ public:
 	void ClearMouseHistory();
 	void ClearKeyBoardHistory();
 	void UpdateMouse();
+	void UpdateMouseForLogicalFrame();
 	CControllerState ReconcileTwoControllersInput(CControllerState const &State1, CControllerState const &State2);
 	void StartShake(int16 nDur, uint8 nFreq);
 	void StartShake_Distance(int16 nDur, uint8 nFreq, float fX, float fY, float fz);
@@ -329,6 +335,8 @@ public:
 
 	float GetMouseX() { return NewMouseControllerState.x; }
 	float GetMouseY() { return NewMouseControllerState.y; }
+	float GetMouseXThisFrame() { return MouseXThisFrame; }
+	float GetMouseYThisFrame() { return MouseYThisFrame; }
 
 	// keyboard
 	

@@ -15,7 +15,6 @@ class COneSheet
 {
 public:
 	CVector m_basePos;
-	CVector m_animatedPos;
 	float m_targetZ;
 	int8 m_state;
 	int8 m_animationType;

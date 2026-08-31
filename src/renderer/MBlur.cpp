@@ -9,6 +9,7 @@
 #include "main.h"
 #include "General.h"
 #include "RwHelper.h"
+#include "Timer.h"
 #include "Camera.h"
 #include "Timecycle.h"
 #include "Particle.h"
@@ -326,6 +327,76 @@ CMBlur::CreateImmediateModeData(RwCamera *cam, RwRect *rect, RwIm2DVertex *verts
 	RwIm2DVertexSetU(&verts[3], u2, recipz);
 	RwIm2DVertexSetV(&verts[3], v1, recipz);
 	RwIm2DVertexSetIntRGBA(&verts[3], color.red, color.green, color.blue, color.alpha);
+}
+
+// The previous frame is blended over the new one. Per logical frame that is, for each
+// channel, F = keep*G + pass*C + white, G the previous frame and C the new one. A
+// rendered frame is only a part of a logical frame, so it gets that map to the power of
+// the part: G keeps keep^l, C and the white get (1-keep^l)/(1-keep) of theirs. That way
+// the trail fades at the same rate at any frame rate instead of per rendered frame. The
+// weights are rounded to the 8 bits a colour has and the part is taken from the rounded
+// keep, so the frames end up at the same brightness as they do per logical frame. Cut
+// off instead, keep is a little short each frame and at a high frame rate, where it is
+// close to 1, the picture goes dark. A single quad cannot scale each channel of C on
+// its own, so it takes three: darken C, add G, add the white. strength shortens the
+// trail: the frame is taken as 1/strength as long, so the previous frames fade out that
+// much sooner while the colour the overlay gives the picture is kept. With quad2 the
+// previous frame is added once more through that quad, by keep2, for the double image
+// the trails give.
+void
+CMBlur::RenderTrail(RwIm2DVertex *quad, RwRaster *ghost, const float *keep, const float *pass, const float *white, float strength, RwIm2DVertex *quad2, const float *keep2)
+{
+	float length = CTimer::GetRenderFrameLength()/strength;
+	int32 k[3], p[3], w[3], k2[3];
+	int i;
+
+	for(i = 0; i < 3; i++){
+		int32 kept = Min((int32)(Pow(keep[i], length)*255.0f + 0.5f), 254);
+		float part = keep[i] < 1.0f ? (1.0f - kept/255.0f)/(1.0f - keep[i]) : length;
+		k[i] = kept;
+		p[i] = Min((int32)(pass[i]*part*255.0f + 0.5f), 255);
+		w[i] = Min((int32)(white[i]*part*255.0f + 0.5f), 255);
+		k2[i] = quad2 ? Min((int32)(keep2[i]*part*255.0f + 0.5f), 255) : 0;
+	}
+
+	RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+	// the ghost pass adds colour whatever its alpha is, so no alpha test on it
+	SetAlphaTest(0);
+
+	// what the new frame keeps
+	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, nil);
+	for(i = 0; i < 4; i++)
+		RwIm2DVertexSetIntRGBA(&quad[i], p[0], p[1], p[2], 255);
+	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDZERO);
+	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDSRCCOLOR);
+	RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad, 4, Index, 6);
+
+	// plus what is left of the previous one
+	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, ghost);
+	for(i = 0; i < 4; i++)
+		RwIm2DVertexSetIntRGBA(&quad[i], k[0], k[1], k[2], 255);
+	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDONE);
+	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
+	RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad, 4, Index, 6);
+
+	// plus the previous one again through the second quad
+	if(quad2){
+		for(i = 0; i < 4; i++)
+			RwIm2DVertexSetIntRGBA(&quad2[i], k2[0], k2[1], k2[2], 255);
+		RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad2, 4, Index, 6);
+	}
+
+	// plus the white
+	if(w[0] > 0 || w[1] > 0 || w[2] > 0){
+		RwRenderStateSet(rwRENDERSTATETEXTURERASTER, nil);
+		for(i = 0; i < 4; i++)
+			RwIm2DVertexSetIntRGBA(&quad[i], w[0], w[1], w[2], 255);
+		RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad, 4, Index, 6);
+	}
+
+	RestoreAlphaTest();
+	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
 }
 
 void

@@ -120,6 +120,7 @@ CBike::CBike(int32 id, uint8 CreatedBy)
 	m_fSteerAngle = 0.0f;
 	m_fWheelAngle = 0.0f;
 	m_fLeanLRAngle = 0.0f;
+	m_fPrevLeanLRAngle = 0.0f;
 	m_fLeanLRAngle2 = 0.0f;
 	m_fGasPedal = 0.0f;
 	m_fBrakePedal = 0.0f;
@@ -224,6 +225,7 @@ CBike::ProcessControl(void)
 	float wheelScale = ((CVehicleModelInfo*)CModelInfo::GetModelInfo(GetModelIndex()))->m_wheelScale;
 	bWarnedPeds = false;
 	bLeanMatrixClean = false;
+	m_fPrevLeanLRAngle = m_fLeanLRAngle;
 	m_doingBurnout = 0;
 	bExtraSpeed = false;
 	bRestingOnPhysical = false;
@@ -1318,6 +1320,13 @@ CBike::PreRender(void)
 	int i;
 	CVehicleModelInfo *mi = (CVehicleModelInfo*)CModelInfo::GetModelInfo(GetModelIndex());
 
+	// the lean moves once per logical frame, draw it between where it was and where it
+	// is. the lean matrix was worked out from where the bike is, the lights and the
+	// exhaust want it from where the bike is drawn. both are put back at the end
+	float realLean = m_fLeanLRAngle;
+	m_fLeanLRAngle = m_fPrevLeanLRAngle + (realLean - m_fPrevLeanLRAngle)*CTimer::GetLogicalFrameFraction();
+	bLeanMatrixClean = false;
+
 	// Wheel particles
 
 	if(m_aWheelState[BIKEWHEEL_REAR] != WHEEL_STATE_NORMAL &&
@@ -1761,6 +1770,9 @@ CBike::PreRender(void)
 			}
 		}
 	}
+
+	m_fLeanLRAngle = realLean;
+	bLeanMatrixClean = false;
 }
 
 void

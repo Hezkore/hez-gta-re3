@@ -18,7 +18,10 @@ RwRaster *CPostFX::pBackBuffer;
 bool CPostFX::bJustInitialised;
 int CPostFX::EffectSwitch = POSTFX_PS2;
 bool CPostFX::BlurOn = false;
-bool CPostFX::MotionBlurOn = false;
+int8 CPostFX::MotionBlur = MBLUR_FAINT;
+// how long the trail lingers with each setting, 1 being the game as it was
+static const float aBlurStrength[] = { 0.0f, 0.35f, 0.8f };
+static float trailStrength = 1.0f;
 
 static RwIm2DVertex Vertex[4];
 static RwIm2DVertex Vertex2[4];
@@ -358,17 +361,14 @@ CPostFX::RenderMotionBlur(RwCamera *cam, uint32 blur)
 	if(blur == 0)
 		return;
 
-	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, pFrontBuffer);
-	RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
-	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
+	// the previous frame with alpha blur over the new one, see CMBlur::RenderTrail. this
+	// is the drunk blur, so the motion blur setting has no say in it
+	float alpha = blur/255.0f;
+	float keep[3] = { alpha, alpha, alpha };
+	float pass[3] = { 1.0f - alpha, 1.0f - alpha, 1.0f - alpha };
+	float white[3] = { 0.0f, 0.0f, 0.0f };
 
-	RwIm2DVertexSetIntRGBA(&Vertex[0], 255, 255, 255, blur);
-	RwIm2DVertexSetIntRGBA(&Vertex[1], 255, 255, 255, blur);
-	RwIm2DVertexSetIntRGBA(&Vertex[2], 255, 255, 255, blur);
-	RwIm2DVertexSetIntRGBA(&Vertex[3], 255, 255, 255, blur);
-
-	RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vertex, 4, Index, 6);
+	CMBlur::RenderTrail(Vertex, pFrontBuffer, keep, pass, white, 1.0f);
 }
 
 bool
@@ -392,7 +392,7 @@ bool
 CPostFX::NeedFrontBuffer(int32 type)
 {
 	// Last frame -- needed for motion blur
-	if(MotionBlurOn)
+	if(CMBlur::Drunkness > 0.0f)
 		return true;
 	if(type == MOTION_BLUR_SNIPER)
 		return true;
@@ -412,6 +412,7 @@ void
 CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blur, int32 type, uint32 bluralpha)
 {
 	PUSH_RENDERGROUP("CPostFX::Render");
+	trailStrength = aBlurStrength[MotionBlur];
 
 	// LCS PS2 blur is drawn in three passes:
 	//  blend frame with current frame 3 times to blur a bit
@@ -442,7 +443,7 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 	RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)FALSE);
 	RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
 
-	if(BlurOn)
+	if(BlurOn && MotionBlur != MBLUR_OFF) // the PSP blur has one strength, so only OFF has a say here
 		RenderOverlayBlur(cam, 0, 0, 0, 0);
 
 	RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
@@ -463,9 +464,8 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 		break;
 	}
 
-	if(MotionBlurOn)
-		if(!bJustInitialised)
-			RenderMotionBlur(cam, bluralpha);
+	if(!bJustInitialised)
+		RenderMotionBlur(cam, 175.0f * CMBlur::Drunkness);
 
 	RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
 	RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)TRUE);

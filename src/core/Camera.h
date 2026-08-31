@@ -374,6 +374,11 @@ public:
 	bool m_FadeTargetIsSplashScreen;
 
 	bool WorldViewerBeingUsed;
+	// pad presses last one logical frame but the camera runs each rendered frame, so
+	// UpdatePadInput() keeps them here until Process() has had them
+	bool m_bCycleCamModeUp;
+	bool m_bCycleCamModeDown;
+	bool m_bToggleWorldViewer;
 	uint8 ActiveCam;
 	uint32 m_uiCamShakeStart;
 	uint32 m_uiFirstPersonCamLastInputTime;
@@ -546,6 +551,7 @@ public:
 	void Init(void);
 	void Process(void);
 	void CamControl(void);
+	void UpdatePadInput(void);
 	void UpdateTargetEntity(void);
 	void UpdateSoundDistances(void);
 	void InitialiseCameraForDebugMode(void);

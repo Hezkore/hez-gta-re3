@@ -14,6 +14,7 @@ public:
 	};
 
 	CVector   m_vecPosition;
+	CVector   m_vecPrevPosition;	// at the end of the previous logical frame, Render() draws between the two
 	CVector   m_vecVelocity;
 	uint32    m_nTimeWhenWillBeDestroyed;
 	uint32    m_nTimeWhenColorWillBeChanged;
@@ -58,6 +59,9 @@ public:
 	static void AddParticlesAlongLine(tParticleType type, CVector const &vecStart, CVector const &vecEnd, CVector const &vecDir, float fPower, CEntity *pEntity = nil, float fSize = 0.0f,                     int32 nRotationSpeed = 0, int32 nRotation = 0, int32 nCurFrame = 0, int32 nLifeSpan = 0);	
 	static void AddParticlesAlongLine(tParticleType type, CVector const &vecStart, CVector const &vecEnd, CVector const &vecDir, float fPower, CEntity *pEntity,       float fSize, RwRGBA const&color,        int32 nRotationSpeed = 0, int32 nRotation = 0, int32 nCurFrame = 0, int32 nLifeSpan = 0);
 
+	// no particle is added while this is set, see CRenderer::PreRender()
+	static bool ms_bAddBlocked;
+
 	static CParticle *AddParticle(tParticleType type, CVector const &vecPos, CVector const &vecDir, CEntity *pEntity = nil, float fSize = 0.0f,               int32 nRotationSpeed = 0, int32 nRotation = 0, int32 nCurFrame = 0, int32 nLifeSpan = 0);
 	static CParticle *AddParticle(tParticleType type, CVector const &vecPos, CVector const &vecDir, CEntity *pEntity,       float fSize, RwRGBA const &color, int32 nRotationSpeed = 0, int32 nRotation = 0, int32 nCurFrame = 0, int32 nLifeSpan = 0);
 
@@ -100,4 +104,4 @@ extern RwRaster *gpHeatHazeRaster;
 extern RwRaster *gpRainDripRaster[];
 extern RwRaster *gpRainDripDarkRaster[];
 
-VALIDATE_SIZE(CParticle, 0x50);
+VALIDATE_SIZE(CParticle, 0x5C);

@@ -282,11 +282,7 @@ CCamera::Process(void)
 		ProcessWideScreenOn();
 
 #ifndef MASTER
-#ifdef IMPROVED_CAMERA
-	if(CPad::GetPad(1)->GetCircleJustDown() || CTRLJUSTDOWN('B')){
-#else
-	if(CPad::GetPad(1)->GetCircleJustDown()){
-#endif
+	if(m_bToggleWorldViewer){
 		WorldViewerBeingUsed = !WorldViewerBeingUsed;
 		if(WorldViewerBeingUsed)
 			InitialiseCameraForDebugMode();
@@ -667,6 +663,31 @@ CCamera::Process(void)
 
 	m_bCameraJustRestored = false;
 	m_bMoveCamToAvoidGeom = false;
+
+	m_bCycleCamModeUp = false;
+	m_bCycleCamModeDown = false;
+	m_bToggleWorldViewer = false;
+}
+
+// Pad presses last one logical frame but the camera runs each rendered frame, so they
+// are kept here until Process() has had them
+void
+CCamera::UpdatePadInput(void)
+{
+	if(CTimer::GetIsPaused())
+		return;
+	if(CPad::GetPad(0)->CycleCameraModeUpJustDown())
+		m_bCycleCamModeUp = true;
+	if(CPad::GetPad(0)->CycleCameraModeDownJustDown())
+		m_bCycleCamModeDown = true;
+#ifndef MASTER
+#ifdef IMPROVED_CAMERA
+	if(CPad::GetPad(1)->GetCircleJustDown() || CTRLJUSTDOWN('B'))
+#else
+	if(CPad::GetPad(1)->GetCircleJustDown())
+#endif
+		m_bToggleWorldViewer = true;
+#endif
 }
 
 void
@@ -1939,6 +1960,7 @@ float fCloseNearClipLimit = 0.15f;
 float fAvoidTweakFOV = 1.15f;
 float fAvoidProbTimerDamp = 0.9f;
 
+
 void
 CCamera::AvoidTheGeometry(const CVector &Source, const CVector &TargetPos, CVector &NewSource, float FOV)
 {
@@ -1989,7 +2011,10 @@ CCamera::AvoidTheGeometry(const CVector &Source, const CVector &TargetPos, CVect
 	static float fClearGeomAmountSpeed;
 	float Near = RwCameraGetNearClipPlane(Scene.camera);
 	float ViewPlaneHeight = Tan(DEGTORAD(FOV) / 2.0f);
-	float ViewPlaneWidth = ViewPlaneHeight * CDraw::CalculateAspectRatio() * fAvoidTweakFOV;
+	// the near plane is as wide as the screen makes it, but a sphere that wide goes as
+	// far down as it does sideways and on a very wide screen is in the road, so the camera
+	// hops over each kerb edge that comes into it. take it as wide as a 16:9 screen at most
+	float ViewPlaneWidth = ViewPlaneHeight * Min(CDraw::CalculateAspectRatio(), 16.0f/9.0f) * fAvoidTweakFOV;
 	CVector Center = NewSource + Front*Near;
 	float fClearGeomTarget = 0.0f;
 	if(CWorld::TestSphereAgainstWorld(Center, ViewPlaneWidth, nil, true, false, false, true, false, true)){

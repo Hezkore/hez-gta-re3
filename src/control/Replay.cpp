@@ -1906,6 +1906,6 @@ void CReplay::Display()
 	CFont::SetColor(CRGBA(255, 255, 200, 200));
 	CFont::SetFontStyle(FONT_STANDARD);
 	if (Mode == MODE_PLAYBACK)
-		CFont::PrintString(SCREEN_WIDTH/15, SCREEN_HEIGHT/10, TheText.Get("REPLAY"));
+		CFont::PrintString(HUD_LEFT + HUD_WIDTH/15, SCREEN_HEIGHT/10, TheText.Get("REPLAY"));
 }
 #endif

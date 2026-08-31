@@ -1027,6 +1027,8 @@ void CParticle::AddParticlesAlongLine(tParticleType type, CVector const &vecStar
 	}
 }
 
+bool CParticle::ms_bAddBlocked;
+
 CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVector const &vecDir, CEntity *pEntity, float fSize, int32 nRotationSpeed, int32 nRotation, int32 nCurFrame, int32 nLifeSpan)
 {
 	CRGBA color(0, 0, 0, 0);
@@ -1035,7 +1037,7 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 
 CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVector const &vecDir, CEntity *pEntity, float fSize, RwRGBA const &color, int32 nRotationSpeed, int32 nRotation, int32 nCurFrame, int32 nLifeSpan)
 {
-	if ( CTimer::GetIsPaused() /*TODO: || byte_355C47*/ )
+	if ( CTimer::GetIsPaused() /*TODO: || byte_355C47*/ || ms_bAddBlocked )
 		return nil;
 /*
 	if ( !CReplay::IsPlayingBack() )
@@ -1241,7 +1243,9 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	
 	if ( fSize != 0.0f )
 		pParticle->m_fSize = fSize;
-	
+
+	pParticle->m_vecPrevPosition = pParticle->m_vecPosition;
+
 	m_pUnusedListHead = pParticle->m_pNext;
 
 	pParticle->m_pNext = psystem->m_pParticles;
@@ -1305,6 +1309,7 @@ void CParticle::Update()
 			
 			bRemoveParticle = false;
 
+			particle->m_vecPrevPosition = particle->m_vecPosition;
 			CVector vecMoveStep = particle->m_vecVelocity * CTimer::GetTimeStep();
 			CVector vecPos = particle->m_vecPosition;
 						
@@ -1770,6 +1775,11 @@ void CParticle::Render()
 	uint32 flags = DRAW_OPAQUE;
 	
 	RwRaster *prevFrame = nil;
+
+	// particles move in logical frames, so draw each one between where it was and where
+	// it is by how far into the logical frame this rendered frame is. while paused the
+	// game clock still runs for the menu, so hold them where they are
+	float fLogicalFrameFraction = CTimer::GetIsPaused() ? 1.0f : CTimer::GetLogicalFrameFraction();
 	
 	for ( int32 i = 0; i < MAX_PARTICLES; i++ )
 	{
@@ -1834,6 +1844,8 @@ void CParticle::Render()
 		while ( particle != nil )
 		{
 			bool canDraw = true;
+			CVector vecDrawPos = particle->m_vecPrevPosition
+				+ (particle->m_vecPosition - particle->m_vecPrevPosition) * fLogicalFrameFraction;
 
 			if ( particle->m_nAlpha == 0 )
 				canDraw = false;
@@ -1853,7 +1865,7 @@ void CParticle::Render()
 			
 			if ( canDraw && psystem->Flags & DRAWTOP2D )
 			{
-				float screenZ = CalcScreenZ(particle->m_vecPosition.z);
+				float screenZ = CalcScreenZ(vecDrawPos.z);
 				
 				float stretchTexW;
 				float stretchTexH;
@@ -1905,7 +1917,7 @@ void CParticle::Render()
 				float w;
 				float h;
 
-				if ( CSprite::CalcScreenCoors(particle->m_vecPosition, &coors, &w, &h, true) )
+				if ( CSprite::CalcScreenCoors(vecDrawPos, &coors, &w, &h, true) )
 				{
 					
 					if ( i == PARTICLE_ENGINE_STEAM
@@ -1933,7 +1945,7 @@ void CParticle::Render()
 					}
 					else if ( i == PARTICLE_WATER_HYDRANT )
 					{
-						float screenZ = CalcScreenZ(particle->m_vecPosition.z);
+						float screenZ = CalcScreenZ(vecDrawPos.z);
 						
 						int32 timeLeft = (particle->m_nTimeWhenWillBeDestroyed - CTimer::GetTimeInMilliseconds()) / particle->m_nTimeWhenWillBeDestroyed;
 					
@@ -2019,7 +2031,7 @@ void CParticle::Render()
 					}
 					else if ( psystem->Flags & SPEED_TRAIL )
 					{
-						CVector vecPrevPos = particle->m_vecPosition - particle->m_vecVelocity;
+						CVector vecPrevPos = vecDrawPos - particle->m_vecVelocity;
 						float fRotation;
 						float fTrailLength;
 						CVector vecScreenPosition;

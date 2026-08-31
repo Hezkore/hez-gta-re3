@@ -1384,8 +1384,8 @@ CCam::Process_FollowPedWithMouse(const CVector &CameraTarget, float TargetOrient
 	}else{
 		// Look around
 		bool UseMouse = false;
-		float MouseX = CPad::GetPad(0)->GetMouseX();
-		float MouseY = CPad::GetPad(0)->GetMouseY();
+		float MouseX = CPad::GetPad(0)->GetMouseXThisFrame();
+		float MouseY = CPad::GetPad(0)->GetMouseYThisFrame();
 		float LookLeftRight, LookUpDown;
 		if((MouseX != 0.0f || MouseY != 0.0f) && !CPad::GetPad(0)->ArePlayerControlsDisabled()){
 			UseMouse = true;
@@ -2245,8 +2245,8 @@ CCam::Process_Rocket(const CVector &CameraTarget, float, float, float)
 
 	// Look around
 	bool UseMouse = false;
-	float MouseX = CPad::GetPad(0)->GetMouseX();
-	float MouseY = CPad::GetPad(0)->GetMouseY();
+	float MouseX = CPad::GetPad(0)->GetMouseXThisFrame();
+	float MouseY = CPad::GetPad(0)->GetMouseYThisFrame();
 	float LookLeftRight, LookUpDown;
 	if(MouseX != 0.0f || MouseY != 0.0f){
 		UseMouse = true;
@@ -2347,8 +2347,8 @@ CCam::Process_M16_1stPerson(const CVector &CameraTarget, float, float, float)
 
 	// Look around
 	bool UseMouse = false;
-	float MouseX = CPad::GetPad(0)->GetMouseX();
-	float MouseY = CPad::GetPad(0)->GetMouseY();
+	float MouseX = CPad::GetPad(0)->GetMouseXThisFrame();
+	float MouseY = CPad::GetPad(0)->GetMouseYThisFrame();
 	float LookLeftRight, LookUpDown;
 	if(MouseX != 0.0f || MouseY != 0.0f){
 		UseMouse = true;
@@ -2758,8 +2758,8 @@ CCam::Process_1rstPersonPedOnPC(const CVector&, float TargetOrientation, float, 
 
 		// Look around
 		bool UseMouse = false;
-		float MouseX = CPad::GetPad(0)->GetMouseX();
-		float MouseY = CPad::GetPad(0)->GetMouseY();
+		float MouseX = CPad::GetPad(0)->GetMouseXThisFrame();
+		float MouseY = CPad::GetPad(0)->GetMouseYThisFrame();
 		float LookLeftRight, LookUpDown;
 		if(MouseX != 0.0f || MouseY != 0.0f){
 			UseMouse = true;
@@ -2897,8 +2897,8 @@ CCam::Process_Sniper(const CVector &CameraTarget, float TargetOrientation, float
 
 	// Look around
 	bool UseMouse = false;
-	float MouseX = CPad::GetPad(0)->GetMouseX();
-	float MouseY = CPad::GetPad(0)->GetMouseY();
+	float MouseX = CPad::GetPad(0)->GetMouseXThisFrame();
+	float MouseY = CPad::GetPad(0)->GetMouseYThisFrame();
 	float LookLeftRight, LookUpDown;
 	if(MouseX != 0.0f || MouseY != 0.0f){
 		UseMouse = true;
@@ -3888,8 +3888,8 @@ CCam::Process_Debug(const CVector&, float, float, float)
 	Alpha += DEGTORAD(CPad::GetPad(1)->GetLeftStickY()) / 50.0f;
 	Beta  += DEGTORAD(CPad::GetPad(1)->GetLeftStickX()*1.5f) / 19.0f;
 	if(CPad::GetPad(0)->GetLeftMouse()){
-		Alpha += DEGTORAD(CPad::GetPad(0)->GetMouseY()/2.0f);
-		Beta += DEGTORAD(CPad::GetPad(0)->GetMouseX()/2.0f);
+		Alpha += DEGTORAD(CPad::GetPad(0)->GetMouseYThisFrame()/2.0f);
+		Beta += DEGTORAD(CPad::GetPad(0)->GetMouseXThisFrame()/2.0f);
 	}
 
 	TargetCoors.x = Source.x + Cos(Alpha) * Sin(Beta) * 7.0f;
@@ -4139,8 +4139,8 @@ CCam::Process_ModelView(const CVector &CameraTarget, float, float, float)
 		Distance += CPad::GetPad(0)->GetLeftStickY() * ((Distance - 10.0f)/20.0f + 1.0f) / 1000.0f;
 #ifdef IMPROVED_CAMERA
 	if(CPad::GetPad(0)->GetLeftMouse()){
-		Distance += DEGTORAD(CPad::GetPad(0)->GetMouseY()/2.0f);
-		Angle += DEGTORAD(CPad::GetPad(0)->GetMouseX()/2.0f);
+		Distance += DEGTORAD(CPad::GetPad(0)->GetMouseYThisFrame()/2.0f);
+		Angle += DEGTORAD(CPad::GetPad(0)->GetMouseXThisFrame()/2.0f);
 	}
 #endif
 	if(Distance < 1.5f)
@@ -4634,8 +4634,8 @@ CCam::Process_FollowPed_Rotation(const CVector &CameraTarget, float TargetOrient
 
 	// Look around
 	bool UseMouse = false;
-	float MouseX = CPad::GetPad(0)->GetMouseX();
-	float MouseY = CPad::GetPad(0)->GetMouseY();
+	float MouseX = CPad::GetPad(0)->GetMouseXThisFrame();
+	float MouseY = CPad::GetPad(0)->GetMouseYThisFrame();
 	float LookLeftRight, LookUpDown;
 /*
 	if((MouseX != 0.0f || MouseY != 0.0f) && !CPad::GetPad(0)->ArePlayerControlsDisabled()){
@@ -4780,6 +4780,7 @@ CCam::Process_FollowPed_Rotation(const CVector &CameraTarget, float TargetOrient
 }
 
 // LCS cam hehe
+
 void
 CCam::Process_FollowCar_SA(const CVector& CameraTarget, float TargetOrientation, float, float)
 {
@@ -5113,8 +5114,8 @@ CCam::Process_FollowCar_SA(const CVector& CameraTarget, float TargetOrientation,
 
 	// FIX: Disable mouse movement in drive-by, it's buggy. Original SA bug.
 	if (/*bFreeMouseCam &&*/ CCamera::m_bUseMouse3rdPerson && !pad->ArePlayerControlsDisabled() && nextDirectionIsForward) {
-		float mouseY = pad->GetMouseY() * 2.0f;
-		float mouseX = pad->GetMouseX() * -2.0f;
+		float mouseY = pad->GetMouseYThisFrame() * 2.0f;
+		float mouseX = pad->GetMouseXThisFrame() * -2.0f;
 
 		// If you want an ability to toggle free cam while steering with mouse, you can add an OR after DisableMouseSteering.
 		// There was a pad->NewState.m_bVehicleMouseLook in SA, which doesn't exists in III.
@@ -5303,7 +5304,8 @@ CCam::Process_FollowCar_SA(const CVector& CameraTarget, float TargetOrientation,
 		// SA and LCS have this unrolled.
 
 		float ViewPlaneHeight = Tan(DEGTORAD(FOV) / 2.0f);
-		float ViewPlaneWidth = ViewPlaneHeight * CDraw::CalculateAspectRatio() * fTweakFOV;
+		// no wider than a 16:9 screen, see CCamera::AvoidTheGeometry
+		float ViewPlaneWidth = ViewPlaneHeight * Min(CDraw::CalculateAspectRatio(), 16.0f/9.0f) * fTweakFOV;
 		float Near = RwCameraGetNearClipPlane(Scene.camera);
 		float radius = ViewPlaneWidth*Near;
 		entity = CWorld::TestSphereAgainstWorld(Source + Front*Near, radius, nil, true, true, false, true, false, true);
