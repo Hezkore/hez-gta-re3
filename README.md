@@ -14,10 +14,13 @@ Audio is done with MSS (using dlls from original GTA) or OpenAL.
 
 ## My fixes
 
-These are only in GTA 3 so far:
+Only in GTA 3 so far:
 
 * The camera now has the same vertical and horizontal speed.
 * The mouse is generally slower, letting you adjust the mouse sensitivity at a finer-granularity level.
+
+In both games:
+
 * The game runs at 30 FPS internally no matter how fast it renders, so physics, scripts, weather, particles and everything else behave like they did on the PS2. Everything is drawn in between those frames, so it still looks as smooth as your monitor allows.
 * Animations are smoothed between frames as well, cutscenes included. Turn it off with the SMOOTH ANIMATIONS option if you want.
 * The motion blur works the same at any framerate, and can be set to OFF, FAINT or STRONG.
@@ -26,10 +29,11 @@ These are only in GTA 3 so far:
 * The defaults are the best the game can look: map memory usage on high, rim lights, lightmaps and road gloss on, draw distance at max, VSync on and no FPS limit.
 * Better support for ultra wide screens. The HUD, subtitles and loading screens stay inside a 16:9 box in the middle of the screen, without any stretching or scaling. Turn on EXTEND HUD under Display if you want them at the screen edges instead.
 * Cutscenes are no longer zoomed in on screens wider than 16:9.
-
-In both games:
-
 * The game starts on a Wayland desktop again, instead of quitting with `GLFW Error: X11: Platform not initialized`.
+
+Only in Vice City:
+
+* The camera no longer hops up and down over kerbs while driving on screens wider than 16:9.
 
 ## Installation
 

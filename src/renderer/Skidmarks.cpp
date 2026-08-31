@@ -152,6 +152,8 @@ CSkidmarks::Render(void)
 		uint32 fade, alpha;
 		if(aSkidmarks[i].m_state == 1 || CTimer::GetTimeInMilliseconds() < aSkidmarks[i].m_fadeStart)
 			fade = 255;
+		else if(CTimer::GetTimeInMilliseconds() >= aSkidmarks[i].m_fadeEnd)
+			fade = 0;	// the clock runs on between logical frames, the next one takes the mark out
 		else
 			fade = 255*(aSkidmarks[i].m_fadeEnd - CTimer::GetTimeInMilliseconds()) / (aSkidmarks[i].m_fadeEnd - aSkidmarks[i].m_fadeStart);
 

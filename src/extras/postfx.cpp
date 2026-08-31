@@ -409,7 +409,6 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 	trailStrength = aBlurStrength[MotionBlur];
 
 	PUSH_RENDERGROUP("CPostFX::Render");
-	CMBlur::UpdateTrailStep();
 	if(pFrontBuffer == nil)
 		Open(cam);
 	assert(pFrontBuffer);
@@ -461,11 +460,9 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
 
 	if(NeedFrontBuffer(type)){
-		if(bJustInitialised || CMBlur::IsTrailStepDone()){
-			RwRasterPushContext(pFrontBuffer);
-			RwRasterRenderFast(RwCameraGetRaster(cam), 0, 0);
-			RwRasterPopContext();
-		}
+		RwRasterPushContext(pFrontBuffer);
+		RwRasterRenderFast(RwCameraGetRaster(cam), 0, 0);
+		RwRasterPopContext();
 		bJustInitialised = false;
 	}else
 		bJustInitialised = true;

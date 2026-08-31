@@ -228,11 +228,6 @@ CAutomobile::ProcessControl(void)
 	CColModel *colModel;
 	float brake = 0.0f;
 
-	// where the doors were at the end of the previous logical frame, PreRender draws them
-	// between that and where they are now
-	for(i = 0; i < ARRAY_SIZE(Doors); i++)
-		Doors[i].m_fPrevAngle = Doors[i].m_fAngle;
-
 	if(bUsingSpecialColModel)
 		colModel = &CWorld::Players[CWorld::PlayerInFocus].m_ColModel;
 	else
@@ -4369,6 +4364,17 @@ CAutomobile::ProcessSwingingDoor(int32 component, eDoors door)
 
 	Doors[door].Process(this);
 	SetDoorRotation(component, door, Doors[door].m_fAngle);
+}
+
+// Where the doors are at the end of a logical frame, before the next one moves them.
+// PreRender draws them between that and where they are then. Called for each car from
+// SnapshotMovingEntities(), not from ProcessControl(), the ped opening or closing a
+// door can run before or after the car in the same frame
+void
+CAutomobile::StoreDoorAngles(void)
+{
+	for(int i = 0; i < ARRAY_SIZE(Doors); i++)
+		Doors[i].m_fPrevAngle = Doors[i].m_fAngle;
 }
 
 void

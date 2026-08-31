@@ -211,7 +211,6 @@ CMBlur::MotionBlurRender(RwCamera *cam, uint32 red, uint32 green, uint32 blue, u
 	CPostFX::Render(cam, red, green, blue, blur, type, bluralpha);
 #else
 	PUSH_RENDERGROUP("CMBlur::MotionBlurRender");
-	UpdateTrailStep();
 	RwRGBA color = { (RwUInt8)red, (RwUInt8)green, (RwUInt8)blue, (RwUInt8)blur };
 #ifdef GTA_PS2
 	if( pFrontBuffer )
@@ -224,11 +223,9 @@ CMBlur::MotionBlurRender(RwCamera *cam, uint32 red, uint32 green, uint32 blue, u
 			else
 				OverlayRender(cam, pFrontBuffer, color, type, bluralpha);
 		}
-		if(IsTrailStepDone()){
-			RwRasterPushContext(pFrontBuffer);
-			RwRasterRenderFast(RwCameraGetRaster(cam), 0, 0);
-			RwRasterPopContext();
-		}
+		RwRasterPushContext(pFrontBuffer);
+		RwRasterRenderFast(RwCameraGetRaster(cam), 0, 0);
+		RwRasterPopContext();
 	}else{
 		OverlayRender(cam, nil, color, type, bluralpha);
 	}
@@ -237,59 +234,31 @@ CMBlur::MotionBlurRender(RwCamera *cam, uint32 red, uint32 green, uint32 blue, u
 #endif
 }
 
-// The trail is drawn on each rendered frame but only accumulates, that is the frame is only
-// copied into the ghost buffer, TRAIL_STEP_RATE times a second. Any faster and a step keeps
-// so much of the ghost and adds so little of the new frame that 8 bit colour rounds the
-// difference away, the picture goes dark and the colours come loose. At this rate the
-// ghost still refreshes far too often to see it step.
-#define TRAIL_STEP_RATE 60
-
-static float trailLength = 1.0f;	// length of the current trail step in logical frames
-static bool trailStepDone;
-
-// Called once per rendered frame before the trail is drawn
-void
-CMBlur::UpdateTrailStep(void)
-{
-	static float msInStep;
-
-	msInStep += CTimer::GetRenderFrameLength()*LOGICAL_FRAME_MS;
-	trailStepDone = msInStep >= 1000.0f/TRAIL_STEP_RATE;
-	if(trailStepDone){
-		trailLength = msInStep/LOGICAL_FRAME_MS;
-		msInStep = 0.0f;
-	}
-}
-
-// Whether this frame ends a trail step and has to be copied into the ghost buffer
-bool
-CMBlur::IsTrailStepDone(void)
-{
-	return trailStepDone;
-}
-
 // The previous frame is blended over the new one. Per logical frame that is, for each
-// channel, F = keep*G + pass*C + white, G the previous frame and C the new one. A trail
-// step covers only a part of a logical frame, so it gets that map to the power of the
-// part: G keeps keep^l, C and the white get (1-keep^l)/(1-keep) of theirs. That way the
-// trail fades at the same rate at any frame rate instead of per rendered frame, and it
-// is smooth. A single quad cannot scale each channel of C on its own, so it takes
-// three: darken C, add G, add the white. strength shortens the trail: the step is taken
-// as 1/strength as long, so the previous frames fade out that much sooner while the
-// colour the overlay gives the picture is kept.
+// channel, F = keep*G + pass*C + white, G the previous frame and C the new one. A
+// rendered frame is only a part of a logical frame, so it gets that map to the power of
+// the part: G keeps keep^l, C and the white get (1-keep^l)/(1-keep) of theirs. That way
+// the trail fades at the same rate at any frame rate instead of per rendered frame. The
+// weights are rounded to the 8 bits a colour has and the part is taken from the rounded
+// keep, so the frames end up at the same brightness as they do per logical frame. Cut
+// off instead, keep is a little short each frame and at a high frame rate, where it is
+// close to 1, the picture goes dark. A single quad cannot scale each channel of C on
+// its own, so it takes three: darken C, add G, add the white. strength shortens the
+// trail: the frame is taken as 1/strength as long, so the previous frames fade out that
+// much sooner while the colour the overlay gives the picture is kept.
 void
 CMBlur::RenderTrail(RwIm2DVertex *quad, RwRaster *ghost, const float *keep, const float *pass, const float *white, float strength)
 {
-	float length = trailLength/strength;
+	float length = CTimer::GetRenderFrameLength()/strength;
 	int32 k[3], p[3], w[3];
 	int i;
 
 	for(i = 0; i < 3; i++){
-		float kept = Pow(keep[i], length);
-		float part = keep[i] < 1.0f ? (1.0f - kept)/(1.0f - keep[i]) : length;
-		k[i] = Min(kept*255.0f, 255.0f);
-		p[i] = Min(pass[i]*part*255.0f, 255.0f);
-		w[i] = Min(white[i]*part*255.0f, 255.0f);
+		int32 kept = Min((int32)(Pow(keep[i], length)*255.0f + 0.5f), 254);
+		float part = keep[i] < 1.0f ? (1.0f - kept/255.0f)/(1.0f - keep[i]) : length;
+		k[i] = kept;
+		p[i] = Min((int32)(pass[i]*part*255.0f + 0.5f), 255);
+		w[i] = Min((int32)(white[i]*part*255.0f + 0.5f), 255);
 	}
 
 	RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);

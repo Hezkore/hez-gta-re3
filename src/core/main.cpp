@@ -1586,6 +1586,8 @@ SnapshotEntity(CPhysical *ent, float)
 
 	ent->m_prevMatrix.CopyOnlyMatrix(ent->GetMatrix());
 	ent->m_bPrevMatrixValid = true;
+	if(ent->IsVehicle() && ((CVehicle*)ent)->IsCar())
+		((CAutomobile*)ent)->StoreDoorAngles();
 	if(CMenuManager::m_PrefsSmoothAnims && (clump = AnimatedClump(ent)))
 		RpAnimBlendClumpStoreFrames(clump);
 }
