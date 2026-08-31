@@ -28,10 +28,10 @@ In both games:
 ## Installation
 
 - You **must** own the games. re3 needs [a copy of GTA III](https://store.steampowered.com/app/12100/Grand_Theft_Auto_III/), reVC needs [a copy of GTA Vice City](https://store.steampowered.com/app/12110/Grand_Theft_Auto_Vice_City/).
-- Build it yourself, or grab the newest [nightly](https://github.com/hezkore/hez-gta-re3/releases). Every nightly holds one zip per game:
+- Build it yourself, or grab the newest [nightly](https://github.com/hezkore/hez-gta-re3/releases). Each nightly has one zip per game:
   - `re3-windows-amd64.zip` and `re3-linux-amd64.zip` for GTA III
   - `reVC-windows-amd64.zip` and `reVC-linux-amd64.zip` for GTA Vice City
-- Extract the zip over the game directory and run the binary in it. The zip holds the binary, updated and additional gamefiles and the dlls OpenAL needs.
+- Extract the zip over the game directory and run the binary in it. The zip has the binary, updated and additional gamefiles and the dlls OpenAL needs.
 
 A nightly is built at midnight UTC, but only when a branch has moved since the last one. The ten newest are kept.
 
@@ -82,7 +82,7 @@ The following things would be nice to have/do:
 * Fix physics for high FPS
 * Improve performance on lower end devices, especially the OpenGL layer on the Raspberry Pi (if you have experience with this, please get in touch)
 * Compare code with PS2 code (tedious, no good decompiler)
-* [PS2 port](https://github.com/GTAmodding/re3/wiki/PS2-port)
+* PS2 port
 * Xbox port (not quite as important)
 * reverse remaining unused/debug functions
 * compare CodeWarrior build with original binary for more accurate code (very tedious)
@@ -107,7 +107,18 @@ Clone the repository with `git clone --recursive https://github.com/hezkore/hez-
 
 <details><summary>Linux Premake</summary>
 
-For Linux using premake, proceed: [Building on Linux](https://github.com/GTAmodding/re3/wiki/Building-on-Linux)
+You need the development files for glfw, OpenAL, libsndfile, mpg123 and OpenGL. On Debian and Ubuntu that is:
+```
+sudo apt install libglfw3-dev libopenal-dev libsndfile1-dev libmpg123-dev libgl1-mesa-dev
+```
+Then generate the makefiles and build:
+```
+./premake5Linux --with-librw gmake2
+make -C build config=release_linux-amd64-librw_gl3_glfw-oal
+```
+The binary ends up in `bin/linux-amd64-librw_gl3_glfw-oal/Release`. Swap `amd64` for `x86`, `arm` or `arm64`, and `release` for `debug`.
+
+Reading the keyboard from the X server needs glfw 3.4 or newer. On anything older the build stops with an error, add `--no-x11-keyboard` to premake and GLFW handles the keys instead.
 
 </details>
 
@@ -125,13 +136,13 @@ conan build .. -if build -bf build -pf package
 
 <details><summary>MacOS Premake</summary>
 
-For MacOS using premake, proceed: [Building on MacOS](https://github.com/GTAmodding/re3/wiki/Building-on-MacOS)
+The old instructions went with the upstream wiki. premake generates the projects the same way it does on Linux, though this has not been built on a Mac in a long time.
 
 </details>
 
 <details><summary>FreeBSD</summary>
 
-For FreeBSD using premake, proceed: [Building on FreeBSD](https://github.com/GTAmodding/re3/wiki/Building-on-FreeBSD)
+The old instructions went with the upstream wiki. premake generates the projects the same way it does on Linux, though this has not been built on FreeBSD in a long time.
 
 </details>
 
@@ -141,9 +152,11 @@ Assuming you have Visual Studio 2015/2017/2019:
 - Run one of the `premake-vsXXXX.cmd` variants on root folder.
 - Open build/re3.sln with Visual Studio and compile the solution.
 
+Visual Studio 2022 builds the vs2019 solution as long as the v142 toolset is installed, which is how the nightlies are built.
+
 Microsoft recently discontinued its downloads of the DX9 SDK. You can download an archived version here: https://archive.org/details/dxsdk_jun10
 
-**If you choose OpenAL on Windows** You must read [Running OpenAL build on Windows](https://github.com/GTAmodding/re3/wiki/Running-OpenAL-build-on-Windows).
+**If you choose OpenAL on Windows** the exe needs `OpenAL32.dll` and `libmpg123-0.dll` next to it. Both ship with the repository, in `vendor/openal-soft/dist/Win64` and `vendor/mpg123/dist/Win64`.
 </details>
 
 > :information_source: premake has an `--with-lto` option if you want the project to be compiled with Link Time Optimization.
