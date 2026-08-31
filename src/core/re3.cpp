@@ -502,7 +502,6 @@ bool LoadINISettings()
 	ReadIniIfExists("Display", "Subtitles", &FrontEndMenuManager.m_PrefsShowSubtitles);
 	ReadIniIfExists("Graphics", "AspectRatio", &FrontEndMenuManager.m_PrefsUseWideScreen);
 	ReadIniIfExists("Graphics", "VSync", &FrontEndMenuManager.m_PrefsVsyncDisp);
-	ReadIniIfExists("Graphics", "FrameLimiter", &FrontEndMenuManager.m_PrefsFrameLimiter);
 	ReadIniIfExists("Graphics", "Trails", &CMBlur::BlurOn);
 	ReadIniIfExists("General", "SkinFile", FrontEndMenuManager.m_PrefsSkinFile, 256);
 	ReadIniIfExists("Controller", "Method", &FrontEndMenuManager.m_ControlMethod);
@@ -604,7 +603,6 @@ void SaveINISettings()
 	StoreIni("Display", "Subtitles", FrontEndMenuManager.m_PrefsShowSubtitles);
 	StoreIni("Graphics", "AspectRatio", FrontEndMenuManager.m_PrefsUseWideScreen);
 	StoreIni("Graphics", "VSync", FrontEndMenuManager.m_PrefsVsyncDisp);
-	StoreIni("Graphics", "FrameLimiter", FrontEndMenuManager.m_PrefsFrameLimiter);
 	StoreIni("Graphics", "Trails", CMBlur::BlurOn);
 	StoreIni("General", "SkinFile", FrontEndMenuManager.m_PrefsSkinFile, 256);
 	StoreIni("Controller", "Method", FrontEndMenuManager.m_ControlMethod);
@@ -959,9 +957,7 @@ DebugMenuPopulate(void)
 		DebugMenuAddVarBool8("Render", "Fix Sprites", &CDraw::ms_bFixSprites, nil);
 #endif
 		DebugMenuAddVarBool8("Render", "PS2 Alpha test Emu", &gPS2alphaTest, nil);
-		DebugMenuAddVarBool8("Render", "Frame limiter", &FrontEndMenuManager.m_PrefsFrameLimiter, nil);
 		DebugMenuAddVarBool8("Render", "VSynch", &FrontEndMenuManager.m_PrefsVsync, nil);
-		DebugMenuAddVar("Render", "Max FPS", &RsGlobal.maxFPS, nil, 1, 1, 1000, nil);
 #ifdef NEW_RENDERER
 		DebugMenuAddVarBool8("Render", "New Renderer", &gbNewRenderer, nil);
 extern bool gbRenderRoads;
@@ -991,7 +987,6 @@ extern bool gbRenderWorld2;
 		e = DebugMenuAddVar("Render", "Colourfilter", &CPostFX::EffectSwitch, nil, 1, CPostFX::POSTFX_OFF, CPostFX::POSTFX_MOBILE, filternames);
 		DebugMenuEntrySetWrap(e, true);
 		DebugMenuAddVar("Render", "Intensity", &CPostFX::Intensity, nil, 0.05f, 0, 10.0f);
-		DebugMenuAddVarBool8("Render", "Motion Blur", &CPostFX::MotionBlurOn, nil);
 #endif
 #ifdef LIBRW
 		DebugMenuAddVarBool32("Render", "MatFX env map apply light", &rw::MatFX::envMapApplyLight, nil);

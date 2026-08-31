@@ -717,7 +717,7 @@ CBoat::Render()
 			RpAtomicRender((RpAtomic*)GetFirstObject(m_aBoatNodes[BOAT_MOVING]));
 		}
 	}
-	m_fMovingRotation += 0.05f;
+	m_fMovingRotation += 0.05f * CTimer::GetTimeStepFix();
 	((CVehicleModelInfo*)CModelInfo::GetModelInfo(GetModelIndex()))->SetVehicleColour(m_currentColour1, m_currentColour2);
 	if (!CVehicle::bWheelsOnlyCheat)
 		CEntity::Render();

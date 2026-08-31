@@ -195,11 +195,11 @@ cMusicManager::DisplayRadioStationName()
 			cDisplay = 60;
 		} else {
 			if(cDisplay == 0) return;
-#ifdef FIX_BUGS
-			cDisplay -= CTimer::GetLogicalFramesPassed();
-#else
-			cDisplay--;
-#endif
+			// drawn once per rendered frame, so count down in logical frames
+			if(cDisplay > CTimer::GetLogicalFramesPassed())
+				cDisplay -= CTimer::GetLogicalFramesPassed();
+			else
+				cDisplay = 0;
 		}
 
 		CFont::SetJustifyOff();

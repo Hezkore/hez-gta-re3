@@ -75,11 +75,7 @@
 	#define SCALE_AND_CENTER_X_FIX(a) (a)
 #endif
 
-#ifdef FIX_BUGS
-#define FRAMECOUNTER CTimer::GetLogicalFrameCounter()
-#else
 #define FRAMECOUNTER CTimer::GetFrameCounter()
-#endif
 
 // Game has colors inlined in code.
 // For easier modification we collect them here:

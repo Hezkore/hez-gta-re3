@@ -11,12 +11,26 @@
 #include "PointLights.h"
 
 int16 CPointLights::NumLights;
+int16 CPointLights::NumLogicalFrameLights;
 CRegisteredPointLight CPointLights::aLights[NUMPOINTLIGHTS];
+
+void
+CPointLights::InitPerLogicalFrame(void)
+{
+	NumLights = 0;
+}
+
+void
+CPointLights::EndLogicalFrame(void)
+{
+	NumLogicalFrameLights = NumLights;
+}
 
 void
 CPointLights::InitPerFrame(void)
 {
-	NumLights = 0;
+	// keep what the logical frame put in, drop what the last rendered frame added
+	NumLights = NumLogicalFrameLights;
 }
 
 #define MAX_DIST 22.0f

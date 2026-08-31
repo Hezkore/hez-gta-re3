@@ -14,4 +14,7 @@ public:
 	static void CreateImmediateModeData(RwCamera *cam, RwRect *rect);
 	static void MotionBlurRender(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blur, int32 type, uint32 bluralpha);
 	static void OverlayRender(RwCamera *cam, RwRaster *raster, RwRGBA color, int32 type, int32 bluralpha);
+	static void UpdateTrailStep(void);
+	static bool IsTrailStepDone(void);
+	static void RenderTrail(RwIm2DVertex *quad, RwRaster *ghost, const float *keep, const float *pass, const float *white, float strength);
 };

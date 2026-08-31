@@ -2484,7 +2484,10 @@ WinMain(HINSTANCE instance,
 						float ms = (float)CTimer::GetCurrentTimeInCycles() / (float)CTimer::GetCyclesPerMillisecond();
 						if ( RwInitialised )
 						{
-							if (!CMenuManager::m_PrefsFrameLimiter || (1000.0f / (float)RsGlobal.maxFPS) < ms)
+							// at the logical frame rate each rendered frame is one logical frame, so wait for
+							// one instead of for a fixed time, or the two drift and a frame gets none or two
+							int32 frameLimit = CMenuManager::GetFrameLimit();
+							if (frameLimit == 0 || (frameLimit == LOGICAL_FRAME_RATE ? CTimer::IsLogicalFrameDue(ms) : (1000.0f / (float)frameLimit) < ms))
 								RsEventHandler(rsIDLE, (void *)TRUE);
 						}
 						break;

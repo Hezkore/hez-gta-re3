@@ -61,6 +61,7 @@ float CCoronas::SunScreenY;
 bool CCoronas::bSmallMoon;
 bool CCoronas::SunBlockedByClouds;
 int CCoronas::bChangeBrightnessImmediately;
+bool CCoronas::bFrameRenderedSinceUpdate;
 
 CRegisteredCorona CCoronas::aCoronas[NUMCORONAS];
 
@@ -129,6 +130,7 @@ CCoronas::Update(void)
 	for(i = 0; i < NUMCORONAS; i++)
 		if(aCoronas[i].id != 0)
 			aCoronas[i].Update();
+	bFrameRenderedSinceUpdate = false;
 }
 
 void
@@ -246,14 +248,15 @@ CCoronas::Render(void)
 	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
 
 	for(i = 0; i < NUMCORONAS; i++){
-		for(j = 5; j > 0; j--){
-			aCoronas[i].prevX[j] = aCoronas[i].prevX[j-1];
-			aCoronas[i].prevY[j] = aCoronas[i].prevY[j-1];
-			aCoronas[i].prevRed[j] = aCoronas[i].prevRed[j-1];
-			aCoronas[i].prevGreen[j] = aCoronas[i].prevGreen[j-1];
-			aCoronas[i].prevBlue[j] = aCoronas[i].prevBlue[j-1];
-			aCoronas[i].hasValue[j] = aCoronas[i].hasValue[j-1];
-		}
+		if(CTimer::GetLogicalFramesPassed() != 0)
+			for(j = 5; j > 0; j--){
+				aCoronas[i].prevX[j] = aCoronas[i].prevX[j-1];
+				aCoronas[i].prevY[j] = aCoronas[i].prevY[j-1];
+				aCoronas[i].prevRed[j] = aCoronas[i].prevRed[j-1];
+				aCoronas[i].prevGreen[j] = aCoronas[i].prevGreen[j-1];
+				aCoronas[i].prevBlue[j] = aCoronas[i].prevBlue[j-1];
+				aCoronas[i].hasValue[j] = aCoronas[i].hasValue[j-1];
+			}
 		aCoronas[i].hasValue[0] = false;
 
 		if(aCoronas[i].id == 0 ||
@@ -421,6 +424,7 @@ CCoronas::Render(void)
 	RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
 	RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)TRUE);
 
+	bFrameRenderedSinceUpdate = true;
 	POP_RENDERGROUP();
 }
 
@@ -556,7 +560,7 @@ CCoronas::DoSunAndMoon(void)
 void
 CRegisteredCorona::Update(void)
 {
-	if(!registeredThisFrame)
+	if(CCoronas::bFrameRenderedSinceUpdate && !registeredThisFrame)
 		alpha = 0;
 
 	if(LOScheck &&
@@ -588,7 +592,9 @@ CRegisteredCorona::Update(void)
 	if(fadeAlpha == 0 && !firstUpdate)
 		id = 0;
 	firstUpdate = false;
-	registeredThisFrame = false;
+	// registered is only meaningful once a frame has been rendered since the last update
+	if(CCoronas::bFrameRenderedSinceUpdate)
+		registeredThisFrame = false;
 }
 
 void

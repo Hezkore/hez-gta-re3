@@ -97,6 +97,10 @@ CCamera::Init(void)
 	float fMouseAccelVertical = m_fMouseAccelVertical;
 #endif
 
+	m_bCycleCamModeUp = false;
+	m_bCycleCamModeDown = false;
+	m_bToggleWorldViewer = false;
+
 #ifdef PS2_MENU
 	if ( !TheMemoryCard.m_bWantToLoad && !FrontEndMenuManager.m_bWantToRestart )
 #endif
@@ -281,11 +285,7 @@ CCamera::Process(void)
 	if(m_WideScreenOn)
 		ProcessWideScreenOn();
 
-#ifdef IMPROVED_CAMERA
-	if(CPad::GetPad(1)->GetCircleJustDown() || CTRLJUSTDOWN('B')){
-#else
-	if(CPad::GetPad(1)->GetCircleJustDown()){
-#endif
+	if(m_bToggleWorldViewer){
 		WorldViewerBeingUsed = !WorldViewerBeingUsed;
 		if(WorldViewerBeingUsed)
 			InitialiseCameraForDebugMode();
@@ -763,6 +763,29 @@ CCamera::Process(void)
 	}
 
 	m_bCameraJustRestored = false;
+
+	m_bCycleCamModeUp = false;
+	m_bCycleCamModeDown = false;
+	m_bToggleWorldViewer = false;
+}
+
+// Pad presses last one logical frame but the camera runs each rendered frame, so they
+// are kept here until Process() has had them
+void
+CCamera::UpdatePadInput(void)
+{
+	if(CTimer::GetIsPaused())
+		return;
+	if(CPad::GetPad(0)->CycleCameraModeUpJustDown())
+		m_bCycleCamModeUp = true;
+	if(CPad::GetPad(0)->CycleCameraModeDownJustDown())
+		m_bCycleCamModeDown = true;
+#ifdef IMPROVED_CAMERA
+	if(CPad::GetPad(1)->GetCircleJustDown() || CTRLJUSTDOWN('B'))
+#else
+	if(CPad::GetPad(1)->GetCircleJustDown())
+#endif
+		m_bToggleWorldViewer = true;
 }
 
 void
@@ -839,11 +862,11 @@ CCamera::CamControl(void)
 					boatTarget = true;
 
 				// Change user selected mode
-				if(CPad::GetPad(0)->CycleCameraModeUpJustDown() && !CReplay::IsPlayingBack() &&
+				if(m_bCycleCamModeUp && !CReplay::IsPlayingBack() &&
 				   (m_bLookingAtPlayer || WhoIsInControlOfTheCamera == CAMCONTROL_OBBE) &&
 				   !m_WideScreenOn)
 					CarZoomIndicator--;
-				if(CPad::GetPad(0)->CycleCameraModeDownJustDown() && !CReplay::IsPlayingBack() &&
+				if(m_bCycleCamModeDown && !CReplay::IsPlayingBack() &&
 				   (m_bLookingAtPlayer || WhoIsInControlOfTheCamera == CAMCONTROL_OBBE) &&
 				   !m_WideScreenOn)
 					CarZoomIndicator++;
@@ -1023,7 +1046,7 @@ CCamera::CamControl(void)
 		// Ped target
 		else if(pTargetEntity->IsPed()){
 			// Change user selected mode
-			if(CPad::GetPad(0)->CycleCameraModeUpJustDown() && !CReplay::IsPlayingBack() &&
+			if(m_bCycleCamModeUp && !CReplay::IsPlayingBack() &&
 			   (m_bLookingAtPlayer || WhoIsInControlOfTheCamera == CAMCONTROL_OBBE) &&
 			   !m_WideScreenOn && !m_bFailedCullZoneTestPreviously){
 				if(FrontEndMenuManager.m_ControlMethod == CONTROL_STANDARD){
@@ -1034,7 +1057,7 @@ CCamera::CamControl(void)
 				}else
 					PedZoomIndicator--;
 			}
-			if(CPad::GetPad(0)->CycleCameraModeDownJustDown() && !CReplay::IsPlayingBack() &&
+			if(m_bCycleCamModeDown && !CReplay::IsPlayingBack() &&
 			   (m_bLookingAtPlayer || WhoIsInControlOfTheCamera == CAMCONTROL_OBBE) &&
 			   !m_WideScreenOn && !m_bFailedCullZoneTestPreviously){
 				if(FrontEndMenuManager.m_ControlMethod == CONTROL_STANDARD){

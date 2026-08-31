@@ -18,8 +18,12 @@ These are only in GTA 3 so far:
 
 * The camera now has the same vertical and horizontal speed.
 * The mouse is generally slower, letting you adjust the mouse sensitivity at a finer-granularity level.
-* Particles are no longer affected by framerate.\
-_(via a dirty fixed rate hack)_
+* The game runs at 30 FPS internally no matter how fast it renders, so physics, scripts, weather, particles and everything else behave like they did on the PS2. Everything is drawn in between those frames, so it still looks as smooth as your monitor allows.
+* Animations are smoothed between frames as well, cutscenes included. Turn it off with the SMOOTH ANIMATIONS option if you want.
+* The motion blur works the same at any framerate, and can be set to OFF, FAINT or STRONG.
+* LIMIT FPS has a list of framerates instead of ON and OFF.
+* Menus run at the full framerate.
+* The defaults are the best the game can look: map memory usage on high, rim lights, lightmaps and road gloss on, draw distance at max, VSync on and no FPS limit.
 
 In both games:
 
@@ -79,7 +83,6 @@ Some of them can be toggled at runtime, some cannot.
 
 The following things would be nice to have/do:
 
-* Fix physics for high FPS
 * Improve performance on lower end devices, especially the OpenGL layer on the Raspberry Pi (if you have experience with this, please get in touch)
 * Compare code with PS2 code (tedious, no good decompiler)
 * PS2 port

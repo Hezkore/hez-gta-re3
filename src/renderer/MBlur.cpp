@@ -8,6 +8,7 @@
 
 #include "main.h"
 #include "RwHelper.h"
+#include "Timer.h"
 #include "Camera.h"
 #include "MBlur.h"
 #include "postfx.h"
@@ -210,6 +211,7 @@ CMBlur::MotionBlurRender(RwCamera *cam, uint32 red, uint32 green, uint32 blue, u
 	CPostFX::Render(cam, red, green, blue, blur, type, bluralpha);
 #else
 	PUSH_RENDERGROUP("CMBlur::MotionBlurRender");
+	UpdateTrailStep();
 	RwRGBA color = { (RwUInt8)red, (RwUInt8)green, (RwUInt8)blue, (RwUInt8)blur };
 #ifdef GTA_PS2
 	if( pFrontBuffer )
@@ -222,15 +224,105 @@ CMBlur::MotionBlurRender(RwCamera *cam, uint32 red, uint32 green, uint32 blue, u
 			else
 				OverlayRender(cam, pFrontBuffer, color, type, bluralpha);
 		}
-		RwRasterPushContext(pFrontBuffer);
-		RwRasterRenderFast(RwCameraGetRaster(cam), 0, 0);
-		RwRasterPopContext();
+		if(IsTrailStepDone()){
+			RwRasterPushContext(pFrontBuffer);
+			RwRasterRenderFast(RwCameraGetRaster(cam), 0, 0);
+			RwRasterPopContext();
+		}
 	}else{
 		OverlayRender(cam, nil, color, type, bluralpha);
 	}
 #endif
 	POP_RENDERGROUP();
 #endif
+}
+
+// The trail is drawn on each rendered frame but only accumulates, that is the frame is only
+// copied into the ghost buffer, TRAIL_STEP_RATE times a second. Any faster and a step keeps
+// so much of the ghost and adds so little of the new frame that 8 bit colour rounds the
+// difference away, the picture goes dark and the colours come loose. At this rate the
+// ghost still refreshes far too often to see it step.
+#define TRAIL_STEP_RATE 60
+
+static float trailLength = 1.0f;	// length of the current trail step in logical frames
+static bool trailStepDone;
+
+// Called once per rendered frame before the trail is drawn
+void
+CMBlur::UpdateTrailStep(void)
+{
+	static float msInStep;
+
+	msInStep += CTimer::GetRenderFrameLength()*LOGICAL_FRAME_MS;
+	trailStepDone = msInStep >= 1000.0f/TRAIL_STEP_RATE;
+	if(trailStepDone){
+		trailLength = msInStep/LOGICAL_FRAME_MS;
+		msInStep = 0.0f;
+	}
+}
+
+// Whether this frame ends a trail step and has to be copied into the ghost buffer
+bool
+CMBlur::IsTrailStepDone(void)
+{
+	return trailStepDone;
+}
+
+// The previous frame is blended over the new one. Per logical frame that is, for each
+// channel, F = keep*G + pass*C + white, G the previous frame and C the new one. A trail
+// step covers only a part of a logical frame, so it gets that map to the power of the
+// part: G keeps keep^l, C and the white get (1-keep^l)/(1-keep) of theirs. That way the
+// trail fades at the same rate at any frame rate instead of per rendered frame, and it
+// is smooth. A single quad cannot scale each channel of C on its own, so it takes
+// three: darken C, add G, add the white. strength shortens the trail: the step is taken
+// as 1/strength as long, so the previous frames fade out that much sooner while the
+// colour the overlay gives the picture is kept.
+void
+CMBlur::RenderTrail(RwIm2DVertex *quad, RwRaster *ghost, const float *keep, const float *pass, const float *white, float strength)
+{
+	float length = trailLength/strength;
+	int32 k[3], p[3], w[3];
+	int i;
+
+	for(i = 0; i < 3; i++){
+		float kept = Pow(keep[i], length);
+		float part = keep[i] < 1.0f ? (1.0f - kept)/(1.0f - keep[i]) : length;
+		k[i] = Min(kept*255.0f, 255.0f);
+		p[i] = Min(pass[i]*part*255.0f, 255.0f);
+		w[i] = Min(white[i]*part*255.0f, 255.0f);
+	}
+
+	RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+	// the ghost pass adds colour whatever its alpha is, so no alpha test on it
+	SetAlphaTest(0);
+
+	// what the new frame keeps
+	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, nil);
+	for(i = 0; i < 4; i++)
+		RwIm2DVertexSetIntRGBA(&quad[i], p[0], p[1], p[2], 255);
+	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDZERO);
+	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDSRCCOLOR);
+	RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad, 4, Index, 6);
+
+	// plus what is left of the previous one
+	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, ghost);
+	for(i = 0; i < 4; i++)
+		RwIm2DVertexSetIntRGBA(&quad[i], k[0], k[1], k[2], 255);
+	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDONE);
+	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
+	RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad, 4, Index, 6);
+
+	// plus the white
+	if(w[0] > 0 || w[1] > 0 || w[2] > 0){
+		RwRenderStateSet(rwRENDERSTATETEXTURERASTER, nil);
+		for(i = 0; i < 4; i++)
+			RwIm2DVertexSetIntRGBA(&quad[i], w[0], w[1], w[2], 255);
+		RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, quad, 4, Index, 6);
+	}
+
+	RestoreAlphaTest();
+	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
 }
 
 void
@@ -279,6 +371,11 @@ CMBlur::OverlayRender(RwCamera *cam, RwRaster *raster, RwRGBA color, int32 type,
 		break;
 	}
 
+	RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+	RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);
+	RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)FALSE);
+	RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
+
 	if(!BlurOn){
 		r = Min(r*0.6f, 255.0f);
 		g = Min(g*0.6f, 255.0f);
@@ -286,33 +383,28 @@ CMBlur::OverlayRender(RwCamera *cam, RwRaster *raster, RwRGBA color, int32 type,
 		if(type != MOTION_BLUR_SNIPER)
 			a = Min(a*0.6f, 255.0f);
 		// game clamps to 255 here, but why?
-	}
-	RwIm2DVertexSetIntRGBA(&Vertex[0], r, g, b, a);
-	RwIm2DVertexSetIntRGBA(&Vertex[1], r, g, b, a);
-	RwIm2DVertexSetIntRGBA(&Vertex[2], r, g, b, a);
-	RwIm2DVertexSetIntRGBA(&Vertex[3], r, g, b, a);
+		RwIm2DVertexSetIntRGBA(&Vertex[0], r, g, b, a);
+		RwIm2DVertexSetIntRGBA(&Vertex[1], r, g, b, a);
+		RwIm2DVertexSetIntRGBA(&Vertex[2], r, g, b, a);
+		RwIm2DVertexSetIntRGBA(&Vertex[3], r, g, b, a);
 
-	RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
-	RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);
-	RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)FALSE);
-	RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)FALSE);
-
-	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, BlurOn ? raster : nil);
-	RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
-	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
-	RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vertex, 4, Index, 6);
-
-	a = bluralpha/2;
-	if(a < 30)
-		a = 30;
-
-	if(BlurOn && a != 0){	// the second condition should always be true
-		RwIm2DVertexSetIntRGBA(&Vertex[0], 255, 255, 255, a);
-		RwIm2DVertexSetIntRGBA(&Vertex[1], 255, 255, 255, a);
-		RwIm2DVertexSetIntRGBA(&Vertex[2], 255, 255, 255, a);
-		RwIm2DVertexSetIntRGBA(&Vertex[3], 255, 255, 255, a);
+		RwRenderStateSet(rwRENDERSTATETEXTURERASTER, nil);
+		RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+		RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+		RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
 		RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vertex, 4, Index, 6);
+	}else{
+		// the previous frame, tinted, with alpha a over the new one and then some white
+		// on top, see RenderTrail
+		int32 whiteAlpha = bluralpha/2;
+		if(whiteAlpha < 30)
+			whiteAlpha = 30;
+		float alpha = a/255.0f;
+		float lit = 1.0f - whiteAlpha/255.0f;
+		float keep[3] = { lit*alpha*r/255.0f, lit*alpha*g/255.0f, lit*alpha*b/255.0f };
+		float pass[3] = { lit*(1.0f - alpha), lit*(1.0f - alpha), lit*(1.0f - alpha) };
+		float white[3] = { 1.0f - lit, 1.0f - lit, 1.0f - lit };
+		RenderTrail(Vertex, raster, keep, pass, white, 1.0f);
 	}
 
 	RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);

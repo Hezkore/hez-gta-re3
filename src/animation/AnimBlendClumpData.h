@@ -43,6 +43,13 @@ public:
 	};
 	// order of frames is determined by RW hierarchy
 	AnimBlendFrameData *frames;
+	// the frame matrices at the end of the previous logical frame and the real current
+	// ones, kept while the drawn ones are put between the two, see
+	// RpAnimBlendClumpInterpolateFrames(). only for clumps animated through RwFrames
+	RwMatrix *prevMatrices;
+	RwMatrix *realMatrices;
+	bool prevMatricesValid;
+	bool matricesInterpolated;
 
 	CAnimBlendClumpData(void);
 	~CAnimBlendClumpData(void);
@@ -51,6 +58,8 @@ public:
 	void SetNumberOfBones(int n) { SetNumberOfFrames(n); }
 #endif
 	void ForAllFrames(void (*cb)(AnimBlendFrameData*, void*), void *arg);
+	void AllocInterpolationMatrices(void);
+	void FreeInterpolationMatrices(void);
 };
 #ifndef PED_SKIN
 VALIDATE_SIZE(CAnimBlendClumpData, 0x14);

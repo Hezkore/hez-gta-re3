@@ -47,6 +47,10 @@ COneSheet::RemoveFromList(void)
 }
 
 
+// Where a moving sheet is at a time into its animation. Render() works this out with the
+// time of the rendered frame, so the sheet flies as smoothly as the frame rate allows
+static CVector AnimatedPos(COneSheet *sheet, uint32 currentTime);
+
 void
 CRubbish::Render(void)
 {
@@ -78,7 +82,7 @@ CRubbish::Render(void)
 				if(!sheet->m_isVisible)
 					alpha = 0;
 			}else{
-				pos = sheet->m_animatedPos;
+				pos = AnimatedPos(sheet, CTimer::GetTimeInMilliseconds() - sheet->m_moveStart);
 				// Not fully visible during animation, calculate current alpha
 				if(!sheet->m_isVisible || !sheet->m_targetIsVisible){
 					float t = (float)(CTimer::GetTimeInMilliseconds() - sheet->m_moveStart)/sheet->m_moveDuration;
@@ -94,8 +98,12 @@ CRubbish::Render(void)
 					alpha -= alpha*(camDist-RUBBISH_FADE_DIST)/(RUBBISH_MAX_DIST-RUBBISH_FADE_DIST);
 				alpha = (RubbishVisibility*alpha)/256;
 
-				float vx = Sin(sheet->m_angle) * 0.4f;
-				float vy = Cos(sheet->m_angle) * 0.4f;
+				// the angle turns once per logical frame, add the part of the next one we are into
+				float angle = sheet->m_angle;
+				if(sheet->m_state == 2)
+					angle += CTimer::GetLogicalFrameFraction()*CTimer::GetDefaultTimeStep()*0.04f;
+				float vx = Sin(angle) * 0.4f;
+				float vy = Cos(angle) * 0.4f;
 
 				int v = TempBufferVerticesStored;
 				RwIm3DVertexSetPos(&TempBufferRenderVertices[v+0], pos.x + vx, pos.y + vy, pos.z);
@@ -258,17 +266,6 @@ CRubbish::Update(void)
 	while(sheet != &EndMoversList){
 		uint32 currentTime = CTimer::GetTimeInMilliseconds() - sheet->m_moveStart;
 		if(currentTime < sheet->m_moveDuration){
-			// Animation
-			int step = 16 * currentTime / sheet->m_moveDuration;	// 16 steps in animation
-			int stepTime = sheet->m_moveDuration/16;	// time in each step
-			float s = (float)(currentTime - stepTime*step) / stepTime;	// position on step
-			float t = (float)currentTime / sheet->m_moveDuration;	// position on total animation
-			// factors for xy and z-movment
-			float fxy = aAnimations[sheet->m_animationType][step]*(1.0f-s) + aAnimations[sheet->m_animationType][step+1]*s;
-			float fz = aAnimations[sheet->m_animationType][step+17]*(1.0f-s) + aAnimations[sheet->m_animationType][step+1+17]*s;
-			sheet->m_animatedPos.x = sheet->m_basePos.x + fxy*sheet->m_xDist;
-			sheet->m_animatedPos.y = sheet->m_basePos.y + fxy*sheet->m_yDist;
-			sheet->m_animatedPos.z = (1.0f-t)*sheet->m_basePos.z + t*sheet->m_targetZ + fz*sheet->m_animHeight;
 			sheet->m_angle += CTimer::GetTimeStep()*0.04f;
 			if(sheet->m_angle > 6.28f)
 				sheet->m_angle -= 6.28f;
@@ -433,4 +430,24 @@ CRubbish::Shutdown(void)
 #if GTA_VERSION >= GTA3_PC_11
 	gpRubbishTexture[3] = nil;
 #endif
+}
+
+static CVector
+AnimatedPos(COneSheet *sheet, uint32 currentTime)
+{
+	CVector pos;
+
+	if(currentTime >= sheet->m_moveDuration)
+		currentTime = sheet->m_moveDuration - 1;
+	int step = 16 * currentTime / sheet->m_moveDuration;	// 16 steps in animation
+	int stepTime = sheet->m_moveDuration/16;	// time in each step
+	float s = (float)(currentTime - stepTime*step) / stepTime;	// position on step
+	float t = (float)currentTime / sheet->m_moveDuration;	// position on total animation
+	// factors for xy and z-movment
+	float fxy = aAnimations[sheet->m_animationType][step]*(1.0f-s) + aAnimations[sheet->m_animationType][step+1]*s;
+	float fz = aAnimations[sheet->m_animationType][step+17]*(1.0f-s) + aAnimations[sheet->m_animationType][step+1+17]*s;
+	pos.x = sheet->m_basePos.x + fxy*sheet->m_xDist;
+	pos.y = sheet->m_basePos.y + fxy*sheet->m_yDist;
+	pos.z = (1.0f-t)*sheet->m_basePos.z + t*sheet->m_targetZ + fz*sheet->m_animHeight;
+	return pos;
 }

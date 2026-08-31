@@ -84,7 +84,7 @@
 #ifdef EXTENDED_COLOURFILTER
 	#define POSTFX_SELECTORS \
 		MENUACTION_CFO_SELECT, "FED_CLF", { new CCFOSelect((int8*)&CPostFX::EffectSwitch, "Graphics", "ColourFilter", filterNames, ARRAY_SIZE(filterNames), false) }, \
-		MENUACTION_CFO_SELECT, "FED_MBL", { new CCFOSelect((int8*)&CPostFX::MotionBlurOn, "Graphics", "MotionBlur", off_on, 2, false) },
+		MENUACTION_CFO_SELECT, "FED_MBL", { new CCFOSelect(&CPostFX::MotionBlur, "Graphics", "MotionBlur", motionBlurTexts, 3, false) },
 #else
 	#define POSTFX_SELECTORS
 #endif	
@@ -103,6 +103,10 @@
 
 const char *filterNames[] = { "FEM_NON", "FEM_SIM", "FEM_NRM", "FEM_MOB" };
 const char *off_on[] = { "FEM_OFF", "FEM_ON" };
+const char *motionBlurTexts[] = { "FEM_OFF", "FEM_FNT", "FEM_STR" };
+extern const char *frameLimitTexts[];
+extern int32 numFrameLimits;
+void IslandLoadingAfterChange(int8 before, int8 after);
 
 void RestoreDefGraphics(int8 action) {
 	if (action != FEOPTION_ACTION_SELECT)
@@ -115,19 +119,13 @@ void RestoreDefGraphics(int8 action) {
 		FrontEndMenuManager.m_nPrefsMSAALevel = FrontEndMenuManager.m_nDisplayMSAALevel = 0;
 	#endif
 	#ifdef NO_ISLAND_LOADING
-	    	if (!FrontEndMenuManager.m_bGameNotLoaded) {
-	    		FrontEndMenuManager.m_PrefsIslandLoading = FrontEndMenuManager.ISLAND_LOADING_LOW;
-			CCollision::bAlreadyLoaded = false;
-			CModelInfo::RemoveColModelsFromOtherLevels(CGame::currLevel);
-			CStreaming::RemoveUnusedBigBuildings(CGame::currLevel);
-			CStreaming::RemoveUnusedBuildings(CGame::currLevel);
-			CStreaming::RequestIslands(CGame::currLevel);
-			CStreaming::LoadAllRequestedModels(true);
-	    	} else
-	    		FrontEndMenuManager.m_PrefsIslandLoading = FrontEndMenuManager.ISLAND_LOADING_LOW;
+		int8 islandLoading = FrontEndMenuManager.m_PrefsIslandLoading;
+		FrontEndMenuManager.m_PrefsIslandLoading = FrontEndMenuManager.ISLAND_LOADING_HIGH;
+		if (!FrontEndMenuManager.m_bGameNotLoaded)
+			IslandLoadingAfterChange(islandLoading, FrontEndMenuManager.m_PrefsIslandLoading);
 	#endif
 	#ifdef GRAPHICS_MENU_OPTIONS // otherwise Frontend will handle those
-		CMenuManager::m_PrefsFrameLimiter = true;
+		CMenuManager::m_PrefsFrameLimiter = 0;
 		CMenuManager::m_PrefsVsyncDisp = true;
 		CMenuManager::m_PrefsVsync = true;
 		CMenuManager::m_PrefsUseWideScreen = false;
@@ -162,8 +160,8 @@ void RestoreDefDisplay(int8 action) {
 	#endif
 	#ifdef GRAPHICS_MENU_OPTIONS // otherwise Frontend will handle those
 		CMenuManager::m_PrefsBrightness = 256;
-		CMenuManager::m_PrefsLOD = 1.2f;
-		CRenderer::ms_lodDistScale = 1.2f;
+		CMenuManager::m_PrefsLOD = 1.8f;
+		CRenderer::ms_lodDistScale = 1.8f;
 		CMenuManager::m_PrefsShowSubtitles = true;
 		FrontEndMenuManager.SaveSettings();
 	#endif
@@ -454,7 +452,8 @@ CMenuScreenCustom aScreens[MENUPAGES] = {
 		MENUACTION_DRAWDIST,	"FEM_LOD", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
 		DENSITY_SLIDERS
 		MENUACTION_FRAMESYNC,	"FEM_VSC", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
-		MENUACTION_FRAMELIMIT,	"FEM_FRM", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
+		MENUACTION_CFO_SELECT,	"FEM_FRM", { new CCFOSelect((int8*)&CMenuManager::m_PrefsFrameLimiter, "Graphics", "FrameLimiter", frameLimitTexts, numFrameLimits, false) },
+		MENUACTION_CFO_SELECT,	"FEM_SMA", { new CCFOSelect(&CMenuManager::m_PrefsSmoothAnims, "Graphics", "SmoothAnimations", off_on, 2, false) },
 #ifndef EXTENDED_COLOURFILTER
 		MENUACTION_TRAILS,		"FED_TRA", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
 #endif
@@ -899,7 +898,8 @@ CMenuScreenCustom aScreens[MENUPAGES] = {
 		MENUACTION_WIDESCREEN,	"FED_WIS", { nil, SAVESLOT_NONE, MENUPAGE_GRAPHICS_SETTINGS },
 		VIDEOMODE_SELECTOR
 		MENUACTION_FRAMESYNC,	"FEM_VSC", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
-		MENUACTION_FRAMELIMIT,	"FEM_FRM", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
+		MENUACTION_CFO_SELECT,	"FEM_FRM", { new CCFOSelect((int8*)&CMenuManager::m_PrefsFrameLimiter, "Graphics", "FrameLimiter", frameLimitTexts, numFrameLimits, false) },
+		MENUACTION_CFO_SELECT,	"FEM_SMA", { new CCFOSelect(&CMenuManager::m_PrefsSmoothAnims, "Graphics", "SmoothAnimations", off_on, 2, false) },
 		MULTISAMPLING_SELECTOR
 		ISLAND_LOADING_SELECTOR
 		DUALPASS_SELECTOR

@@ -527,6 +527,7 @@ public:
 	void ProcessControl(void);
 	void Teleport(CVector);
 	void PreRender(void);
+	void AddPreRenderParticles(void);
 	void Render(void);
 	bool SetupLighting(void);
 	void RemoveLighting(bool);

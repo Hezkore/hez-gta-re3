@@ -4857,6 +4857,15 @@ CPed::PreRender(void)
 	}
 #endif
 
+	// blood and rain splashes were added once per frame, which was once per logical frame.
+	// keep it that way, or a faster frame rate spawns that much more of them
+	if (CTimer::GetLogicalFramesPassed() != 0)
+		AddPreRenderParticles();
+}
+
+void
+CPed::AddPreRenderParticles(void)
+{
 	if (bBodyPartJustCameOff && bIsPedDieAnimPlaying && m_bodyPartBleeding != -1 && (CTimer::GetFrameCounter() & 7) > 3) {
 		CVector bloodDir(0.0f, 0.0f, 0.0f);
 		CVector bloodPos(0.0f, 0.0f, 0.0f);

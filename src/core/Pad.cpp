@@ -69,6 +69,8 @@ char CPad::KeyBoardCheatString[20];
 CMouseControllerState CPad::OldMouseControllerState;
 CMouseControllerState CPad::NewMouseControllerState;
 CMouseControllerState CPad::PCTempMouseControllerState;
+float CPad::MouseXThisFrame;
+float CPad::MouseYThisFrame;
 
 #ifdef DETECT_PAD_INPUT_SWITCH
 bool CPad::IsAffectedByController = false;
@@ -462,6 +464,8 @@ void CPad::ClearMouseHistory()
 	PCTempMouseControllerState.Clear();
 	NewMouseControllerState.Clear();
 	OldMouseControllerState.Clear();
+	MouseXThisFrame = 0.0f;
+	MouseYThisFrame = 0.0f;
 }
 
 CMouseControllerState::CMouseControllerState()
@@ -543,90 +547,94 @@ CMouseControllerState CMousePointerStateHelper::GetMouseSetUp()
 	return state;
 }
 
+// Reads the mouse once per rendered frame. The movement of that frame goes to the camera,
+// which runs each rendered frame, and is added up for the next logical frame, where
+// everything else reads it. Buttons keep their last state, the wheel keeps its value until the
+// next logical frame has seen it.
 void CPad::UpdateMouse()
 {
+	float x, y;
+	int32 signX = 1;
+	int32 signy = 1;
+
+	MouseXThisFrame = 0.0f;
+	MouseYThisFrame = 0.0f;
+
+	if ( !IsForegroundApp() )
+		return;
+
+	if ( !FrontEndMenuManager.m_bMenuActive )
+	{
+		if ( MousePointerStateHelper.bInvertVertically )
+			signy = -1;
+		if ( MousePointerStateHelper.bInvertHorizontally )
+			signX = -1;
+	}
+
 #if defined RW_D3D9 || defined RWLIBS
-	if ( IsForegroundApp() )
-	{
-		if ( PSGLOBAL(mouse) == nil )
-			_InputInitialiseMouse();
+	if ( PSGLOBAL(mouse) == nil )
+		_InputInitialiseMouse();
 
-		DIMOUSESTATE2 state;
+	DIMOUSESTATE2 state;
 
-		if ( PSGLOBAL(mouse) != nil && SUCCEEDED(_InputGetMouseState(&state)) )
-		{
-			int32 signX = 1;
-			int32 signy = 1;
+	if ( PSGLOBAL(mouse) == nil || FAILED(_InputGetMouseState(&state)) )
+		return;
 
-			if ( !FrontEndMenuManager.m_bMenuActive )
-			{
-				if ( MousePointerStateHelper.bInvertVertically )
-					signy = -1;
-				if ( MousePointerStateHelper.bInvertHorizontally )
-					signX = -1;
-			}
+	x = (float)(signX * state.lX);
+	y = (float)(signy * state.lY);
+	PCTempMouseControllerState.LMB = state.rgbButtons[0] & 128;
+	PCTempMouseControllerState.RMB = state.rgbButtons[1] & 128;
+	PCTempMouseControllerState.MMB = state.rgbButtons[2] & 128;
+	PCTempMouseControllerState.MXB1 = state.rgbButtons[3] & 128;
+	PCTempMouseControllerState.MXB2 = state.rgbButtons[4] & 128;
 
-			PCTempMouseControllerState.Clear();
-
-			PCTempMouseControllerState.x = (float)(signX * state.lX);
-			PCTempMouseControllerState.y = (float)(signy * state.lY);
-			PCTempMouseControllerState.LMB = state.rgbButtons[0] & 128;
-			PCTempMouseControllerState.RMB = state.rgbButtons[1] & 128;
-			PCTempMouseControllerState.MMB = state.rgbButtons[2] & 128;
-			PCTempMouseControllerState.MXB1 = state.rgbButtons[3] & 128;
-			PCTempMouseControllerState.MXB2 = state.rgbButtons[4] & 128;
-
-			if ( state.lZ > 0 )
-				PCTempMouseControllerState.WHEELUP = 1;
-			else if ( state.lZ < 0 )
-				PCTempMouseControllerState.WHEELDN = 1;
-
-			OldMouseControllerState = NewMouseControllerState;
-			NewMouseControllerState = PCTempMouseControllerState;
-		}
-	}
+	if ( state.lZ > 0 )
+		PCTempMouseControllerState.WHEELUP = 1;
+	else if ( state.lZ < 0 )
+		PCTempMouseControllerState.WHEELDN = 1;
 #else
-	if ( IsForegroundApp() && PSGLOBAL(cursorIsInWindow) )
-	{
-		double xpos = 1.0f, ypos;
-		glfwGetCursorPos(PSGLOBAL(window), &xpos, &ypos);
-		if (xpos == 0.f)
-			return;
+	if ( !PSGLOBAL(cursorIsInWindow) )
+		return;
 
-		int32 signX = 1;
-		int32 signy = 1;
+	double xpos = 1.0f, ypos;
+	glfwGetCursorPos(PSGLOBAL(window), &xpos, &ypos);
+	if ( xpos == 0.f )
+		return;
 
-		if (!FrontEndMenuManager.m_bMenuActive)
-		{
-			if (MousePointerStateHelper.bInvertVertically)
-				signy = -1;
-			if (MousePointerStateHelper.bInvertHorizontally)
-				signX = -1;
-		}
+	x = (float)(signX * (xpos - PSGLOBAL(lastMousePos.x)));
+	y = (float)(signy * (ypos - PSGLOBAL(lastMousePos.y)));
+	PCTempMouseControllerState.LMB = glfwGetMouseButton(PSGLOBAL(window), GLFW_MOUSE_BUTTON_LEFT);
+	PCTempMouseControllerState.RMB = glfwGetMouseButton(PSGLOBAL(window), GLFW_MOUSE_BUTTON_RIGHT);
+	PCTempMouseControllerState.MMB = glfwGetMouseButton(PSGLOBAL(window), GLFW_MOUSE_BUTTON_MIDDLE);
+	PCTempMouseControllerState.MXB1 = glfwGetMouseButton(PSGLOBAL(window), GLFW_MOUSE_BUTTON_4);
+	PCTempMouseControllerState.MXB2 = glfwGetMouseButton(PSGLOBAL(window), GLFW_MOUSE_BUTTON_5);
 
-		PCTempMouseControllerState.Clear();
+	if ( PSGLOBAL(mouseWheel) > 0 )
+		PCTempMouseControllerState.WHEELUP = 1;
+	else if ( PSGLOBAL(mouseWheel) < 0 )
+		PCTempMouseControllerState.WHEELDN = 1;
 
-		PCTempMouseControllerState.x = (float)(signX * (xpos - PSGLOBAL(lastMousePos.x)));
-		PCTempMouseControllerState.y = (float)(signy * (ypos - PSGLOBAL(lastMousePos.y)));
-		PCTempMouseControllerState.LMB = glfwGetMouseButton(PSGLOBAL(window), GLFW_MOUSE_BUTTON_LEFT);
-		PCTempMouseControllerState.RMB = glfwGetMouseButton(PSGLOBAL(window), GLFW_MOUSE_BUTTON_RIGHT);
-		PCTempMouseControllerState.MMB = glfwGetMouseButton(PSGLOBAL(window), GLFW_MOUSE_BUTTON_MIDDLE);
-		PCTempMouseControllerState.MXB1 = glfwGetMouseButton(PSGLOBAL(window), GLFW_MOUSE_BUTTON_4);
-		PCTempMouseControllerState.MXB2 = glfwGetMouseButton(PSGLOBAL(window), GLFW_MOUSE_BUTTON_5);
-
-		if (PSGLOBAL(mouseWheel) > 0)
-			PCTempMouseControllerState.WHEELUP = 1;
-		else if (PSGLOBAL(mouseWheel) < 0)
-			PCTempMouseControllerState.WHEELDN = 1;
-
-		PSGLOBAL(lastMousePos.x) = xpos;
-		PSGLOBAL(lastMousePos.y) = ypos;
-		PSGLOBAL(mouseWheel) = 0.0f;
-
-		OldMouseControllerState = NewMouseControllerState;
-		NewMouseControllerState = PCTempMouseControllerState;
-	}
+	PSGLOBAL(lastMousePos.x) = xpos;
+	PSGLOBAL(lastMousePos.y) = ypos;
+	PSGLOBAL(mouseWheel) = 0.0f;
 #endif
+
+	MouseXThisFrame = x;
+	MouseYThisFrame = y;
+	PCTempMouseControllerState.x += x;
+	PCTempMouseControllerState.y += y;
+}
+
+// Called once per logical frame. Hands over what the rendered frames since the last one
+// collected and starts collecting for the next
+void CPad::UpdateMouseForLogicalFrame()
+{
+	OldMouseControllerState = NewMouseControllerState;
+	NewMouseControllerState = PCTempMouseControllerState;
+	PCTempMouseControllerState.x = 0.0f;
+	PCTempMouseControllerState.y = 0.0f;
+	PCTempMouseControllerState.WHEELUP = false;
+	PCTempMouseControllerState.WHEELDN = false;
 }
 
 CControllerState CPad::ReconcileTwoControllersInput(CControllerState const &State1, CControllerState const &State2)
@@ -1099,7 +1107,7 @@ void CPad::UpdatePads(void)
 {
 	bool bUpdate = true;
 
-	GetPad(0)->UpdateMouse();
+	GetPad(0)->UpdateMouseForLogicalFrame();
 #ifdef XINPUT
 	GetPad(0)->AffectFromXinput(m_bMapPadOneToPadTwo ? 1 : 0);
 	GetPad(1)->AffectFromXinput(m_bMapPadOneToPadTwo ? 0 : 1);

@@ -117,6 +117,7 @@ public:
 	void ProcessControl(void);
 	void Teleport(CVector v);
 	void PreRender(void);
+	void AddPreRenderParticles(void);
 	void Render(void);
 
 	// from CPhysical
@@ -127,6 +128,7 @@ public:
 	void GetComponentWorldPosition(int32 component, CVector &pos);
 	bool IsComponentPresent(int32 component);
 	void SetComponentRotation(int32 component, CVector rotation);
+	void SetDoorRotation(int32 component, eDoors door, float angle);
 	void OpenDoor(int32 component, eDoors door, float openRatio);
 	void ProcessOpenDoor(uint32, uint32, float);
 	bool IsDoorReady(eDoors door);

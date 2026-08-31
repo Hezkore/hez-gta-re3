@@ -138,7 +138,7 @@ int8 CMenuManager::m_nDisplayMSAALevel = 0;
 #endif
 
 #ifdef NO_ISLAND_LOADING
-int8 CMenuManager::m_PrefsIslandLoading = ISLAND_LOADING_LOW;
+int8 CMenuManager::m_PrefsIslandLoading = ISLAND_LOADING_HIGH;
 #endif
 
 #ifdef GAMEPAD_MENU
@@ -154,7 +154,21 @@ int8 CMenuManager::m_PrefsUseVibration;
 int8 CMenuManager::m_DisplayControllerOnFoot;
 int8 CMenuManager::m_PrefsVsync = 1;
 int8 CMenuManager::m_PrefsVsyncDisp = 1;
-int8 CMenuManager::m_PrefsFrameLimiter = 1;
+int8 CMenuManager::m_PrefsFrameLimiter = 0;
+int8 CMenuManager::m_PrefsSmoothAnims = 1;
+
+// index of m_PrefsFrameLimiter, 0 is no limit
+const int32 frameLimits[] = { 0, 30, 60, 75, 90, 120, 144, 165, 240 };
+const char *frameLimitTexts[] = { "FEM_OFF", "FEM_30", "FEM_60", "FEM_75", "FEM_90", "FEM_120", "FEM_144", "FEM_165", "FEM_240" };
+int32 numFrameLimits = ARRAY_SIZE(frameLimits);
+
+int32
+CMenuManager::GetFrameLimit(void)
+{
+	if (m_PrefsFrameLimiter < 1 || m_PrefsFrameLimiter >= ARRAY_SIZE(frameLimits))
+		return 0;
+	return frameLimits[m_PrefsFrameLimiter];
+}
 int8 CMenuManager::m_PrefsShowSubtitles = 1;
 int8 CMenuManager::m_PrefsSpeakers;
 int32 CMenuManager::m_ControlMethod;
@@ -1471,7 +1485,7 @@ CMenuManager::Draw()
 				rightText = TheText.Get(m_PrefsVsyncDisp ? "FEM_ON" : "FEM_OFF");
 				break;
 			case MENUACTION_FRAMELIMIT:
-				rightText = TheText.Get(m_PrefsFrameLimiter ? "FEM_ON" : "FEM_OFF");
+				rightText = TheText.Get(frameLimitTexts[m_PrefsFrameLimiter]);
 				break;
 			case MENUACTION_TRAILS:
 				rightText = TheText.Get(CMBlur::BlurOn ? "FEM_ON" : "FEM_OFF");
@@ -5096,12 +5110,12 @@ CMenuManager::ProcessButtonPresses(void)
 						DMAudio.PlayFrontEndTrack(m_PrefsRadioStation, TRUE);
 						SaveSettings();
 					} else if (m_nCurrScreen == MENUPAGE_DISPLAY_SETTINGS) {
-						m_PrefsFrameLimiter = true;
+						m_PrefsFrameLimiter = 0;
 						m_PrefsBrightness = 256;
 						m_PrefsVsyncDisp = true;
-						m_PrefsLOD = 1.2f;
+						m_PrefsLOD = 1.8f;
 						m_PrefsVsync = true;
-						CRenderer::ms_lodDistScale = 1.2f;
+						CRenderer::ms_lodDistScale = 1.8f;
 #ifdef ASPECT_RATIO_SCALE
 						m_PrefsUseWideScreen = AR_AUTO;
 #else
@@ -5518,7 +5532,7 @@ CMenuManager::ProcessOnOffMenuOptions()
 		SaveSettings();
 		break;
 	case MENUACTION_FRAMELIMIT:
-		m_PrefsFrameLimiter = !m_PrefsFrameLimiter;
+		m_PrefsFrameLimiter = (m_PrefsFrameLimiter + 1) % ARRAY_SIZE(frameLimits);
 		DMAudio.PlayFrontEndSound(SOUND_FRONTEND_MENU_SETTING_CHANGE, 0);
 		SaveSettings();
 		break;

@@ -26,6 +26,8 @@ CPhysical::CPhysical(void)
 	m_nLastTimeCollided = 0;
 #endif
 
+	m_bPrevMatrixValid = false;
+	m_bInterpolated = false;
 	m_fForceMultiplier = 1.0f;
 	m_vecMoveSpeed = CVector(0.0f, 0.0f, 0.0f);
 	m_vecTurnSpeed = CVector(0.0f, 0.0f, 0.0f);
@@ -227,6 +229,7 @@ void
 CPhysical::AddToMovingList(void)
 {
 	m_movingListNode = CWorld::GetMovingEntityList().InsertItem(this);
+	m_bPrevMatrixValid = false;
 }
 
 void

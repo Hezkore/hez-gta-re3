@@ -806,7 +806,6 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	return AddParticle(type, vecPos, vecDir, pEntity, fSize, color, nRotationSpeed, nRotation, nCurFrame, nLifeSpan);
 }
 
-float throttleParticleAdd = 0;
 CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVector const &vecDir, CEntity *pEntity, float fSize, RwRGBA const &color, int32 nRotationSpeed, int32 nRotation, int32 nCurFrame, int32 nLifeSpan)
 {
 	if ( CTimer::GetIsPaused() )
@@ -831,11 +830,7 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	
 	if ( pParticle == nil )
 		return nil;
-	
-	throttleParticleAdd += CTimer::GetTimeStepInMilliseconds();
-	if(throttleParticleAdd < 31) return nil;
-	throttleParticleAdd -= 31;
-	
+
 	tParticleSystemData *psystem = &mod_ParticleSystemManager.m_aParticles[type];
 	
 	if ( psystem->m_fCreateRange != 0.0f && psystem->m_fCreateRange < ( TheCamera.GetPosition() - vecPos ).MagnitudeSqr() )
@@ -1034,7 +1029,9 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	
 	if ( fSize != 0.0f )
 		pParticle->m_fSize = fSize;
-	
+
+	pParticle->m_vecPrevPosition = pParticle->m_vecPosition;
+
 	m_pUnusedListHead = pParticle->m_pNext;
 
 	pParticle->m_pNext = psystem->m_pParticles;
@@ -1044,18 +1041,10 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	return pParticle;
 }
 
-float throttleParticleUpdate = 0;
-
 void CParticle::Update()
 {
 	if ( CTimer::GetIsPaused() )
 		return;
-	
-	CParticleObject::UpdateAll();
-	
-	throttleParticleUpdate += CTimer::GetTimeStepInMilliseconds();
-	if(throttleParticleUpdate < 31) return;
-	throttleParticleUpdate -= 31;
 
 	CRGBA color(0, 0, 0, 0);
 	
@@ -1065,7 +1054,9 @@ void CParticle::Update()
 	float fFricDeccel95 = 0.95f;
 	float fFricDeccel96 = 0.96f;
 	float fFricDeccel99 = 0.99f;
-	
+
+	CParticleObject::UpdateAll();
+
 	for ( int32 i = 0; i < MAX_PARTICLES; i++ )
 	{
 		tParticleSystemData *psystem = &mod_ParticleSystemManager.m_aParticles[i];
@@ -1080,6 +1071,7 @@ void CParticle::Update()
 		{
 			bRemoveParticle = false;
 
+			particle->m_vecPrevPosition = particle->m_vecPosition;
 			CVector moveStep = particle->m_vecPosition + particle->m_vecVelocity;
 			
 			if (  CTimer::GetTimeInMilliseconds() > particle->m_nTimeWhenWillBeDestroyed || particle->m_nAlpha == 0 )
@@ -1501,11 +1493,16 @@ void CParticle::Render()
 	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void *)rwBLENDINVSRCALPHA);
 	
 	CSprite::InitSpriteBuffer2D();
-	
+
 	uint32 flags = DRAW_OPAQUE;
-	
+
 	RwRaster *prevFrame = nil;
-	
+
+	// particles move in logical frames, so draw each one between where it was and where
+	// it is by how far into the logical frame this rendered frame is. while paused the
+	// game clock still runs for the menu, so hold them where they are
+	float fLogicalFrameFraction = CTimer::GetIsPaused() ? 1.0f : CTimer::GetLogicalFrameFraction();
+
 	for ( int32 i = 0; i < MAX_PARTICLES; i++ )
 	{
 		tParticleSystemData *psystem = &mod_ParticleSystemManager.m_aParticles[i];
@@ -1571,6 +1568,8 @@ void CParticle::Render()
 		while ( particle != nil )
 		{
 			bool canDraw = true;
+			CVector vecDrawPos = particle->m_vecPrevPosition
+				+ (particle->m_vecPosition - particle->m_vecPrevPosition) * fLogicalFrameFraction;
 #ifdef PC_PARTICLE
 
 			if ( particle->m_nAlpha == 0 )
@@ -1592,8 +1591,8 @@ void CParticle::Render()
 				if ( particle->m_nRotation != 0 )
 				{
 					 CSprite::RenderBufferedOneXLUSprite2D_Rotate_Dimension(
-							particle->m_vecPosition.x,
-							particle->m_vecPosition.y,
+							vecDrawPos.x,
+							vecDrawPos.y,
 							particle->m_fSize * 63.0f,
 							particle->m_fSize * 63.0f,
 							particle->m_Color,
@@ -1604,8 +1603,8 @@ void CParticle::Render()
 				else
 				{
 					CSprite::RenderBufferedOneXLUSprite2D(
-							particle->m_vecPosition.x,
-							particle->m_vecPosition.y,
+							vecDrawPos.x,
+							vecDrawPos.y,
 							particle->m_fSize * 63.0f,
 							particle->m_fSize * 63.0f,
 							particle->m_Color,
@@ -1622,7 +1621,7 @@ void CParticle::Render()
 				float w;
 				float h;
 
-				if ( CSprite::CalcScreenCoors(particle->m_vecPosition, &coors, &w, &h, true) )
+				if ( CSprite::CalcScreenCoors(vecDrawPos, &coors, &w, &h, true) )
 				{
 #ifdef PC_PARTICLE
 					if ( (!particleBanned || SCREEN_WIDTH * fParticleScaleLimit >= w)
@@ -1698,7 +1697,7 @@ void CParticle::Render()
 						}
 						else if ( psystem->Flags & SPEED_TRAIL )
 						{
-							CVector vecPrevPos = particle->m_vecPosition - particle->m_vecVelocity;
+							CVector vecPrevPos = vecDrawPos - particle->m_vecVelocity;
 							float fRotation;
 							float fTrailLength;
 							

@@ -228,6 +228,11 @@ CAutomobile::ProcessControl(void)
 	CColModel *colModel;
 	float brake = 0.0f;
 
+	// where the doors were at the end of the previous logical frame, PreRender draws them
+	// between that and where they are now
+	for(i = 0; i < ARRAY_SIZE(Doors); i++)
+		Doors[i].m_fPrevAngle = Doors[i].m_fAngle;
+
 	if(bUsingSpecialColModel)
 		colModel = &CWorld::Players[CWorld::PlayerInFocus].m_ColModel;
 	else
@@ -1240,18 +1245,11 @@ CAutomobile::Teleport(CVector pos)
 }
 
 void
-CAutomobile::PreRender(void)
+CAutomobile::AddPreRenderParticles(void)
 {
 	int i, j, n;
 	CVehicleModelInfo *mi = (CVehicleModelInfo*)CModelInfo::GetModelInfo(GetModelIndex());
-
-	if(GetModelIndex() == MI_RCBANDIT){
-		CVector pos = GetMatrix() * CVector(0.218f, -0.444f, 0.391f);
-		CAntennas::RegisterOne((uintptr)this, GetUp(), pos, 1.0f);
-	}
-
 	float fwdSpeed = DotProduct(m_vecMoveSpeed, GetForward())*180.0f;
-
 
 	// Wheel particles
 
@@ -1481,7 +1479,37 @@ CAutomobile::PreRender(void)
 					CParticle::AddParticle(PARTICLE_EXHAUST_FUMES, pos1, dir);
 		}
 	}
+}
 
+void
+CAutomobile::PreRender(void)
+{
+	int i, j, n;
+	CVehicleModelInfo *mi = (CVehicleModelInfo*)CModelInfo::GetModelInfo(GetModelIndex());
+
+	// the doors move once per logical frame, draw them between where they were and where
+	// they are. the next logical frame puts them right again before anything reads them
+	static const struct { int32 component; eDoors door; } doorNodes[] = {
+		{ CAR_DOOR_LF, DOOR_FRONT_LEFT }, { CAR_DOOR_RF, DOOR_FRONT_RIGHT },
+		{ CAR_DOOR_LR, DOOR_REAR_LEFT }, { CAR_DOOR_RR, DOOR_REAR_RIGHT },
+		{ CAR_BONNET, DOOR_BONNET }, { CAR_BOOT, DOOR_BOOT }
+	};
+	for(i = 0; i < ARRAY_SIZE(doorNodes); i++){
+		CDoor &d = Doors[doorNodes[i].door];
+		if(m_aCarNodes[doorNodes[i].component] && d.m_fAngle != d.m_fPrevAngle)
+			SetDoorRotation(doorNodes[i].component, doorNodes[i].door,
+				d.m_fPrevAngle + (d.m_fAngle - d.m_fPrevAngle)*CTimer::GetLogicalFrameFraction());
+	}
+
+	if(GetModelIndex() == MI_RCBANDIT){
+		CVector pos = GetMatrix() * CVector(0.218f, -0.444f, 0.391f);
+		CAntennas::RegisterOne((uintptr)this, GetUp(), pos, 1.0f);
+	}
+
+	// smoke, rain and exhaust were added once per frame, which was once per logical frame.
+	// keep it that way, or a faster frame rate spawns that much more of them
+	if(CTimer::GetLogicalFramesPassed() != 0)
+		AddPreRenderParticles();
 
 	// Siren and taxi lights
 	switch(GetModelIndex()){
@@ -2061,7 +2089,7 @@ CAutomobile::Render(void)
 			mat.Translate(pos);
 			mat.UpdateRW();
 
-			m_fPropellerRotation += m_fGasPedal != 0.0f ? TWOPI/13.0f : TWOPI/26.0f;
+			m_fPropellerRotation += (m_fGasPedal != 0.0f ? TWOPI/13.0f : TWOPI/26.0f) * CTimer::GetTimeStepFix();
 			if(m_fPropellerRotation > TWOPI)
 				m_fPropellerRotation -= TWOPI;
 		}
@@ -3656,9 +3684,6 @@ CAutomobile::SetComponentRotation(int32 component, CVector rotation)
 void
 CAutomobile::OpenDoor(int32 component, eDoors door, float openRatio)
 {
-	CMatrix mat(RwFrameGetMatrix(m_aCarNodes[component]));
-	CVector pos = mat.GetPosition();
-	float axes[3] = { 0.0f, 0.0f, 0.0f };
 	float wasClosed = false;
 
 	if(Doors[door].IsClosed()){
@@ -3685,10 +3710,7 @@ CAutomobile::OpenDoor(int32 component, eDoors door, float openRatio)
 		DMAudio.PlayOneShot(m_audioEntityId, SOUND_CAR_DOOR_CLOSE_BONNET + door, 0.0f);
 	}
 
-	axes[Doors[door].m_nAxis] = Doors[door].m_fAngle;
-	mat.SetRotate(axes[0], axes[1], axes[2]);
-	mat.Translate(pos);
-	mat.UpdateRW();
+	SetDoorRotation(component, door, Doors[door].m_fAngle);
 }
 
 inline void ProcessDoorOpenAnimation(CAutomobile *car, uint32 component, eDoors door, float time, float start, float end)
@@ -4345,12 +4367,18 @@ CAutomobile::ProcessSwingingDoor(int32 component, eDoors door)
 	if(Damage.GetDoorStatus(door) != DOOR_STATUS_SWINGING)
 		return;
 
+	Doors[door].Process(this);
+	SetDoorRotation(component, door, Doors[door].m_fAngle);
+}
+
+void
+CAutomobile::SetDoorRotation(int32 component, eDoors door, float angle)
+{
 	CMatrix mat(RwFrameGetMatrix(m_aCarNodes[component]));
 	CVector pos = mat.GetPosition();
 	float axes[3] = { 0.0f, 0.0f, 0.0f };
 
-	Doors[door].Process(this);
-	axes[Doors[door].m_nAxis] = Doors[door].m_fAngle;
+	axes[Doors[door].m_nAxis] = angle;
 	mat.SetRotate(axes[0], axes[1], axes[2]);
 	mat.Translate(pos);
 	mat.UpdateRW();

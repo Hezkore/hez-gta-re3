@@ -14,6 +14,7 @@ public:
 	};
 
 	CVector   m_vecPosition;
+	CVector   m_vecPrevPosition;	// at the end of the previous logical frame, Render() draws between the two
 	CVector   m_vecVelocity;
 	CVector   m_vecScreenPosition;
 	uint32     m_nTimeWhenWillBeDestroyed;
@@ -91,4 +92,4 @@ public:
 	static void AddYardieDoorSmoke(CVector const &vecPos, CMatrix const &matMatrix);
 };
 
-VALIDATE_SIZE(CParticle, 0x68);
+VALIDATE_SIZE(CParticle, 0x74);

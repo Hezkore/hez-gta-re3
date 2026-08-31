@@ -9,6 +9,7 @@
 
 #include "main.h"
 #include "RwHelper.h"
+#include "Timer.h"
 #include "Camera.h"
 #include "MBlur.h"
 #include "postfx.h"
@@ -17,7 +18,11 @@ RwRaster *CPostFX::pFrontBuffer;
 RwRaster *CPostFX::pBackBuffer;
 bool CPostFX::bJustInitialised;
 int CPostFX::EffectSwitch = POSTFX_NORMAL;
-bool CPostFX::MotionBlurOn = false;
+int8 CPostFX::MotionBlur = MBLUR_FAINT;
+// how much of the timecycle blur each setting uses
+// how long the trail lingers with each setting, 1 being the game as it was
+static const float aBlurStrength[] = { 0.0f, 0.35f, 0.8f };
+static float trailStrength = 1.0f;
 
 static RwIm2DVertex Vertex[4];
 static RwIm2DVertex Vertex2[4];
@@ -209,18 +214,13 @@ CPostFX::Close(void)
 void
 CPostFX::RenderOverlayBlur(RwCamera *cam, int32 r, int32 g, int32 b, int32 a)
 {
-	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, pFrontBuffer);
-	RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+	// the previous frame, tinted, with alpha a over the new one, see CMBlur::RenderTrail
+	float alpha = a/255.0f;
+	float keep[3] = { alpha*r/255.0f, alpha*g/255.0f, alpha*b/255.0f };
+	float pass[3] = { 1.0f - alpha, 1.0f - alpha, 1.0f - alpha };
+	float white[3] = { 0.0f, 0.0f, 0.0f };
 
-	RwIm2DVertexSetIntRGBA(&Vertex[0], r, g, b, a);
-	RwIm2DVertexSetIntRGBA(&Vertex[1], r, g, b, a);
-	RwIm2DVertexSetIntRGBA(&Vertex[2], r, g, b, a);
-	RwIm2DVertexSetIntRGBA(&Vertex[3], r, g, b, a);
-
-	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
-
-	RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vertex, 4, Index, 6);
+	CMBlur::RenderTrail(Vertex, pFrontBuffer, keep, pass, white, trailStrength);
 }
 
 void
@@ -320,17 +320,13 @@ CPostFX::RenderMotionBlur(RwCamera *cam, uint32 blur)
 	if(blur == 0)
 		return;
 
-	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, pFrontBuffer);
-	RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
-	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
-	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
+	// the previous frame with alpha blur over the new one, see CMBlur::RenderTrail
+	float alpha = blur/255.0f;
+	float keep[3] = { alpha, alpha, alpha };
+	float pass[3] = { 1.0f - alpha, 1.0f - alpha, 1.0f - alpha };
+	float white[3] = { 0.0f, 0.0f, 0.0f };
 
-	RwIm2DVertexSetIntRGBA(&Vertex[0], 255, 255, 255, blur);
-	RwIm2DVertexSetIntRGBA(&Vertex[1], 255, 255, 255, blur);
-	RwIm2DVertexSetIntRGBA(&Vertex[2], 255, 255, 255, blur);
-	RwIm2DVertexSetIntRGBA(&Vertex[3], 255, 255, 255, blur);
-
-	RwIm2DRenderIndexedPrimitive(rwPRIMTYPETRILIST, Vertex, 4, Index, 6);
+	CMBlur::RenderTrail(Vertex, pFrontBuffer, keep, pass, white, trailStrength);
 }
 
 bool
@@ -344,7 +340,7 @@ CPostFX::NeedBackBuffer(void)
 	case POSTFX_SIMPLE:
 		return false;
 	case POSTFX_NORMAL:
-		if(MotionBlurOn)
+		if(MotionBlur != MBLUR_OFF)
 			return false;
 		else
 			return true;
@@ -358,7 +354,7 @@ bool
 CPostFX::NeedFrontBuffer(int32 type)
 {
 	// Last frame -- needed for motion blur
-	if(MotionBlurOn)
+	if(MotionBlur != MBLUR_OFF)
 		return true;
 	if(type == MOTION_BLUR_SNIPER)
 		return true;
@@ -410,8 +406,10 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 		blur = 128;
 		break;
 	}
+	trailStrength = aBlurStrength[MotionBlur];
 
 	PUSH_RENDERGROUP("CPostFX::Render");
+	CMBlur::UpdateTrailStep();
 	if(pFrontBuffer == nil)
 		Open(cam);
 	assert(pFrontBuffer);
@@ -438,7 +436,7 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 		RenderOverlaySimple(cam, red, green, blue, blur);
 		break;
 	case POSTFX_NORMAL:
-		if(MotionBlurOn){
+		if(MotionBlur != MBLUR_OFF){
 			if(!bJustInitialised)
 				RenderOverlayBlur(cam, red, green, blue, blur);
 		}else{
@@ -451,7 +449,7 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 	}
 
 	// TODO? maybe we want this even without motion blur on sometimes?
-	if(MotionBlurOn)
+	if(MotionBlur != MBLUR_OFF)
 		if(!bJustInitialised)
 			RenderMotionBlur(cam, bluralpha);
 
@@ -463,9 +461,11 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
 
 	if(NeedFrontBuffer(type)){
-		RwRasterPushContext(pFrontBuffer);
-		RwRasterRenderFast(RwCameraGetRaster(cam), 0, 0);
-		RwRasterPopContext();
+		if(bJustInitialised || CMBlur::IsTrailStepDone()){
+			RwRasterPushContext(pFrontBuffer);
+			RwRasterRenderFast(RwCameraGetRaster(cam), 0, 0);
+			RwRasterPopContext();
+		}
 		bJustInitialised = false;
 	}else
 		bJustInitialised = true;

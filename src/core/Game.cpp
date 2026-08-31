@@ -1011,7 +1011,10 @@ void CGame::InitialiseWhenRestarting(void)
 
 void CGame::Process(void) 
 {
-	CPad::UpdatePads();
+	// with the menu up the game is paused and the pads and the menu run once per rendered
+	// frame instead, see Idle(), so the menu is as smooth as the game
+	if (!FrontEndMenuManager.m_bMenuActive)
+		CPad::UpdatePads();
 #ifdef USE_CUSTOM_ALLOCATOR
 	ProcessTidyUpMemory();
 #endif
@@ -1024,7 +1027,7 @@ void CGame::Process(void)
 	CCutsceneMgr::Update();
 
 	PUSH_MEMID(MEMID_FRONTEND);
-	if (!CCutsceneMgr::IsCutsceneProcessing() && !CTimer::GetIsCodePaused())
+	if (!CCutsceneMgr::IsCutsceneProcessing() && !CTimer::GetIsCodePaused() && !FrontEndMenuManager.m_bMenuActive)
 		FrontEndMenuManager.Process();
 	POP_MEMID();
 
@@ -1038,6 +1041,7 @@ void CGame::Process(void)
 		CRecordDataForGame::SaveOrRetrieveDataForThisFrame();
 		CRecordDataForChase::SaveOrRetrieveDataForThisFrame();
 		CPad::DoCheats();
+		TheCamera.UpdatePadInput();
 		CClock::Update();
 		CWeather::Update();
 
@@ -1082,8 +1086,7 @@ void CGame::Process(void)
 		CRubbish::Update();
 		CSpecialFX::Update();
 		CTimeCycle::Update();
-		if (CReplay::ShouldStandardCameraBeProcessed())
-			TheCamera.Process();
+		// the camera runs once per rendered frame instead, see Idle()
 		CCullZones::Update();
 		if (!CReplay::IsPlayingBack())
 			CGameLogic::Update();

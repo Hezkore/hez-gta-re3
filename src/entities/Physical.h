@@ -19,6 +19,11 @@ public:
 	float m_phys_unused1;
 	CTreadable *m_treadable[2];	// car and ped
 	uint32 m_nLastTimeCollided;
+	CMatrix m_prevMatrix;	// where we were at the end of the previous logical frame
+	CMatrix m_realMatrix;	// the true one, kept while the drawn one is interpolated
+	bool m_bPrevMatrixValid;
+	bool m_bInterpolated;
+
 	CVector m_vecMoveSpeed;		// velocity
 	CVector m_vecTurnSpeed;		// angular velocity
 	CVector m_vecMoveFriction;

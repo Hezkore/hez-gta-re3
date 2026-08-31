@@ -6,6 +6,11 @@ class CPostFX
 {
 public:
 	enum {
+		MBLUR_OFF,
+		MBLUR_FAINT,
+		MBLUR_STRONG
+	};
+	enum {
 		POSTFX_OFF,
 		POSTFX_SIMPLE,
 		POSTFX_NORMAL,
@@ -15,7 +20,7 @@ public:
 	static RwRaster *pBackBuffer;
 	static bool bJustInitialised;
 	static int EffectSwitch;
-	static bool MotionBlurOn;	// or use CMblur for that?
+	static int8 MotionBlur;	// MBLUR_OFF, MBLUR_FAINT or MBLUR_STRONG
 	static float Intensity;
 
 	static void InitOnce(void);

@@ -569,6 +569,11 @@ CHeli::PreRender(void)
 	float radius = (GetPosition().z - FindPlayerCoors().z - 10.0f - 1.0f) * 0.3f + 10.0f;
 	int frm = CTimer::GetFrameCounter() & 7;
 
+	// the dust were added once per frame, which was once per logical frame. keep it that way,
+	// or a faster frame rate spawns that much more of it
+	if(CTimer::GetLogicalFramesPassed() == 0)
+		return;
+
 	i = 0;
 	for(angle = 0.0f; angle < TWOPI; angle += TWOPI/32){
 		CVector pos(radius*Cos(angle), radius*Sin(angle), 0.0f);
@@ -628,7 +633,7 @@ CHeli::Render(void)
 	mat.Translate(pos);
 	mat.UpdateRW();
 
-	m_fRotorRotation += 3.14f/6.5f;
+	m_fRotorRotation += 3.14f/6.5f * CTimer::GetTimeStepFix();
 	if(m_fRotorRotation > 6.28f)
 		m_fRotorRotation -= 6.28f;
 

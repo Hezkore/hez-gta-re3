@@ -693,6 +693,8 @@ public:
 	static int8 m_PrefsVsync;
 	static int8 m_PrefsVsyncDisp;
 	static int8 m_PrefsFrameLimiter;
+	static int8 m_PrefsSmoothAnims;
+	static int32 GetFrameLimit(void);
 	static int8 m_PrefsShowSubtitles;
 	static int8 m_PrefsSpeakers;
 	static int32 m_ControlMethod;

@@ -82,7 +82,7 @@ CLinkList<EntityInfo> gSortedBuildings;
 CVector CRenderer::ms_vecCameraPosition;
 CVehicle *CRenderer::m_pFirstPersonVehicle;
 bool CRenderer::m_loadingPriority;
-float CRenderer::ms_lodDistScale = 1.2f;
+float CRenderer::ms_lodDistScale = 1.8f;
 
 // unused
 BlockedRange CRenderer::aBlockedRanges[16];

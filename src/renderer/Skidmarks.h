@@ -21,6 +21,9 @@ public:
 class CSkidmarks
 {
 	static CSkidmark aSkidmarks[NUMSKIDMARKS];
+	// Update() runs each logical frame but skidmarks are registered each rendered frame,
+	// so one only counts as ended once a frame has been rendered
+	static bool bFrameRenderedSinceUpdate;
 public:
 
 	static void Init(void);
