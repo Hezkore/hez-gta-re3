@@ -1491,9 +1491,12 @@ CAutomobile::PreRender(void)
 	};
 	for(i = 0; i < ARRAY_SIZE(doorNodes); i++){
 		CDoor &d = Doors[doorNodes[i].door];
-		if(m_aCarNodes[doorNodes[i].component] && d.m_fAngle != d.m_fPrevAngle)
-			SetDoorRotation(doorNodes[i].component, doorNodes[i].door,
-				d.m_fPrevAngle + (d.m_fAngle - d.m_fPrevAngle)*CTimer::GetLogicalFrameFraction());
+		if(m_aCarNodes[doorNodes[i].component])
+			if (d.m_fAngle != d.m_fPrevAngle) {
+				SetDoorRotation(doorNodes[i].component, doorNodes[i].door, d.m_fPrevAngle + (d.m_fAngle - d.m_fPrevAngle)*CTimer::GetLogicalFrameFraction());
+			else {
+				SetDoorRotation(doorNodes[i].component, doorNodes[i].door, d.m_fAngle);
+			}
 	}
 
 	if(GetModelIndex() == MI_RCBANDIT){
