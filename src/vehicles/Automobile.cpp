@@ -1494,7 +1494,7 @@ CAutomobile::PreRender(void)
 		if(m_aCarNodes[doorNodes[i].component])
 			if (d.m_fAngle != d.m_fPrevAngle) {
 				SetDoorRotation(doorNodes[i].component, doorNodes[i].door, d.m_fPrevAngle + (d.m_fAngle - d.m_fPrevAngle)*CTimer::GetLogicalFrameFraction());
-			else {
+			} else {
 				SetDoorRotation(doorNodes[i].component, doorNodes[i].door, d.m_fAngle);
 			}
 	}
