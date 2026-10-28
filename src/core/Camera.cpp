@@ -247,7 +247,7 @@ CCamera::Init(void)
 	m_fMouseAccelHorzntl = 0.0025f;
 	m_fMouseAccelVertical = 0.0025f;
 #endif
-	m_f3rdPersonCHairMultX = 0.4f;
+	m_f3rdPersonCHairMultX = 0.53f;
 	m_f3rdPersonCHairMultY = 0.4f;
 }
 
