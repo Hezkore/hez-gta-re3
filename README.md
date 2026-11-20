@@ -25,6 +25,7 @@ They are in both games. See [My fixes](https://github.com/hezkore/hez-gta-re3/tr
   - `reLCS-alpha-windows-amd64-d3d9.zip` and `reLCS-alpha-linux-amd64.zip` for GTA Liberty City Stories, an unfinished alpha with its own setup on [the lcs branch](https://github.com/hezkore/hez-gta-re3/tree/lcs)
 - The Windows builds use OpenGL, and the `d3d9` builds use Direct3D 9. Only the `d3d9` builds play the intro videos.
 - Extract the zip over the game directory and run the binary in it. The zip has the binary, updated and additional gamefiles and the dlls OpenAL needs.
+- Start the binary with `-loadsave 1` to skip the intro and menus and load save slot 1 straight away, and with `-cheat thugstools` to enter a cheat as soon as you can play. `-cheat` can be given several times. `-spawncar cheetah` puts you in that car on the nearest road.
 
 A nightly is built at midnight UTC, but only when a branch has moved since the last one. The ten newest are kept.
 

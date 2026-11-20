@@ -31,6 +31,7 @@
 #include "Pad.h"
 #include "PlayerPed.h"
 #include "Radar.h"
+#include "startoptions.h"
 #include "debugmenu.h"
 #include "Frontend.h"
 #include "WaterLevel.h"
@@ -716,43 +717,13 @@ DebugMenuEntry *carCol2;
 void
 SpawnCar(int id)
 {
-	CVector playerpos;
-	CStreaming::RequestModel(id, 0);
-	CStreaming::LoadAllRequestedModels(false);
-	if(CStreaming::HasModelLoaded(id)){
-		playerpos = FindPlayerCoors();
-		int node;
-		if(!CModelInfo::IsBoatModel(id)){
-			node = ThePaths.FindNodeClosestToCoors(playerpos, 0, 100.0f, false, false);
-			if(node < 0)
-				return;
-		}
-
-		CVehicle *v;
-		if(CModelInfo::IsBoatModel(id))
-			v = new CBoat(id, RANDOM_VEHICLE);
-		else if(CModelInfo::IsBikeModel(id))
-			v = new CBike(id, RANDOM_VEHICLE);
-		else
-			v = new CAutomobile(id, RANDOM_VEHICLE);
-
-		v->bHasBeenOwnedByPlayer = true;
-		if(carCol1)
-			DebugMenuEntrySetAddress(carCol1, &v->m_currentColour1);
-		if(carCol2)
-			DebugMenuEntrySetAddress(carCol2, &v->m_currentColour2);
-
-		if(CModelInfo::IsBoatModel(id))
-			v->SetPosition(TheCamera.GetPosition() + TheCamera.GetForward()*15.0f);
-		else
-			v->SetPosition(ThePaths.m_pathNodes[node].GetPosition());
-
-		v->GetMatrix().GetPosition().z += 4.0f;
-		v->SetOrientation(0.0f, 0.0f, 3.49f);
-		v->SetStatus(STATUS_ABANDONED);
-		v->m_nDoorLock = CARLOCK_UNLOCKED;
-		CWorld::Add(v);
-	}
+	CVehicle *v = SpawnCarOnNearestRoad(id);
+	if(v == nil)
+		return;
+	if(carCol1)
+		DebugMenuEntrySetAddress(carCol1, &v->m_currentColour1);
+	if(carCol2)
+		DebugMenuEntrySetAddress(carCol2, &v->m_currentColour2);
 }
 
 static void
