@@ -52,7 +52,7 @@ jobs:
   build:
     needs: check
     if: needs.check.outputs.build == 'yes'
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.target.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -61,7 +61,16 @@ jobs:
             branch: master
           - name: reVC
             branch: miami
-        os: [ubuntu-latest, windows-2022]
+        target:
+          - os: ubuntu-latest
+            platform: linux-amd64-librw_gl3_glfw-oal
+            suffix: linux-amd64
+          - os: windows-2022
+            platform: win-amd64-librw_gl3_glfw-oal
+            suffix: windows-amd64
+          - os: windows-2022
+            platform: win-amd64-librw_d3d9-oal
+            suffix: windows-amd64-d3d9
     steps:
       - uses: actions/checkout@v4
         with:
@@ -78,8 +87,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           ./premake5Linux --with-librw --no-x11-keyboard gmake2
-          make -C build config=release_linux-amd64-librw_gl3_glfw-oal
-          mv bin/linux-amd64-librw_gl3_glfw-oal/Release/${{ matrix.game.name }} gamefiles/
+          make -C build config=release_${{ matrix.target.platform }}
+          mv bin/${{ matrix.target.platform }}/Release/${{ matrix.game.name }} gamefiles/
 
       - name: Add msbuild to PATH
         if: runner.os == 'Windows'
@@ -95,19 +104,18 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           ./premake5.exe vs2019 --with-librw --no-full-paths --glfwdir64=glfw-3.3.2.bin.WIN64
-          msbuild -m build/${{ matrix.game.name }}.sln /property:Configuration=Release /property:Platform=win-amd64-librw_gl3_glfw-oal
-          mv bin/win-amd64-librw_gl3_glfw-oal/Release/${{ matrix.game.name }}.exe gamefiles/
+          msbuild -m build/${{ matrix.game.name }}.sln /property:Configuration=Release /property:Platform=${{ matrix.target.platform }}
+          mv bin/${{ matrix.target.platform }}/Release/${{ matrix.game.name }}.exe gamefiles/
           mv vendor/mpg123/dist/Win64/libmpg123-0.dll gamefiles/
           mv vendor/openal-soft/dist/Win64/OpenAL32.dll gamefiles/
 
       - name: Pack
         shell: bash
         run: |
+          asset=${{ matrix.game.name }}-${{ matrix.target.suffix }}.zip
           if [ "$RUNNER_OS" = "Linux" ]; then
-            asset=${{ matrix.game.name }}-linux-amd64.zip
             (cd gamefiles && zip -r "../$asset" .)
           else
-            asset=${{ matrix.game.name }}-windows-amd64.zip
             (cd gamefiles && 7z a "../$asset" .)
           fi
           echo "asset=$asset" >> $GITHUB_ENV

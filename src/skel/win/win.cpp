@@ -24,7 +24,7 @@
 #endif
 
 #include <ddraw.h>
-#include <DShow.h>
+#include <dshow.h>
 #pragma warning( pop )
 
 #define WM_GRAPHNOTIFY	WM_USER+13
