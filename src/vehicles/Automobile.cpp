@@ -1737,41 +1737,10 @@ CAutomobile::Teleport(CVector pos)
 
 
 void
-CAutomobile::PreRender(void)
+CAutomobile::AddPreRenderParticles(void)
 {
 	int i, j, n;
 	CVehicleModelInfo *mi = (CVehicleModelInfo*)CModelInfo::GetModelInfo(GetModelIndex());
-
-	if(GetModelIndex() == MI_RHINO && m_aCarNodes[CAR_WINDSCREEN]){
-		// Rotate Rhino turret
-		CMatrix m;
-		CVector p;
-		m.Attach(RwFrameGetMatrix(m_aCarNodes[CAR_WINDSCREEN]));
-		p = m.GetPosition();
-		m.SetRotateZ(m_fCarGunLR);
-		m.Translate(p);
-		m.UpdateRW();
-	}
-
-	// the doors move once per logical frame, draw them between where they were and where
-	// they are. the next logical frame puts them right again before anything reads them
-	static const struct { int32 component; eDoors door; } doorNodes[] = {
-		{ CAR_DOOR_LF, DOOR_FRONT_LEFT }, { CAR_DOOR_RF, DOOR_FRONT_RIGHT },
-		{ CAR_DOOR_LR, DOOR_REAR_LEFT }, { CAR_DOOR_RR, DOOR_REAR_RIGHT },
-		{ CAR_BONNET, DOOR_BONNET }, { CAR_BOOT, DOOR_BOOT }
-	};
-	for(i = 0; i < ARRAY_SIZE(doorNodes); i++){
-		CDoor &d = Doors[doorNodes[i].door];
-		if(m_aCarNodes[doorNodes[i].component] && d.m_fAngle != d.m_fPrevAngle)
-			SetDoorRotation(doorNodes[i].component, doorNodes[i].door,
-				d.m_fPrevAngle + (d.m_fAngle - d.m_fPrevAngle)*CTimer::GetLogicalFrameFraction());
-	}
-
-	if(GetModelIndex() == MI_RCBANDIT){
-		CVector pos = GetMatrix() * CVector(0.218f, -0.444f, 0.391f);
-		CAntennas::RegisterOne((uintptr)this, GetUp(), pos, 1.0f);
-	}
-
 	float fwdSpeed = DotProduct(m_vecMoveSpeed, GetForward())*180.0f;
 
 
@@ -1971,6 +1940,17 @@ CAutomobile::PreRender(void)
 		}
 	}
 
+	// Hovering on water
+	if(GetStatus() == STATUS_PLAYER && bHoverCheat){
+		AddHoverParticles(CARWHEEL_REAR_RIGHT, 1.0f, 10.0f, 90.0f);
+		AddHoverParticles(CARWHEEL_REAR_LEFT, -1.0f, 10.0f, 90.0f);
+		// the dodo, the rhino and the helis do not hover on their front wheels
+		if(GetModelIndex() != MI_DODO && GetModelIndex() != MI_RHINO && !IsRealHeli()){
+			AddHoverParticles(CARWHEEL_FRONT_RIGHT, 1.0f, 90.0f, 10.0f);
+			AddHoverParticles(CARWHEEL_FRONT_LEFT, -1.0f, 90.0f, 10.0f);
+		}
+	}
+
 
 	// Rain on roof
 	if(!CCullZones::CamNoRain() && !CCullZones::PlayerNoRain() &&
@@ -2081,7 +2061,68 @@ CAutomobile::PreRender(void)
 				}
 		}
 	}
+}
 
+// a wheel that hovers on water sprays it to its side
+void
+CAutomobile::AddHoverParticles(int32 wheel, float side, float maxRotationSpeed, float maxRotation)
+{
+	static RwRGBA hoverParticleCol = { 255, 255, 255, 32 };
+
+	if(m_aSuspensionSpringRatioPrev[wheel] >= 1.0f || m_aWheelColPoints[wheel].surfaceB != SURFACE_WATER)
+		return;
+	if((CTimer::GetFrameCounter()+wheel) & 1){
+		CParticle::AddParticle(PARTICLE_STEAM_NY_SLOWMOTION, m_aWheelColPoints[wheel].point,
+			0.5f*m_vecMoveSpeed+side*0.1f*GetRight(), nil, 0.4f, hoverParticleCol);
+	}else{
+		CParticle::AddParticle(PARTICLE_CAR_SPLASH, m_aWheelColPoints[wheel].point,
+			0.3f*m_vecMoveSpeed+side*0.15f*GetRight()+CVector(0.0f, 0.0f, 0.1f), nil, 0.15f, hoverParticleCol,
+			CGeneral::GetRandomNumberInRange(0.0f, maxRotationSpeed),
+			CGeneral::GetRandomNumberInRange(0.0f, maxRotation), 1);
+	}
+}
+
+void
+CAutomobile::PreRender(void)
+{
+	int i;
+	CVehicleModelInfo *mi = (CVehicleModelInfo*)CModelInfo::GetModelInfo(GetModelIndex());
+
+	if(GetModelIndex() == MI_RHINO && m_aCarNodes[CAR_WINDSCREEN]){
+		// Rotate Rhino turret
+		CMatrix m;
+		CVector p;
+		m.Attach(RwFrameGetMatrix(m_aCarNodes[CAR_WINDSCREEN]));
+		p = m.GetPosition();
+		m.SetRotateZ(m_fCarGunLR);
+		m.Translate(p);
+		m.UpdateRW();
+	}
+
+	// the doors move once per logical frame, draw them between where they were and where
+	// they are. the next logical frame puts them right again before anything reads them
+	static const struct { int32 component; eDoors door; } doorNodes[] = {
+		{ CAR_DOOR_LF, DOOR_FRONT_LEFT }, { CAR_DOOR_RF, DOOR_FRONT_RIGHT },
+		{ CAR_DOOR_LR, DOOR_REAR_LEFT }, { CAR_DOOR_RR, DOOR_REAR_RIGHT },
+		{ CAR_BONNET, DOOR_BONNET }, { CAR_BOOT, DOOR_BOOT }
+	};
+	for(i = 0; i < ARRAY_SIZE(doorNodes); i++){
+		CDoor &d = Doors[doorNodes[i].door];
+		if(m_aCarNodes[doorNodes[i].component] && d.m_fAngle != d.m_fPrevAngle)
+			SetDoorRotation(doorNodes[i].component, doorNodes[i].door,
+				d.m_fPrevAngle + (d.m_fAngle - d.m_fPrevAngle)*CTimer::GetLogicalFrameFraction());
+	}
+
+	if(GetModelIndex() == MI_RCBANDIT){
+		CVector pos = GetMatrix() * CVector(0.218f, -0.444f, 0.391f);
+		CAntennas::RegisterOne((uintptr)this, GetUp(), pos, 1.0f);
+	}
+
+	// particles and skidmarks are added once per logical frame, see CRenderer::PreRender()
+	if(!CParticle::ms_bAddBlocked){
+		CParticleSourceScope scope(this);
+		AddPreRenderParticles();
+	}
 
 	// Siren and taxi lights
 	switch(GetModelIndex()){
@@ -2601,8 +2642,6 @@ CAutomobile::PreRender(void)
 		}
 	}
 
-	RwRGBA hoverParticleCol = { 255, 255, 255, 32 };
-
 	// Rear right wheel
 	mat.Attach(RwFrameGetMatrix(m_aCarNodes[CAR_WHEEL_RB]));
 	pos = mat.GetPosition();
@@ -2616,15 +2655,6 @@ CAutomobile::PreRender(void)
 		   m_aWheelColPoints[CARWHEEL_REAR_RIGHT].surfaceB == SURFACE_WATER){
 			// hovering on water
 			mat.RotateY(-HALFPI);
-			if((CTimer::GetFrameCounter()+CARWHEEL_REAR_RIGHT) & 1){
-				CParticle::AddParticle(PARTICLE_STEAM_NY_SLOWMOTION, m_aWheelColPoints[CARWHEEL_REAR_RIGHT].point,
-					0.5f*m_vecMoveSpeed+0.1f*GetRight(), nil, 0.4f, hoverParticleCol);
-			}else{
-				CParticle::AddParticle(PARTICLE_CAR_SPLASH, m_aWheelColPoints[CARWHEEL_REAR_RIGHT].point,
-					0.3f*m_vecMoveSpeed+0.15f*GetRight()+CVector(0.0f, 0.0f, 0.1f), nil, 0.15f, hoverParticleCol,
-					CGeneral::GetRandomNumberInRange(0.0f, 10.0f),
-					CGeneral::GetRandomNumberInRange(0.0f, 90.0f), 1);
-			}
 #ifdef BETTER_ALLCARSAREDODO_CHEAT
 		} else if (bAllDodosCheat && m_nDriveWheelsOnGround == 0 && m_nDriveWheelsOnGroundPrev == 0) {
 			mat.RotateY(-HALFPI);
@@ -2657,15 +2687,6 @@ CAutomobile::PreRender(void)
 		   m_aWheelColPoints[CARWHEEL_REAR_LEFT].surfaceB == SURFACE_WATER){
 			// hovering on water
 			mat.RotateY(HALFPI);
-			if((CTimer::GetFrameCounter()+CARWHEEL_REAR_LEFT) & 1){
-				CParticle::AddParticle(PARTICLE_STEAM_NY_SLOWMOTION, m_aWheelColPoints[CARWHEEL_REAR_LEFT].point,
-					0.5f*m_vecMoveSpeed-0.1f*GetRight(), nil, 0.4f, hoverParticleCol);
-			}else{
-				CParticle::AddParticle(PARTICLE_CAR_SPLASH, m_aWheelColPoints[CARWHEEL_REAR_LEFT].point,
-					0.3f*m_vecMoveSpeed-0.15f*GetRight()+CVector(0.0f, 0.0f, 0.1f), nil, 0.15f, hoverParticleCol,
-					CGeneral::GetRandomNumberInRange(0.0f, 10.0f),
-					CGeneral::GetRandomNumberInRange(0.0f, 90.0f), 1);
-			}
 #ifdef BETTER_ALLCARSAREDODO_CHEAT
 		} else if (bAllDodosCheat && m_nDriveWheelsOnGround == 0 && m_nDriveWheelsOnGroundPrev == 0) {
 			mat.RotateY(HALFPI);
@@ -2858,15 +2879,6 @@ CAutomobile::PreRender(void)
 			   m_aWheelColPoints[CARWHEEL_FRONT_RIGHT].surfaceB == SURFACE_WATER){
 				// hovering on water
 				mat.RotateY(-HALFPI);
-				if((CTimer::GetFrameCounter()+CARWHEEL_FRONT_RIGHT) & 1){
-					CParticle::AddParticle(PARTICLE_STEAM_NY_SLOWMOTION, m_aWheelColPoints[CARWHEEL_FRONT_RIGHT].point,
-						0.5f*m_vecMoveSpeed+0.1f*GetRight(), nil, 0.4f, hoverParticleCol);
-				}else{
-					CParticle::AddParticle(PARTICLE_CAR_SPLASH, m_aWheelColPoints[CARWHEEL_FRONT_RIGHT].point,
-						0.3f*m_vecMoveSpeed+0.15f*GetRight()+CVector(0.0f, 0.0f, 0.1f), nil, 0.15f, hoverParticleCol,
-						CGeneral::GetRandomNumberInRange(0.0f, 90.0f),
-						CGeneral::GetRandomNumberInRange(0.0f, 10.0f), 1);
-				}
 #ifdef BETTER_ALLCARSAREDODO_CHEAT
 			} else if (bAllDodosCheat && m_nDriveWheelsOnGround == 0 && m_nDriveWheelsOnGroundPrev == 0) {
 				mat.RotateY(-HALFPI);
@@ -2899,15 +2911,6 @@ CAutomobile::PreRender(void)
 			   m_aWheelColPoints[CARWHEEL_FRONT_LEFT].surfaceB == SURFACE_WATER){
 				// hovering on water
 				mat.RotateY(HALFPI);
-				if((CTimer::GetFrameCounter()+CARWHEEL_FRONT_LEFT) & 1){
-					CParticle::AddParticle(PARTICLE_STEAM_NY_SLOWMOTION, m_aWheelColPoints[CARWHEEL_FRONT_LEFT].point,
-						0.5f*m_vecMoveSpeed-0.1f*GetRight(), nil, 0.4f, hoverParticleCol);
-				}else{
-					CParticle::AddParticle(PARTICLE_CAR_SPLASH, m_aWheelColPoints[CARWHEEL_FRONT_LEFT].point,
-						0.3f*m_vecMoveSpeed-0.15f*GetRight()+CVector(0.0f, 0.0f, 0.1f), nil, 0.15f, hoverParticleCol,
-						CGeneral::GetRandomNumberInRange(0.0f, 90.0f),
-						CGeneral::GetRandomNumberInRange(0.0f, 10.0f), 1);
-				}
 #ifdef BETTER_ALLCARSAREDODO_CHEAT
 			} else if (bAllDodosCheat && m_nDriveWheelsOnGround == 0 && m_nDriveWheelsOnGroundPrev == 0) {
 				mat.RotateY(HALFPI);

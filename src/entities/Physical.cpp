@@ -250,6 +250,8 @@ CPhysical::RemoveFromMovingList(void)
 		CWorld::GetMovingEntityList().DeleteNode(m_movingListNode);
 		m_movingListNode = nil;
 	}
+	// off the list the previous matrix is no longer kept, so it says nothing about the last frame
+	m_bPrevMatrixValid = false;
 }
 
 void

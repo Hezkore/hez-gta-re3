@@ -97,6 +97,7 @@ public:
 	void ProcessControl(void);
 	void Teleport(CVector v);
 	void PreRender(void);
+	void AddPreRenderParticles(void);
 	void Render(void);
 
 	// from CPhysical

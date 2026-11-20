@@ -3,6 +3,7 @@
 
 
 class CEntity;
+class CPhysical;
 
 class CParticle
 {
@@ -110,3 +111,22 @@ extern RwRaster *gpRainDripRaster[];
 extern RwRaster *gpRainDripDarkRaster[];
 
 VALIDATE_SIZE(CParticle, 0x64);
+
+// The game draws a moving source between its previous and its current logical matrix. While
+// this scope lives the source stands at its logical matrix, so whatever it spawns starts from
+// where the game has it, and each particle is drawn from the same point on the previous matrix,
+// so it shows at the drawn source from its first frame
+class CParticleSourceScope
+{
+	CPhysical *m_pSource;
+	CMatrix m_drawnMatrix;
+	bool m_bMovedSource;
+
+public:
+	static bool ms_bActive;
+	static CMatrix ms_toPrevMatrix;
+	static CMatrix ms_toDrawnMatrix;
+
+	CParticleSourceScope(CPhysical *source);
+	~CParticleSourceScope();
+};

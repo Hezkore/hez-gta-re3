@@ -19,6 +19,7 @@
 #include "ParticleObject.h"
 #include "Particle.h"
 #include "soundlist.h"
+#include "Physical.h"
 #include "SaveBuf.h"
 #include "debugmenu.h"
 
@@ -945,8 +946,10 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	{
 		CVector screen;
 		float w, h;
+		// a heat haze lives on the screen, so it goes where the drawn source shows it
+		CVector drawnPos = CParticleSourceScope::ms_bActive ? CParticleSourceScope::ms_toDrawnMatrix * vecPos : vecPos;
 
-		if ( !CSprite::CalcScreenCoors(vecPos, &screen, &w, &h, true) )
+		if ( !CSprite::CalcScreenCoors(drawnPos, &screen, &w, &h, true) )
 			return nil;
 		
 		pParticle->m_vecPosition = screen;
@@ -1115,7 +1118,8 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	if ( fSize != 0.0f )
 		pParticle->m_fSize = fSize;
 
-	pParticle->m_vecPrevPosition = pParticle->m_vecPosition;
+	pParticle->m_vecPrevPosition = CParticleSourceScope::ms_bActive && type != PARTICLE_HEATHAZE
+		? CParticleSourceScope::ms_toPrevMatrix * pParticle->m_vecPosition : pParticle->m_vecPosition;
 
 	m_pUnusedListHead = pParticle->m_pNext;
 
@@ -1124,6 +1128,35 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	psystem->m_pParticles = pParticle;
 	
 	return pParticle;
+}
+
+bool CParticleSourceScope::ms_bActive;
+CMatrix CParticleSourceScope::ms_toPrevMatrix;
+CMatrix CParticleSourceScope::ms_toDrawnMatrix;
+
+CParticleSourceScope::CParticleSourceScope(CPhysical *source)
+{
+	assert(!ms_bActive);
+	m_pSource = source;
+	m_bMovedSource = source->m_bInterpolated;
+	if ( m_bMovedSource )
+	{
+		m_drawnMatrix.CopyOnlyMatrix(source->GetMatrix());
+		source->GetMatrix().CopyOnlyMatrix(source->m_realMatrix);
+		ms_toDrawnMatrix = m_drawnMatrix * Invert(source->m_realMatrix);
+	}
+	else
+		ms_toDrawnMatrix.SetUnity();
+	ms_toPrevMatrix = source->GetPrevLogicalMatrix() * Invert(source->GetLogicalMatrix());
+	// a particle moves by its velocity times the time step, the same units as the source's speed
+	ms_bActive = true;
+}
+
+CParticleSourceScope::~CParticleSourceScope()
+{
+	if ( m_bMovedSource )
+		m_pSource->GetMatrix().CopyOnlyMatrix(m_drawnMatrix);
+	ms_bActive = false;
 }
 
 void CParticle::Update()
