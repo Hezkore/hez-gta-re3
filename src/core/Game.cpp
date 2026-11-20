@@ -90,6 +90,7 @@
 #ifdef USE_TEXTURE_POOL
 #include "TexturePools.h"
 #endif
+#include "startoptions.h"
 
 eLevelName CGame::currLevel;
 bool CGame::bDemoMode = true;
@@ -1015,7 +1016,7 @@ void CGame::Process(void)
 	// frame instead, see Idle(), so the menu is as smooth as the game
 	if (!FrontEndMenuManager.m_bMenuActive) {
 		CPad::UpdatePads();
-		CPad::ApplyStartUpCheats();
+		StartOptions::Apply();
 	}
 #ifdef USE_CUSTOM_ALLOCATOR
 	ProcessTidyUpMemory();

@@ -14,7 +14,7 @@
 #include "MemoryHeap.h"
 #include "Frontend.h"
 #include "GenericGameStorage.h"
-#include "Pad.h"
+#include "startoptions.h"
 
 static RwBool               DefaultVideoMode = TRUE;
 
@@ -156,6 +156,7 @@ rsPreInitCommandLine(RwChar *arg)
 	// These options take their value from the next argument
 	static const RwChar *OPTION_LOAD_SAVE = RWSTRING("-loadsave");
 	static const RwChar *OPTION_CHEAT = RWSTRING("-cheat");
+	static const RwChar *OPTION_SPAWN_CAR = RWSTRING("-spawncar");
 	static const RwChar *optionTakingValue = nil;
 	if( optionTakingValue )
 	{
@@ -167,8 +168,10 @@ rsPreInitCommandLine(RwChar *arg)
 			else
 				printf("%s needs a save slot from 1 to %d, not %s\n", OPTION_LOAD_SAVE, SLOT_COUNT, arg);
 		}
+		else if( optionTakingValue == OPTION_CHEAT )
+			StartOptions::AddCheat(arg);
 		else
-			CPad::QueueStartUpCheat(arg);
+			StartOptions::SetCar(arg);
 
 		optionTakingValue = nil;
 		return TRUE;
@@ -181,6 +184,11 @@ rsPreInitCommandLine(RwChar *arg)
 	if( !strcmp(arg, OPTION_CHEAT) )
 	{
 		optionTakingValue = OPTION_CHEAT;
+		return TRUE;
+	}
+	if( !strcmp(arg, OPTION_SPAWN_CAR) )
+	{
+		optionTakingValue = OPTION_SPAWN_CAR;
 		return TRUE;
 	}
 
