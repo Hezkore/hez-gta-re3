@@ -54,14 +54,26 @@ re3_sem_close(sem_t* sem)
 
 #else
 
+#define SEM_NAME_SIZE 32
+
+// The process id keeps two running games from opening the same semaphore
+static void
+re3_sem_name(char *semName, const char *format, va_list va)
+{
+	char baseName[SEM_NAME_SIZE];
+	vsnprintf(baseName, SEM_NAME_SIZE, format, va);
+	snprintf(semName, SEM_NAME_SIZE, "/%d%s", (int)getpid(), baseName + 1);
+}
+
 #define RE3_SEM_OPEN re3_sem_open
 sem_t*
 re3_sem_open(const char* format, ...)
 {
-	char semName[21];
+	char semName[SEM_NAME_SIZE];
 	va_list va;
 	va_start(va, format);
-	vsprintf(semName, format, va);
+	re3_sem_name(semName, format, va);
+	va_end(va);
 
 	return sem_open(semName, O_CREAT, 0644, 1);
 }
@@ -72,10 +84,11 @@ re3_sem_close(sem_t* sem, const char* format, ...)
 {
 	sem_close(sem);
 
-	char semName[21];
+	char semName[SEM_NAME_SIZE];
 	va_list va;
 	va_start(va, format);
-	vsprintf(semName, format, va);
+	re3_sem_name(semName, format, va);
+	va_end(va);
 
 	sem_unlink(semName);
 }
