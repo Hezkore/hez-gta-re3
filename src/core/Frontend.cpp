@@ -178,6 +178,7 @@ uint8 CMenuManager::m_PrefsStereoMono; // unused except restore settings
 
 bool CMenuManager::m_PrefsAllowNastyGame = true;
 bool CMenuManager::m_bStartUpFrontEndRequested;
+int32 CMenuManager::m_nStartUpSaveSlot = CMenuManager::NO_START_UP_SAVE_SLOT;
 bool CMenuManager::m_bShutDownFrontEndRequested;
 
 #ifdef ASPECT_RATIO_SCALE
@@ -5751,6 +5752,13 @@ CMenuManager::SwitchMenuOnAndOff()
 		m_nCurrScreen = MENUPAGE_CHOOSE_SAVE_SLOT;
 #endif
 		PcSaveHelper.PopulateSlotInfo();
+		m_nCurrOption = 0;
+	}
+
+	if (m_bStartUpFrontEndRequested && m_nStartUpSaveSlot != NO_START_UP_SAVE_SLOT) {
+		m_nCurrSaveSlot = m_nStartUpSaveSlot;
+		m_nStartUpSaveSlot = NO_START_UP_SAVE_SLOT;
+		m_nCurrScreen = MENUPAGE_LOADING_IN_PROGRESS;
 		m_nCurrOption = 0;
 	}
 /*	// PS2 leftover

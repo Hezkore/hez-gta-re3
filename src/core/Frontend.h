@@ -709,6 +709,9 @@ public:
 	static int32 m_KeyPressedCode;
 
 	static bool m_bStartUpFrontEndRequested;
+	// The save slot the command line asks to load at start, which skips the menus
+	static const int32 NO_START_UP_SAVE_SLOT = -1;
+	static int32 m_nStartUpSaveSlot;
 	static bool m_bShutDownFrontEndRequested;
 	static bool m_PrefsAllowNastyGame;
 	

@@ -12,6 +12,8 @@
 #include "platform.h"
 #include "main.h"
 #include "MemoryHeap.h"
+#include "Frontend.h"
+#include "GenericGameStorage.h"
 
 static RwBool               DefaultVideoMode = TRUE;
 
@@ -150,6 +152,26 @@ rsCommandLine(RwChar *arg)
 static RwBool
 rsPreInitCommandLine(RwChar *arg)
 {
+	// -loadsave takes the slot number from the next argument
+	static RwBool isSaveSlotNext = FALSE;
+	if( isSaveSlotNext )
+	{
+		isSaveSlotNext = FALSE;
+		int32 slot = atoi(arg);
+		if( slot >= 1 && slot <= SLOT_COUNT )
+			CMenuManager::m_nStartUpSaveSlot = slot - 1;
+		else
+			printf("-loadsave needs a save slot from 1 to %d, not %s\n", SLOT_COUNT, arg);
+
+		return TRUE;
+	}
+	if( !strcmp(arg, RWSTRING("-loadsave")) )
+	{
+		isSaveSlotNext = TRUE;
+
+		return TRUE;
+	}
+
 	if( !strcmp(arg, RWSTRING("-vms")) )
 	{
 		DefaultVideoMode = FALSE;
