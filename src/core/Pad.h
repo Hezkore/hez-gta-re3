@@ -178,6 +178,8 @@ public:
 	static CKeyboardState NewKeyState;
 	static CKeyboardState TempKeyState;
 	static char KeyBoardCheatString[20];
+	// Cheats the command line asks for, typed in once the game runs
+	static char StartUpCheats[64];
 	static CMouseControllerState OldMouseControllerState;
 	static CMouseControllerState NewMouseControllerState;
 	static CMouseControllerState PCTempMouseControllerState;
@@ -203,6 +205,8 @@ public:
 	void AddToCheatString(char c);
 #endif
 	void AddToPCCheatString(char c);
+	static void QueueStartUpCheat(const char *cheat);
+	static void ApplyStartUpCheats(void);
 
 	static void UpdatePads(void);
 	void ProcessPCSpecificStuff(void);

@@ -14,6 +14,7 @@
 #include "MemoryHeap.h"
 #include "Frontend.h"
 #include "GenericGameStorage.h"
+#include "Pad.h"
 
 static RwBool               DefaultVideoMode = TRUE;
 
@@ -152,23 +153,34 @@ rsCommandLine(RwChar *arg)
 static RwBool
 rsPreInitCommandLine(RwChar *arg)
 {
-	// -loadsave takes the slot number from the next argument
-	static RwBool isSaveSlotNext = FALSE;
-	if( isSaveSlotNext )
+	// These options take their value from the next argument
+	static const RwChar *OPTION_LOAD_SAVE = RWSTRING("-loadsave");
+	static const RwChar *OPTION_CHEAT = RWSTRING("-cheat");
+	static const RwChar *optionTakingValue = nil;
+	if( optionTakingValue )
 	{
-		isSaveSlotNext = FALSE;
-		int32 slot = atoi(arg);
-		if( slot >= 1 && slot <= SLOT_COUNT )
-			CMenuManager::m_nStartUpSaveSlot = slot - 1;
+		if( optionTakingValue == OPTION_LOAD_SAVE )
+		{
+			int32 slot = atoi(arg);
+			if( slot >= 1 && slot <= SLOT_COUNT )
+				CMenuManager::m_nStartUpSaveSlot = slot - 1;
+			else
+				printf("%s needs a save slot from 1 to %d, not %s\n", OPTION_LOAD_SAVE, SLOT_COUNT, arg);
+		}
 		else
-			printf("-loadsave needs a save slot from 1 to %d, not %s\n", SLOT_COUNT, arg);
+			CPad::QueueStartUpCheat(arg);
 
+		optionTakingValue = nil;
 		return TRUE;
 	}
-	if( !strcmp(arg, RWSTRING("-loadsave")) )
+	if( !strcmp(arg, OPTION_LOAD_SAVE) )
 	{
-		isSaveSlotNext = TRUE;
-
+		optionTakingValue = OPTION_LOAD_SAVE;
+		return TRUE;
+	}
+	if( !strcmp(arg, OPTION_CHEAT) )
+	{
+		optionTakingValue = OPTION_CHEAT;
 		return TRUE;
 	}
 

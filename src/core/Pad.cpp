@@ -65,6 +65,7 @@ CKeyboardState CPad::NewKeyState;
 CKeyboardState CPad::TempKeyState;
 
 char CPad::KeyBoardCheatString[20];
+char CPad::StartUpCheats[64];
 
 CMouseControllerState CPad::OldMouseControllerState;
 CMouseControllerState CPad::NewMouseControllerState;
@@ -897,6 +898,27 @@ void CPad::AddToCheatString(char c)
 #undef _CHEATCMP
 }
 #endif
+
+void CPad::QueueStartUpCheat(const char *cheat)
+{
+	size_t length = strlen(StartUpCheats);
+	for ( ; *cheat && length < ARRAY_SIZE(StartUpCheats) - 1; cheat++ )
+		StartUpCheats[length++] = toupper(*cheat);
+	StartUpCheats[length] = '\0';
+}
+
+void CPad::ApplyStartUpCheats(void)
+{
+	// Wait until the player is in control, since loading and fading in still change the player
+	if ( StartUpCheats[0] == '\0' || FindPlayerPed() == nil || GetPad(0)->ArePlayerControlsDisabled()
+		|| TheCamera.GetScreenFadeStatus() != FADE_0 )
+		return;
+
+	debug("typing the start up cheats %s\n", StartUpCheats);
+	for ( char *c = StartUpCheats; *c; c++ )
+		GetPad(0)->AddToPCCheatString(*c);
+	StartUpCheats[0] = '\0';
+}
 
 void CPad::AddToPCCheatString(char c)
 {

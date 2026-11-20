@@ -1013,8 +1013,10 @@ void CGame::Process(void)
 {
 	// with the menu up the game is paused and the pads and the menu run once per rendered
 	// frame instead, see Idle(), so the menu is as smooth as the game
-	if (!FrontEndMenuManager.m_bMenuActive)
+	if (!FrontEndMenuManager.m_bMenuActive) {
 		CPad::UpdatePads();
+		CPad::ApplyStartUpCheats();
+	}
 #ifdef USE_CUSTOM_ALLOCATOR
 	ProcessTidyUpMemory();
 #endif
