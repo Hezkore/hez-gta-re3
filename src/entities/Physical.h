@@ -69,6 +69,11 @@ public:
 	CPhysical(void);
 	~CPhysical(void);
 
+	// where the game has the entity, while the drawn matrix may sit between logical frames
+	const CMatrix &GetLogicalMatrix(void) { return m_bInterpolated ? m_realMatrix : GetMatrix(); }
+	// where the game had the entity at the end of the previous logical frame
+	const CMatrix &GetPrevLogicalMatrix(void) { return m_bPrevMatrixValid ? m_prevMatrix : GetLogicalMatrix(); }
+
 	// from CEntity
 	void Add(void);
 	void Remove(void);

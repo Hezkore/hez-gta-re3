@@ -1041,6 +1041,13 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	return pParticle;
 }
 
+// A particle from a moving source is drawn between where the source was and where it is, like
+// the source itself, until its first logical frame
+void CParticle::DrawFrom(const CVector &prevPosition)
+{
+	m_vecPrevPosition = prevPosition;
+}
+
 void CParticle::Update()
 {
 	if ( CTimer::GetIsPaused() )

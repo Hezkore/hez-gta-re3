@@ -1439,7 +1439,7 @@ CAutomobile::AddPreRenderParticles(void)
 	// Exhaust smoke
 	if(bEngineOn && fwdSpeed < 90.0f){
 		CVector exhaustPos = mi->m_positions[CAR_POS_EXHAUST];
-		CVector pos1, pos2, dir;
+		CVector dir;
 
 		if(exhaustPos != CVector(0.0f, 0.0f, 0.0f)){
 			dir.z = 0.0f;
@@ -1454,26 +1454,26 @@ CAutomobile::AddPreRenderParticles(void)
 				dir.y = m_vecMoveSpeed.y;
 			}
 
-			bool dblExhaust = false;
-			pos1 = GetMatrix() * exhaustPos;
-			if(pHandling->Flags & HANDLING_DBL_EXHAUST){
-				dblExhaust = true;
-				pos2 = exhaustPos;
-				pos2.x = -pos2.x;
-				pos2 = GetMatrix() * pos2;
-			}
-
+			// spawn at the exhaust where the game has the car and draw from where it was, so the
+			// puff is drawn between the two right at the exhaust of the drawn car
+			CVector otherExhaustPos(-exhaustPos.x, exhaustPos.y, exhaustPos.z);
+			bool dblExhaust = !!(pHandling->Flags & HANDLING_DBL_EXHAUST);
 			n = 4.0f*m_fGasPedal;
-			if(dblExhaust)
-				for(i = 0; i <= n; i++){
-					CParticle::AddParticle(PARTICLE_EXHAUST_FUMES, pos1, dir);
-					CParticle::AddParticle(PARTICLE_EXHAUST_FUMES, pos2, dir);
-				}
-			else
-				for(i = 0; i <= n; i++)
-					CParticle::AddParticle(PARTICLE_EXHAUST_FUMES, pos1, dir);
+			for(i = 0; i <= n; i++){
+				AddExhaustPuff(exhaustPos, dir);
+				if(dblExhaust)
+					AddExhaustPuff(otherExhaustPos, dir);
+			}
 		}
 	}
+}
+
+void
+CAutomobile::AddExhaustPuff(const CVector &exhaustPos, const CVector &dir)
+{
+	CParticle *puff = CParticle::AddParticle(PARTICLE_EXHAUST_FUMES, GetLogicalMatrix() * exhaustPos, dir);
+	if(puff)
+		puff->DrawFrom(GetPrevLogicalMatrix() * exhaustPos);
 }
 
 void
