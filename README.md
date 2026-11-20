@@ -19,9 +19,10 @@ They are in both games. See [My fixes](https://github.com/hezkore/hez-gta-re3/tr
 ## Installation
 
 - You **must** own the games. re3 needs [a copy of GTA III](https://store.steampowered.com/app/12100/Grand_Theft_Auto_III/), reVC needs [a copy of GTA Vice City](https://store.steampowered.com/app/12110/Grand_Theft_Auto_Vice_City/).
-- Build it yourself, or grab the newest [nightly](https://github.com/hezkore/hez-gta-re3/releases). Each nightly has one zip per game:
-  - `re3-windows-amd64.zip` and `re3-linux-amd64.zip` for GTA III
-  - `reVC-windows-amd64.zip` and `reVC-linux-amd64.zip` for GTA Vice City
+- Build it yourself, or grab the newest [nightly](https://github.com/hezkore/hez-gta-re3/releases). Each nightly has these zips:
+  - `re3-windows-amd64.zip`, `re3-windows-amd64-d3d9.zip` and `re3-linux-amd64.zip` for GTA III
+  - `reVC-windows-amd64.zip`, `reVC-windows-amd64-d3d9.zip` and `reVC-linux-amd64.zip` for GTA Vice City
+- The Windows builds use OpenGL, and the `d3d9` builds use Direct3D 9. Only the `d3d9` builds play the intro videos.
 - Extract the zip over the game directory and run the binary in it. The zip has the binary, updated and additional gamefiles and the dlls OpenAL needs.
 
 A nightly is built at midnight UTC, but only when a branch has moved since the last one. The ten newest are kept.

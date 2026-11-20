@@ -906,7 +906,7 @@ void CPad::UpdateMouse()
 
 #if defined RW_D3D9 || defined RWLIBS
 	if ( PSGLOBAL(mouse) == nil )
-		_InputInitialiseMouse();
+		_InputInitialiseMouse(!FrontEndMenuManager.m_bMenuActive && _InputMouseNeedsExclusive());
 
 	DIMOUSESTATE2 state;
 
