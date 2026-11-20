@@ -20,61 +20,56 @@ jobs:
       tag: ${{ steps.compare.outputs.tag }}
       master: ${{ steps.compare.outputs.master }}
       miami: ${{ steps.compare.outputs.miami }}
+      lcs: ${{ steps.compare.outputs.lcs }}
       prev_master: ${{ steps.compare.outputs.prev_master }}
       prev_miami: ${{ steps.compare.outputs.prev_miami }}
+      prev_lcs: ${{ steps.compare.outputs.prev_lcs }}
     steps:
-      - name: Compare both branches against the last nightly
+      - name: Compare every branch against the last nightly
         id: compare
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          master=$(gh api repos/${{ github.repository }}/commits/master --jq .sha)
-          miami=$(gh api repos/${{ github.repository }}/commits/miami --jq .sha)
-
           body=$(gh api repos/${{ github.repository }}/releases \
             --jq '[.[] | select(.tag_name | startswith("nightly-"))] | first | .body // ""')
-          prev_master=$(echo "$body" | sed -n 's/^Built from master \([0-9a-f]\{40\}\) and miami \([0-9a-f]\{40\}\)\.$/\1/p')
-          prev_miami=$(echo "$body" | sed -n 's/^Built from master \([0-9a-f]\{40\}\) and miami \([0-9a-f]\{40\}\)\.$/\2/p')
 
-          if [ "$master" = "$prev_master" ] && [ "$miami" = "$prev_miami" ]; then
+          build=no
+          for branch in master miami lcs; do
+            sha=$(gh api repos/${{ github.repository }}/commits/$branch --jq .sha)
+            prev=$(echo "$body" | sed -n "s/^Built from $branch \([0-9a-f]\{40\}\)\.$/\1/p")
+            if [ "$sha" != "$prev" ]; then
+              build=yes
+            fi
+            echo "$branch=$sha" >> $GITHUB_OUTPUT
+            echo "prev_$branch=$prev" >> $GITHUB_OUTPUT
+          done
+
+          if [ "$build" = "no" ]; then
             echo "No branch has moved since the last nightly."
-            echo "build=no" >> $GITHUB_OUTPUT
-          else
-            echo "build=yes" >> $GITHUB_OUTPUT
           fi
-
+          echo "build=$build" >> $GITHUB_OUTPUT
           echo "tag=nightly-$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
-          echo "master=$master" >> $GITHUB_OUTPUT
-          echo "miami=$miami" >> $GITHUB_OUTPUT
-          echo "prev_master=$prev_master" >> $GITHUB_OUTPUT
-          echo "prev_miami=$prev_miami" >> $GITHUB_OUTPUT
 
   build:
     needs: check
     if: needs.check.outputs.build == 'yes'
-    runs-on: ${{ matrix.target.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        game:
-          - name: re3
-            branch: master
-          - name: reVC
-            branch: miami
-        target:
-          - os: ubuntu-latest
-            platform: linux-amd64-librw_gl3_glfw-oal
-            suffix: linux-amd64
-          - os: windows-2022
-            platform: win-amd64-librw_gl3_glfw-oal
-            suffix: windows-amd64
-          - os: windows-2022
-            platform: win-amd64-librw_d3d9-oal
-            suffix: windows-amd64-d3d9
+        include:
+          - { game: re3, branch: master, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: re3-linux-amd64 }
+          - { game: re3, branch: master, os: windows-2022, platform: win-amd64-librw_gl3_glfw-oal, asset: re3-windows-amd64 }
+          - { game: re3, branch: master, os: windows-2022, platform: win-amd64-librw_d3d9-oal, asset: re3-windows-amd64-d3d9 }
+          - { game: reVC, branch: miami, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: reVC-linux-amd64 }
+          - { game: reVC, branch: miami, os: windows-2022, platform: win-amd64-librw_gl3_glfw-oal, asset: reVC-windows-amd64 }
+          - { game: reVC, branch: miami, os: windows-2022, platform: win-amd64-librw_d3d9-oal, asset: reVC-windows-amd64-d3d9 }
+          - { game: reLCS, branch: lcs, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: reLCS-alpha-linux-amd64 }
+          - { game: reLCS, branch: lcs, os: windows-2022, platform: win-amd64-librw_d3d9-oal, asset: reLCS-alpha-windows-amd64-d3d9 }
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ matrix.game.branch }}
+          ref: ${{ matrix.branch }}
           submodules: true
 
       - name: Install dependencies
@@ -87,8 +82,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           ./premake5Linux --with-librw --no-x11-keyboard gmake2
-          make -C build config=release_${{ matrix.target.platform }}
-          mv bin/${{ matrix.target.platform }}/Release/${{ matrix.game.name }} gamefiles/
+          make -C build config=release_${{ matrix.platform }}
+          mv bin/${{ matrix.platform }}/Release/${{ matrix.game }} gamefiles/
 
       - name: Add msbuild to PATH
         if: runner.os == 'Windows'
@@ -104,15 +99,15 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           ./premake5.exe vs2019 --with-librw --no-full-paths --glfwdir64=glfw-3.3.2.bin.WIN64
-          msbuild -m build/${{ matrix.game.name }}.sln /property:Configuration=Release /property:Platform=${{ matrix.target.platform }}
-          mv bin/${{ matrix.target.platform }}/Release/${{ matrix.game.name }}.exe gamefiles/
+          msbuild -m build/${{ matrix.game }}.sln /property:Configuration=Release /property:Platform=${{ matrix.platform }}
+          mv bin/${{ matrix.platform }}/Release/${{ matrix.game }}.exe gamefiles/
           mv vendor/mpg123/dist/Win64/libmpg123-0.dll gamefiles/
           mv vendor/openal-soft/dist/Win64/OpenAL32.dll gamefiles/
 
       - name: Pack
         shell: bash
         run: |
-          asset=${{ matrix.game.name }}-${{ matrix.target.suffix }}.zip
+          asset=${{ matrix.asset }}.zip
           if [ "$RUNNER_OS" = "Linux" ]; then
             (cd gamefiles && zip -r "../$asset" .)
           else
@@ -140,7 +135,7 @@ jobs:
 
       - name: Write the changelog
         run: |
-          git fetch origin master miami
+          git fetch origin master miami lcs
 
           log() {
             if [ -z "$1" ]; then
@@ -161,7 +156,13 @@ jobs:
             echo
             log "${{ needs.check.outputs.prev_miami }}" "${{ needs.check.outputs.miami }}"
             echo
-            echo "Built from master ${{ needs.check.outputs.master }} and miami ${{ needs.check.outputs.miami }}."
+            echo "## GTA: Liberty City Stories (alpha)"
+            echo
+            log "${{ needs.check.outputs.prev_lcs }}" "${{ needs.check.outputs.lcs }}"
+            echo
+            echo "Built from master ${{ needs.check.outputs.master }}."
+            echo "Built from miami ${{ needs.check.outputs.miami }}."
+            echo "Built from lcs ${{ needs.check.outputs.lcs }}."
           } > changelog.md
 
           cat changelog.md
