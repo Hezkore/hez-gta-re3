@@ -28,7 +28,7 @@ StartOptions::AddCheat(const char *cheat)
 {
 	size_t length = strlen(cheats);
 	for ( ; *cheat && length < CHEATS_SIZE - 1; cheat++ )
-		cheats[length++] = toupper(*cheat);
+		cheats[length++] = toupper((unsigned char)*cheat);
 	cheats[length] = '\0';
 }
 
