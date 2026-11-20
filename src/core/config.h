@@ -481,8 +481,11 @@ enum Config {
 	#define IGNORE_MOUSE_KEYBOARD // ignore mouse & keyboard input
 #endif
 
-#ifdef __SWITCH__
-	#define USE_UNNAMED_SEM // named semaphores are unsupported on the switch
+// Named semaphores are shared by every process that opens the name, so a second running game
+// would take the first one's wakeups and hang while loading. macOS has no unnamed ones, so it
+// names them per process instead
+#ifndef __APPLE__
+	#define USE_UNNAMED_SEM
 #endif
 
 #endif // VANILLA_DEFINES

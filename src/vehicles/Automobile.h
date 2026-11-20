@@ -118,7 +118,6 @@ public:
 	void Teleport(CVector v);
 	void PreRender(void);
 	void AddPreRenderParticles(void);
-	void AddExhaustPuff(const CVector &exhaustPos, const CVector &dir);
 	void Render(void);
 
 	// from CPhysical

@@ -3,6 +3,7 @@
 
 
 class CEntity;
+class CPhysical;
 
 class CParticle
 {
@@ -64,8 +65,6 @@ public:
 	static CParticle *AddParticle(tParticleType type, CVector const &vecPos, CVector const &vecDir, CEntity *pEntity = nil, float fSize = 0.0f, int32 nRotationSpeed = 0, int32 nRotation = 0, int32 nCurFrame = 0, int32 nLifeSpan = 0);
 	static CParticle *AddParticle(tParticleType type, CVector const &vecPos, CVector const &vecDir, CEntity *pEntity, float fSize, RwRGBA const &color, int32 nRotationSpeed = 0, int32 nRotation = 0, int32 nCurFrame = 0, int32 nLifeSpan = 0);
 
-	void DrawFrom(const CVector &prevPosition);
-
 	static void Update();
 	static void Render();
 
@@ -95,3 +94,21 @@ public:
 };
 
 VALIDATE_SIZE(CParticle, 0x74);
+
+// The game draws a moving source between its previous and its current logical matrix. While
+// this scope lives the source stands at its logical matrix, so whatever it spawns starts from
+// where the game has it, and each particle is drawn from the same point on the previous matrix,
+// so it shows at the drawn source from its first frame
+class CParticleSourceScope
+{
+	CPhysical *m_pSource;
+	CMatrix m_drawnMatrix;
+	bool m_bMovedSource;
+
+public:
+	static bool ms_bActive;
+	static CMatrix ms_toPrevMatrix;
+
+	CParticleSourceScope(CPhysical *source);
+	~CParticleSourceScope();
+};
