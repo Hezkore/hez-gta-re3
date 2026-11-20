@@ -600,6 +600,9 @@ public:
 	bool m_DisplayControllerOnFoot;
 	bool m_bShutDownFrontEndRequested;
 	bool m_bStartUpFrontEndRequested;
+	// The save slot the command line asks to load at start, which skips the menus
+	static const int32 NO_START_UP_SAVE_SLOT = -1;
+	static int32 m_nStartUpSaveSlot;
 	int32 m_KeyPressedCode;
 	int32 m_PrefsBrightness;
 	float m_PrefsLOD;

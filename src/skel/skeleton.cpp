@@ -12,6 +12,9 @@
 #include "platform.h"
 #include "main.h"
 #include "MemoryHeap.h"
+#include "Frontend.h"
+#include "GenericGameStorage.h"
+#include "startoptions.h"
 
 static RwBool               DefaultVideoMode = TRUE;
 
@@ -150,6 +153,45 @@ rsCommandLine(RwChar *arg)
 static RwBool
 rsPreInitCommandLine(RwChar *arg)
 {
+	// These options take their value from the next argument
+	static const RwChar *OPTION_LOAD_SAVE = RWSTRING("-loadsave");
+	static const RwChar *OPTION_CHEAT = RWSTRING("-cheat");
+	static const RwChar *OPTION_SPAWN_CAR = RWSTRING("-spawncar");
+	static const RwChar *optionTakingValue = nil;
+	if( optionTakingValue )
+	{
+		if( optionTakingValue == OPTION_LOAD_SAVE )
+		{
+			int32 slot = atoi(arg);
+			if( slot >= 1 && slot <= SLOT_COUNT )
+				CMenuManager::m_nStartUpSaveSlot = slot - 1;
+			else
+				printf("%s needs a save slot from 1 to %d, not %s\n", OPTION_LOAD_SAVE, SLOT_COUNT, arg);
+		}
+		else if( optionTakingValue == OPTION_CHEAT )
+			StartOptions::AddCheat(arg);
+		else
+			StartOptions::SetCar(arg);
+
+		optionTakingValue = nil;
+		return TRUE;
+	}
+	if( !strcmp(arg, OPTION_LOAD_SAVE) )
+	{
+		optionTakingValue = OPTION_LOAD_SAVE;
+		return TRUE;
+	}
+	if( !strcmp(arg, OPTION_CHEAT) )
+	{
+		optionTakingValue = OPTION_CHEAT;
+		return TRUE;
+	}
+	if( !strcmp(arg, OPTION_SPAWN_CAR) )
+	{
+		optionTakingValue = OPTION_SPAWN_CAR;
+		return TRUE;
+	}
+
 	if( !strcmp(arg, RWSTRING("-vms")) )
 	{
 		DefaultVideoMode = FALSE;

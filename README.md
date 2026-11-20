@@ -25,6 +25,7 @@ The fixes from [the master branch](https://github.com/hezkore/hez-gta-re3/tree/m
   - the music, cutscene and news files from your copy into `audio`: the `AUDIO` folders of a PS2 disc, or the `MUSIC`, `CUTSCENE` and `NEWS` mp3 folders from a mobile install
 - Build it yourself, or grab `reLCS-alpha-windows-amd64-d3d9.zip` or `reLCS-alpha-linux-amd64.zip` from the newest [nightly](https://github.com/hezkore/hez-gta-re3/releases).
 - Extract the zip over the directory and run the binary in it. When building it yourself, copy the files in `gamefiles` to the directory and put the `reLCS` binary next to them.
+- Start the binary with `-loadsave 1` to skip the menus and load save slot 1 straight away, and with `-cheat gunsgunsguns` to enter a cheat as soon as you can play. `-cheat` can be given several times. `-spawncar kuruma` puts you in that car on the nearest road.
 
 ## Building from Source
 
