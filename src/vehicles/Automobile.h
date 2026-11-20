@@ -86,6 +86,7 @@ public:
 	void ProcessControl(void);
 	void Teleport(CVector v);
 	void PreRender(void);
+	void AddPreRenderParticles(void);
 	void Render(void);
 
 	// from CPhysical
@@ -126,6 +127,7 @@ public:
 	void PlaceOnRoadProperly(void);
 	void dmgDrawCarCollidingParticles(const CVector &pos, float amount);
 	void AddDamagedVehicleParticles(void);
+	void AddHoverParticles(int32 wheel, float side, float maxRotationSpeed, float maxRotation);
 	int32 AddWheelDirtAndWater(CColPoint *colpoint, uint32 belowEffectSpeed);
 	void PlayHornIfNecessary(void);
 	void ResetSuspension(void);

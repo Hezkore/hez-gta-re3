@@ -1315,17 +1315,11 @@ CBike::Teleport(CVector pos)
 }
 
 void
-CBike::PreRender(void)
+CBike::AddPreRenderParticles(void)
 {
 	int i;
 	CVehicleModelInfo *mi = (CVehicleModelInfo*)CModelInfo::GetModelInfo(GetModelIndex());
-
-	// the lean moves once per logical frame, draw it between where it was and where it
-	// is. the lean matrix was worked out from where the bike is, the lights and the
-	// exhaust want it from where the bike is drawn. both are put back at the end
-	float realLean = m_fLeanLRAngle;
-	m_fLeanLRAngle = m_fPrevLeanLRAngle + (realLean - m_fPrevLeanLRAngle)*CTimer::GetLogicalFrameFraction();
-	bLeanMatrixClean = false;
+	float fwdSpeed = DotProduct(m_vecMoveSpeed, GetForward())*180.0f;
 
 	// Wheel particles
 
@@ -1360,6 +1354,117 @@ CBike::PreRender(void)
 		CSkidmarks::RegisterOne((uintptr)this, groundPos, GetForward().x, GetForward().y,
 			m_aWheelSkidmarkType[BIKEWHEEL_REAR], &m_aWheelSkidmarkBloody[BIKEWHEEL_REAR]);
 	}
+
+	int drawParticles = Abs(fwdSpeed) < 90.0f;
+	int susp = BIKESUSP_F1;
+	for(i = 0; i < 2; i++){
+		if(i == BIKEWHEEL_REAR)
+			susp = BIKESUSP_R1;
+
+		static float speedSq;
+		// Sparks for friction of burst wheels
+		if(m_wheelStatus[i] == WHEEL_STATUS_BURST && m_aSuspensionSpringRatioPrev[susp] < 1.0f &&
+		   (speedSq = m_vecMoveSpeed.MagnitudeSqr(), speedSq > SQR(0.1f)) &&
+		   m_aWheelColPoints[susp].surfaceB != SURFACE_GRASS &&
+		   m_aWheelColPoints[susp].surfaceB != SURFACE_MUD_DRY &&
+		   m_aWheelColPoints[susp].surfaceB != SURFACE_SAND &&
+		   m_aWheelColPoints[susp].surfaceB != SURFACE_SAND_BEACH){
+			CVector normalSpeed = m_aWheelColPoints[susp].normal * DotProduct(m_aWheelColPoints[susp].normal, m_vecMoveSpeed);
+			CVector frictionSpeed = m_vecMoveSpeed - normalSpeed;
+			CVector sparkDir = 0.25f*frictionSpeed;
+			CParticle::AddParticle(PARTICLE_SPARK_SMALL, m_aWheelColPoints[susp].point, sparkDir);
+
+			if(speedSq > 0.04f)
+				CParticle::AddParticle(PARTICLE_SPARK_SMALL, m_aWheelColPoints[susp].point, sparkDir);
+			if(speedSq > 0.16f){
+				CParticle::AddParticle(PARTICLE_SPARK_SMALL, m_aWheelColPoints[susp].point, sparkDir);
+				CParticle::AddParticle(PARTICLE_SPARK_SMALL, m_aWheelColPoints[susp].point, sparkDir);
+			}
+		}else if(m_aSuspensionSpringRatioPrev[i] < 1.0f &&
+		         (fwdSpeed > 0.2f || m_aWheelState[i] == WHEEL_STATE_SPINNING)){
+			if(m_aWheelColPoints[susp].surfaceB == SURFACE_GRASS ||
+			   m_aWheelColPoints[susp].surfaceB == SURFACE_MUD_DRY ||
+			   m_aWheelColPoints[susp].surfaceB == SURFACE_SAND ||
+			   m_aWheelColPoints[susp].surfaceB == SURFACE_SAND_BEACH)
+				AddWheelDirtAndWater(&m_aWheelColPoints[susp], drawParticles);
+		}
+	}
+
+	AddDamagedVehicleParticles();
+
+	// Exhaust smoke
+	if(bEngineOn && !(pHandling->Flags & HANDLING_NO_EXHAUST) && fwdSpeed < 130.0f){
+		CVector exhaustPos = mi->m_positions[CAR_POS_EXHAUST];
+		CVector pos1, pos2, dir;
+
+		if(exhaustPos != CVector(0.0f, 0.0f, 0.0f)){
+			dir.z = 0.0f;
+			if(fwdSpeed < 10.0f){
+				CVector steerFwd(-Sin(m_fSteerAngle), Cos(m_fSteerAngle), 0.0f);
+				steerFwd = Multiply3x3(GetMatrix(), steerFwd);
+				float r = CGeneral::GetRandomNumberInRange(-0.06f, -0.03f);
+				dir.x = steerFwd.x * r;
+				dir.y = steerFwd.y * r;
+			}else{
+				dir.x = m_vecMoveSpeed.x;
+				dir.y = m_vecMoveSpeed.y;
+			}
+
+			bool dblExhaust = false;
+			pos1 = GetMatrix() * exhaustPos;
+			if(pHandling->Flags & HANDLING_DBL_EXHAUST){
+				dblExhaust = true;
+				pos2 = exhaustPos;
+				pos2.x = -pos2.x;
+				pos2 = GetMatrix() * pos2;
+			}
+
+			static float fumesLimit = 2.0f;
+			if(CGeneral::GetRandomNumberInRange(1.0f, 3.0f)*(m_fGasPedal+1.1f) > fumesLimit){
+				CParticle::AddParticle(PARTICLE_EXHAUST_FUMES, pos1, dir);
+				if(dblExhaust)
+					CParticle::AddParticle(PARTICLE_EXHAUST_FUMES, pos2, dir);
+
+				if(GetStatus() == STATUS_PLAYER && (CTimer::GetFrameCounter()&3) == 0 &&
+				   CWeather::Rain == 0.0f){
+					CVector camDist = GetPosition() - TheCamera.GetPosition();
+					if(DotProduct(GetForward(), camDist) > 0.0f ||
+					   TheCamera.GetLookDirection() == LOOKING_LEFT ||
+					   TheCamera.GetLookDirection() == LOOKING_RIGHT){
+						if(dblExhaust)
+							pos1 = 0.5f*pos1 + 0.5f*pos2;
+
+						if(TheCamera.GetLookDirection() == LOOKING_LEFT ||
+						   TheCamera.GetLookDirection() == LOOKING_RIGHT)
+							pos1 -= 0.2f*GetForward();
+
+						//CParticle::AddParticle(PARTICLE_HEATHAZE, pos1, CVector(0.0f, 0.0f, 0.0f));
+					}
+				}
+			}
+		}
+	}
+}
+
+void
+CBike::PreRender(void)
+{
+	CVehicleModelInfo *mi = (CVehicleModelInfo*)CModelInfo::GetModelInfo(GetModelIndex());
+
+	// particles and skidmarks are added once per logical frame, see CRenderer::PreRender()
+	if(!CParticle::ms_bAddBlocked){
+		CParticleSourceScope scope(this);
+		// the lean matrix may have been worked out from where the bike is drawn
+		bLeanMatrixClean = false;
+		AddPreRenderParticles();
+	}
+
+	// the lean moves once per logical frame, draw it between where it was and where it
+	// is. the lean matrix was worked out from where the bike is, the lights want it from
+	// where the bike is drawn. both are put back at the end
+	float realLean = m_fLeanLRAngle;
+	m_fLeanLRAngle = m_fPrevLeanLRAngle + (realLean - m_fPrevLeanLRAngle)*CTimer::GetLogicalFrameFraction();
+	bLeanMatrixClean = false;
 
 	// Process lights
 
@@ -1561,46 +1666,6 @@ CBike::PreRender(void)
 		}
 	}
 
-
-	// Wheel particles
-
-	float fwdSpeed = DotProduct(m_vecMoveSpeed, GetForward())*180.0f;
-	int drawParticles = Abs(fwdSpeed) < 90.0f;
-	int susp = BIKESUSP_F1;
-	for(i = 0; i < 2; i++){
-		if(i == BIKEWHEEL_REAR)
-			susp = BIKESUSP_R1;
-
-		static float speedSq;
-		// Sparks for friction of burst wheels
-		if(m_wheelStatus[i] == WHEEL_STATUS_BURST && m_aSuspensionSpringRatioPrev[susp] < 1.0f &&
-		   (speedSq = m_vecMoveSpeed.MagnitudeSqr(), speedSq > SQR(0.1f)) &&
-		   m_aWheelColPoints[susp].surfaceB != SURFACE_GRASS &&
-		   m_aWheelColPoints[susp].surfaceB != SURFACE_MUD_DRY &&
-		   m_aWheelColPoints[susp].surfaceB != SURFACE_SAND &&
-		   m_aWheelColPoints[susp].surfaceB != SURFACE_SAND_BEACH){
-			CVector normalSpeed = m_aWheelColPoints[susp].normal * DotProduct(m_aWheelColPoints[susp].normal, m_vecMoveSpeed);
-			CVector frictionSpeed = m_vecMoveSpeed - normalSpeed;
-			CVector sparkDir = 0.25f*frictionSpeed;
-			CParticle::AddParticle(PARTICLE_SPARK_SMALL, m_aWheelColPoints[susp].point, sparkDir);
-
-			if(speedSq > 0.04f)
-				CParticle::AddParticle(PARTICLE_SPARK_SMALL, m_aWheelColPoints[susp].point, sparkDir);
-			if(speedSq > 0.16f){
-				CParticle::AddParticle(PARTICLE_SPARK_SMALL, m_aWheelColPoints[susp].point, sparkDir);
-				CParticle::AddParticle(PARTICLE_SPARK_SMALL, m_aWheelColPoints[susp].point, sparkDir);
-			}
-		}else if(m_aSuspensionSpringRatioPrev[i] < 1.0f &&
-		         (fwdSpeed > 0.2f || m_aWheelState[i] == WHEEL_STATE_SPINNING)){
-			if(m_aWheelColPoints[susp].surfaceB == SURFACE_GRASS ||
-			   m_aWheelColPoints[susp].surfaceB == SURFACE_MUD_DRY ||
-			   m_aWheelColPoints[susp].surfaceB == SURFACE_SAND ||
-			   m_aWheelColPoints[susp].surfaceB == SURFACE_SAND_BEACH)
-				AddWheelDirtAndWater(&m_aWheelColPoints[susp], drawParticles);
-		}
-	}
-
-	AddDamagedVehicleParticles();
 	CShadows::StoreShadowForVehicle(this, VEH_SHD_TYPE_BIKE);
 
 	CMatrix mat;
@@ -1716,59 +1781,6 @@ CBike::PreRender(void)
 		mat.RotateY(m_fLeanLRAngle);
 		mat.Translate(pos);
 		mat.UpdateRW();
-	}
-
-	// Exhaust smoke
-	if(bEngineOn && !(pHandling->Flags & HANDLING_NO_EXHAUST) && fwdSpeed < 130.0f){
-		CVector exhaustPos = mi->m_positions[CAR_POS_EXHAUST];
-		CVector pos1, pos2, dir;
-
-		if(exhaustPos != CVector(0.0f, 0.0f, 0.0f)){
-			dir.z = 0.0f;
-			if(fwdSpeed < 10.0f){
-				CVector steerFwd(-Sin(m_fSteerAngle), Cos(m_fSteerAngle), 0.0f);
-				steerFwd = Multiply3x3(GetMatrix(), steerFwd);
-				float r = CGeneral::GetRandomNumberInRange(-0.06f, -0.03f);
-				dir.x = steerFwd.x * r;
-				dir.y = steerFwd.y * r;
-			}else{
-				dir.x = m_vecMoveSpeed.x;
-				dir.y = m_vecMoveSpeed.y;
-			}
-
-			bool dblExhaust = false;
-			pos1 = GetMatrix() * exhaustPos;
-			if(pHandling->Flags & HANDLING_DBL_EXHAUST){
-				dblExhaust = true;
-				pos2 = exhaustPos;
-				pos2.x = -pos2.x;
-				pos2 = GetMatrix() * pos2;
-			}
-
-			static float fumesLimit = 2.0f;
-			if(CGeneral::GetRandomNumberInRange(1.0f, 3.0f)*(m_fGasPedal+1.1f) > fumesLimit){
-				CParticle::AddParticle(PARTICLE_EXHAUST_FUMES, pos1, dir);
-				if(dblExhaust)
-					CParticle::AddParticle(PARTICLE_EXHAUST_FUMES, pos2, dir);
-
-				if(GetStatus() == STATUS_PLAYER && (CTimer::GetFrameCounter()&3) == 0 &&
-				   CWeather::Rain == 0.0f){
-					CVector camDist = GetPosition() - TheCamera.GetPosition();
-					if(DotProduct(GetForward(), camDist) > 0.0f ||
-					   TheCamera.GetLookDirection() == LOOKING_LEFT ||
-					   TheCamera.GetLookDirection() == LOOKING_RIGHT){
-						if(dblExhaust)
-							pos1 = 0.5f*pos1 + 0.5f*pos2;
-
-						if(TheCamera.GetLookDirection() == LOOKING_LEFT ||
-						   TheCamera.GetLookDirection() == LOOKING_RIGHT)
-							pos1 -= 0.2f*GetForward();
-
-						//CParticle::AddParticle(PARTICLE_HEATHAZE, pos1, CVector(0.0f, 0.0f, 0.0f));
-					}
-				}
-			}
-		}
 	}
 
 	m_fLeanLRAngle = realLean;
