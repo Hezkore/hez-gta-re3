@@ -143,7 +143,21 @@ jobs:
             elif [ "$1" = "$2" ]; then
               echo "* no changes"
             else
-              git log --no-merges --pretty=format:'%B' "$1..$2" | sed '/^$/d; s/^/* /'
+              # the branch's own line only, so a merged pull request is one entry with its title
+              # instead of every commit inside it
+              git log --first-parent --format='%H %P' "$1..$2" | while read -r commit parent merged; do
+                if [ -n "$merged" ]; then
+                  pull_request=$(git log -1 --format='%s' "$commit" | sed -n 's/^Merge pull request #\([0-9]*\) from \([^/]*\)\/.*/#\1 by \2/p')
+                  title=$(git log -1 --format='%b' "$commit" | sed '/^$/d' | head -n 1)
+                  if [ -n "$pull_request" ]; then
+                    echo "* ${title:-pull request} ($pull_request)"
+                  else
+                    echo "* $(git log -1 --format='%s' "$commit")"
+                  fi
+                else
+                  git log -1 --format='%B' "$commit" | sed '/^$/d; s/^/* /'
+                fi
+              done
             fi
           }
 
