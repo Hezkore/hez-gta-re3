@@ -17,15 +17,14 @@ The fixes from [the master branch](https://github.com/hezkore/hez-gta-re3/tree/m
 * The menus have the text the game files are without, so the graphics page and its options read as they should.
 * The PSP hud keeps to its corners and draws at a sane size for a monitor. PSP hud scale under Render in the debug menu adjusts it.
 
-There are no nightlies for this branch, build it yourself.
-
 ## Installation
 
 - You **must** own the game. Liberty City Stories was not sold for PC, so that means [the mobile release](https://play.google.com/store/apps/details?id=com.rockstargames.gtalcs) or a PSP or PS2 copy.
 - The game data goes in a directory of your choice:
   - the converted files the reLCS project made, [lcs_dist.7z](http://gta.rockstarvision.com/lcs_dist.7z), extracted to the directory, and [lcs_dist_hires.7z](http://gta.rockstarvision.com/lcs_dist_hires.7z) extracted over its `models` if you want the sharper hud textures
   - the music, cutscene and news files from your copy into `audio`: the `AUDIO` folders of a PS2 disc, or the `MUSIC`, `CUTSCENE` and `NEWS` mp3 folders from a mobile install
-- Copy the files in `gamefiles` to the directory, then build and put the `reLCS` binary next to them and run it.
+- Build it yourself, or grab `reLCS-alpha-windows-amd64-d3d9.zip` or `reLCS-alpha-linux-amd64.zip` from the newest [nightly](https://github.com/hezkore/hez-gta-re3/releases).
+- Extract the zip over the directory and run the binary in it. When building it yourself, copy the files in `gamefiles` to the directory and put the `reLCS` binary next to them.
 
 ## Building from Source
 
