@@ -228,7 +228,7 @@ int32 nParticleCreationInterval = 1;
 float fParticleScaleLimit       = 0.5f;
 // how much of its source's movement a particle from a moving source keeps, so it travels a
 // little way with the source instead of standing still where it was let go
-float fSourceVelocityShare      = 0.15f;
+float fSourceVelocityShare      = 0.25f;
 
 #ifdef DEBUGMENU
 SETTWEAKPATH("Particle");
