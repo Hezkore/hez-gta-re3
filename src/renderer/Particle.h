@@ -108,6 +108,7 @@ class CParticleSourceScope
 public:
 	static bool ms_bActive;
 	static CMatrix ms_toPrevMatrix;
+	static CVector ms_inheritedVelocity;
 
 	CParticleSourceScope(CPhysical *source);
 	~CParticleSourceScope();

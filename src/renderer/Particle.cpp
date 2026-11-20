@@ -226,6 +226,9 @@ int32 Randomizer;
 
 int32 nParticleCreationInterval = 1;
 float fParticleScaleLimit       = 0.5f;
+// how much of its source's movement a particle from a moving source keeps, so it travels a
+// little way with the source instead of standing still where it was let go
+float fSourceVelocityShare      = 0.1f;
 
 #ifdef DEBUGMENU
 SETTWEAKPATH("Particle");
@@ -1031,8 +1034,13 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 	if ( fSize != 0.0f )
 		pParticle->m_fSize = fSize;
 
-	pParticle->m_vecPrevPosition = CParticleSourceScope::ms_bActive
-		? CParticleSourceScope::ms_toPrevMatrix * pParticle->m_vecPosition : pParticle->m_vecPosition;
+	if ( CParticleSourceScope::ms_bActive )
+	{
+		pParticle->m_vecPrevPosition = CParticleSourceScope::ms_toPrevMatrix * pParticle->m_vecPosition;
+		pParticle->m_vecVelocity += CParticleSourceScope::ms_inheritedVelocity;
+	}
+	else
+		pParticle->m_vecPrevPosition = pParticle->m_vecPosition;
 
 	m_pUnusedListHead = pParticle->m_pNext;
 
@@ -1045,6 +1053,7 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 
 bool CParticleSourceScope::ms_bActive;
 CMatrix CParticleSourceScope::ms_toPrevMatrix;
+CVector CParticleSourceScope::ms_inheritedVelocity;
 
 CParticleSourceScope::CParticleSourceScope(CPhysical *source)
 {
@@ -1057,6 +1066,8 @@ CParticleSourceScope::CParticleSourceScope(CPhysical *source)
 		source->GetMatrix().CopyOnlyMatrix(source->m_realMatrix);
 	}
 	ms_toPrevMatrix = source->GetPrevLogicalMatrix() * Invert(source->GetLogicalMatrix());
+	ms_inheritedVelocity = (source->GetLogicalMatrix().GetPosition() - source->GetPrevLogicalMatrix().GetPosition())
+		* fSourceVelocityShare;
 	ms_bActive = true;
 }
 
