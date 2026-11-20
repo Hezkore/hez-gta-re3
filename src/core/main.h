@@ -83,4 +83,5 @@ extern bool gbDrawVersionText;
 
 #ifdef NO_MOVIES
 extern bool gbNoMovies;
+bool IntroMoviesWanted(void);
 #endif

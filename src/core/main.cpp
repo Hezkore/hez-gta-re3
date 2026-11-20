@@ -110,6 +110,12 @@ bool gbDrawVersionText; // Our addition, we think it was always enabled on !MAST
 #endif
 #ifdef NO_MOVIES
 bool gbNoMovies = true;
+
+bool
+IntroMoviesWanted(void)
+{
+	return !gbNoMovies && CMenuManager::m_nStartUpSaveSlot == CMenuManager::NO_START_UP_SAVE_SLOT;
+}
 #endif
 
 volatile int32 frameCount;
