@@ -22,6 +22,7 @@ They are in both games. See [My fixes](https://github.com/hezkore/hez-gta-re3/tr
 - Build it yourself, or grab the newest [nightly](https://github.com/hezkore/hez-gta-re3/releases). Each nightly has these zips:
   - `re3-windows-amd64.zip`, `re3-windows-amd64-d3d9.zip` and `re3-linux-amd64.zip` for GTA III
   - `reVC-windows-amd64.zip`, `reVC-windows-amd64-d3d9.zip` and `reVC-linux-amd64.zip` for GTA Vice City
+  - `reLCS-alpha-windows-amd64-d3d9.zip` and `reLCS-alpha-linux-amd64.zip` for GTA Liberty City Stories, an unfinished alpha with its own setup on [the lcs branch](https://github.com/hezkore/hez-gta-re3/tree/lcs)
 - The Windows builds use OpenGL, and the `d3d9` builds use Direct3D 9. Only the `d3d9` builds play the intro videos.
 - Extract the zip over the game directory and run the binary in it. The zip has the binary, updated and additional gamefiles and the dlls OpenAL needs.
 
