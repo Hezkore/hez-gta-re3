@@ -1148,7 +1148,6 @@ CParticleSourceScope::CParticleSourceScope(CPhysical *source)
 	else
 		ms_toDrawnMatrix.SetUnity();
 	ms_toPrevMatrix = source->GetPrevLogicalMatrix() * Invert(source->GetLogicalMatrix());
-	// a particle moves by its velocity times the time step, the same units as the source's speed
 	ms_bActive = true;
 }
 
