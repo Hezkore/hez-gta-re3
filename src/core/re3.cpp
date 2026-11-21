@@ -720,13 +720,7 @@ TeleportToWaypoint(void)
 {
 	if (CRadar::TargetMarkerId == -1)
 		return;
-	CEntity* pEntityToTeleport = FindPlayerEntity();
-	CVector vNewPos = CRadar::TargetMarkerPos;
-	CGame::currLevel = CTheZones::GetLevelFromPosition(&vNewPos);
-	CCollision::SortOutCollisionAfterLoad();
-	CStreaming::LoadScene(vNewPos);
-	vNewPos.z = CWorld::FindGroundZForCoord(vNewPos.x, vNewPos.y) + pEntityToTeleport->GetDistanceFromCentreOfMassToBaseOfModel();
-	pEntityToTeleport->Teleport(vNewPos);
+	TeleportPlayer(CRadar::TargetMarkerPos, false);
 }
 #endif
 
