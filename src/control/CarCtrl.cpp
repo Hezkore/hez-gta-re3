@@ -21,6 +21,7 @@
 #include "PlayerPed.h"
 #include "Wanted.h"
 #include "Pools.h"
+#include "Population.h"
 #include "Renderer.h"
 #include "RoadBlocks.h"
 #include "Timer.h"
@@ -110,6 +111,8 @@ CCarCtrl::GenerateRandomCars()
 void
 CCarCtrl::GenerateOneRandomCar()
 {
+	if (!CPopulation::HasPedPoolRoomFor(MAX_PEDS_IN_ONE_VEHICLE))
+		return;
 	static int32 unk = 0;
 	CPlayerInfo* pPlayer = &CWorld::Players[CWorld::PlayerInFocus];
 	CVector vecTargetPos = FindPlayerCentreOfWorld(CWorld::PlayerInFocus);
@@ -2659,6 +2662,8 @@ void CCarCtrl::FindLinksToGoWithTheseNodes(CVehicle* pVehicle)
 
 void CCarCtrl::GenerateEmergencyServicesCar(void)
 {
+	if (!CPopulation::HasPedPoolRoomFor(MAX_PEDS_IN_ONE_VEHICLE))
+		return;
 	if (FindPlayerPed()->m_pWanted->GetWantedLevel() > 3)
 		return;
 	if (NumFiretrucksOnDuty + NumAmbulancesOnDuty + NumParkedCars + NumMissionCars +

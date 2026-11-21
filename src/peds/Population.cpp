@@ -575,6 +575,9 @@ CPopulation::AddToPopulation(float minDist, float maxDist, float minDistOffScree
 	int32 modelToAdd;
 	int pedAmount;
 
+	if (!HasPedPoolRoomFor(MAX_PEDS_IN_ONE_PLACEMENT))
+		return;
+
 	CZoneInfo zoneInfo;
 	CPed *gangLeader = nil;
 	bool addCop = false;
@@ -1171,4 +1174,11 @@ CPopulation::ManagePopulation(void)
 				RemovePed(ped);
 		}
 	}
+}
+
+bool
+CPopulation::HasPedPoolRoomFor(int32 peds)
+{
+	CPedPool *pool = CPools::GetPedPool();
+	return pool->GetSize() - pool->GetNoOfUsedSpaces() >= peds + PED_POOL_RESERVE;
 }
