@@ -31,12 +31,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           body=$(gh api repos/${{ github.repository }}/releases \
-            --jq '[.[] | select(.tag_name | startswith("nightly-"))] | first | .body // ""')
+            --jq '[.[] | select(.tag_name | startswith("nightly-"))] | first | .body // ""' | tr -d '\r')
 
           build=no
           for branch in master miami lcs; do
             sha=$(gh api repos/${{ github.repository }}/commits/$branch --jq .sha)
-            prev=$(echo "$body" | sed -n "s/^Built from $branch \([0-9a-f]\{40\}\)\.$/\1/p")
+            # notes edited on the web come back with \r\n, and older nightlies name every branch on one line
+            prev=$(echo "$body" | grep '^Built from ' | grep -o "\b$branch [0-9a-f]\{40\}\b" | cut -d' ' -f2 || true)
             if [ "$sha" != "$prev" ]; then
               build=yes
             fi
