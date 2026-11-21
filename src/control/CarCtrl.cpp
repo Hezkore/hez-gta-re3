@@ -133,7 +133,7 @@ CCarCtrl::GenerateRandomCars()
 void
 CCarCtrl::GenerateOneRandomCar()
 {
-	if (!CPopulation::HasPedPoolRoomFor(MAX_PEDS_IN_ONE_VEHICLE))
+	if (!CPopulation::HasPedPoolRoomForRandomSpawn())
 		return;
 	static int32 unk = 0;
 	bool bTopDownCamera = false;
@@ -3170,7 +3170,7 @@ void CCarCtrl::FindLinksToGoWithTheseNodes(CVehicle* pVehicle)
 
 void CCarCtrl::GenerateEmergencyServicesCar(void)
 {
-	if (!CPopulation::HasPedPoolRoomFor(MAX_PEDS_IN_ONE_VEHICLE))
+	if (!CPopulation::HasPedPoolRoomForRandomSpawn())
 		return;
 	if (FindPlayerPed()->m_pWanted->GetWantedLevel() > 3)
 		return;

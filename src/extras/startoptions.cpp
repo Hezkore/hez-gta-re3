@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include <ctype.h>
+#include <math.h>
 
 #include "startoptions.h"
 #include "Automobile.h"
@@ -48,11 +49,13 @@ StartOptions::SetCar(const char *modelName)
 void
 StartOptions::SetTeleport(const char *coordinates)
 {
-	int count = sscanf(coordinates, "%f,%f,%f", &teleportPosition.x, &teleportPosition.y, &teleportPosition.z);
-	if ( count < TELEPORT_GROUND_VALUES ) {
+	CVector position(0.0f, 0.0f, 0.0f);
+	int count = sscanf(coordinates, "%f,%f,%f", &position.x, &position.y, &position.z);
+	if ( count < TELEPORT_GROUND_VALUES || !isfinite(position.x) || !isfinite(position.y) || !isfinite(position.z) ) {
 		printf("-teleport needs x,y or x,y,z, not %s\n", coordinates);
 		return;
 	}
+	teleportPosition = position;
 	hasTeleportHeight = count == TELEPORT_ALL_VALUES;
 	isTeleportWaiting = true;
 }
