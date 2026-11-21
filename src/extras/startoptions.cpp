@@ -20,9 +20,14 @@
 #define SPAWN_HEIGHT 4.0f
 #define SPAWN_HEADING 3.49f
 #define BOAT_SPAWN_DISTANCE 15.0f
+#define TELEPORT_GROUND_VALUES 2
+#define TELEPORT_ALL_VALUES 3
 
 static char cheats[CHEATS_SIZE];
 static char carName[CAR_NAME_SIZE];
+static bool isTeleportWaiting;
+static bool hasTeleportHeight;
+static CVector teleportPosition;
 
 void
 StartOptions::AddCheat(const char *cheat)
@@ -38,6 +43,18 @@ StartOptions::SetCar(const char *modelName)
 {
 	strncpy(carName, modelName, CAR_NAME_SIZE - 1);
 	carName[CAR_NAME_SIZE - 1] = '\0';
+}
+
+void
+StartOptions::SetTeleport(const char *coordinates)
+{
+	int count = sscanf(coordinates, "%f,%f,%f", &teleportPosition.x, &teleportPosition.y, &teleportPosition.z);
+	if ( count < TELEPORT_GROUND_VALUES ) {
+		printf("-teleport needs x,y or x,y,z, not %s\n", coordinates);
+		return;
+	}
+	hasTeleportHeight = count == TELEPORT_ALL_VALUES;
+	isTeleportWaiting = true;
 }
 
 static bool
@@ -80,11 +97,16 @@ SpawnCarForPlayer(void)
 void
 StartOptions::Apply(void)
 {
-	if ( (cheats[0] == '\0' && carName[0] == '\0') || !IsPlayerInControl() )
+	if ( (cheats[0] == '\0' && carName[0] == '\0' && !isTeleportWaiting) || !IsPlayerInControl() )
 		return;
 
 	if ( cheats[0] != '\0' )
 		TypeCheats();
+	if ( isTeleportWaiting ) {
+		debug("teleporting to %f,%f,%f\n", teleportPosition.x, teleportPosition.y, teleportPosition.z);
+		TeleportPlayer(teleportPosition, hasTeleportHeight);
+		isTeleportWaiting = false;
+	}
 	if ( carName[0] != '\0' )
 		SpawnCarForPlayer();
 }
@@ -124,4 +146,15 @@ SpawnCarOnNearestRoad(int32 modelId)
 	vehicle->m_nDoorLock = CARLOCK_UNLOCKED;
 	CWorld::Add(vehicle);
 	return vehicle;
+}
+
+void
+TeleportPlayer(CVector position, bool hasHeight)
+{
+	CEntity *player = FindPlayerEntity();
+	CStreaming::LoadScene(position);
+	CStreaming::LoadSceneCollision(position);
+	if ( !hasHeight )
+		position.z = CWorld::FindGroundZForCoord(position.x, position.y) + player->GetDistanceFromCentreOfMassToBaseOfModel();
+	player->Teleport(position);
 }

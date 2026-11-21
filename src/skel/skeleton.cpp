@@ -157,6 +157,7 @@ rsPreInitCommandLine(RwChar *arg)
 	static const RwChar *OPTION_LOAD_SAVE = RWSTRING("-loadsave");
 	static const RwChar *OPTION_CHEAT = RWSTRING("-cheat");
 	static const RwChar *OPTION_SPAWN_CAR = RWSTRING("-spawncar");
+	static const RwChar *OPTION_TELEPORT = RWSTRING("-teleport");
 	static const RwChar *optionTakingValue = nil;
 	if( optionTakingValue )
 	{
@@ -170,8 +171,10 @@ rsPreInitCommandLine(RwChar *arg)
 		}
 		else if( optionTakingValue == OPTION_CHEAT )
 			StartOptions::AddCheat(arg);
-		else
+		else if( optionTakingValue == OPTION_SPAWN_CAR )
 			StartOptions::SetCar(arg);
+		else
+			StartOptions::SetTeleport(arg);
 
 		optionTakingValue = nil;
 		return TRUE;
@@ -189,6 +192,11 @@ rsPreInitCommandLine(RwChar *arg)
 	if( !strcmp(arg, OPTION_SPAWN_CAR) )
 	{
 		optionTakingValue = OPTION_SPAWN_CAR;
+		return TRUE;
+	}
+	if( !strcmp(arg, OPTION_TELEPORT) )
+	{
+		optionTakingValue = OPTION_TELEPORT;
 		return TRUE;
 	}
 
