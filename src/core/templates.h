@@ -164,6 +164,7 @@ public:
 				n++;
 		return n;
 	}
+	int32 GetNoOfFreeSpaces() const { return GetSize() - GetNoOfUsedSpaces(); }
 	void ClearStorage(uint8 *&flags, U *&entries){
 		delete[] flags;
 		delete[] (uint8*)entries;

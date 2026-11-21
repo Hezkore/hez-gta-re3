@@ -5,10 +5,8 @@
 
 // Ped pool slots that random peds and cars leave free for mission and script peds
 #define PED_POOL_RESERVE 8
-// The most peds one population spawn places, such as a gang group
-#define MAX_PEDS_IN_ONE_PLACEMENT 4
-// A driver and a full set of passengers
-#define MAX_PEDS_IN_ONE_VEHICLE 9
+// The most peds one random spawn adds at once, a police car with four cops, as many as the biggest gang group
+#define MAX_PEDS_IN_ONE_SPAWN 4
 
 class CPed;
 class CVehicle;
@@ -87,7 +85,7 @@ public:
 	static CPed *AddPed(ePedType pedType, uint32 mi, CVector const &coors);
 	static void AddToPopulation(float, float, float, float);
 	static void ManagePopulation(void);
-	static bool HasPedPoolRoomFor(int32 peds);
+	static bool HasPedPoolRoomForRandomSpawn(void);
 	static void MoveCarsAndPedsOutOfAbandonedZones(void);
 	static void ConvertToRealObject(CDummyObject*);
 	static void ConvertToDummyObject(CObject*);
