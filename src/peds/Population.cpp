@@ -524,6 +524,9 @@ CPopulation::AddToPopulation(float minDist, float maxDist, float minDistOffScree
 	int32 modelToAdd;
 	int pedAmount;
 
+	if (!HasPedPoolRoomFor(MAX_PEDS_IN_ONE_PLACEMENT))
+		return;
+
 	CZoneInfo zoneInfo;
 	int32 man = -1, woman = -1;
 	CPed *gangLeader = nil;
@@ -1218,11 +1221,17 @@ CPopulation::CanJeerAtStripper(int32 model)
 	return false;
 }
 
+bool
+CPopulation::HasPedPoolRoomFor(int32 peds)
+{
+	return CPools::GetPedPool()->GetNoOfFreeSpaces() >= peds + PED_POOL_RESERVE;
+}
+
 void
 CPopulation::RemovePedsIfThePoolGetsFull(void)
 {
 	if ((CTimer::GetFrameCounter() & 7) == 5) {
-		if (CPools::GetPedPool()->GetNoOfFreeSpaces() < 8) {
+		if (CPools::GetPedPool()->GetNoOfFreeSpaces() < PED_POOL_RESERVE) {
 			CPed *closestPed = nil;
 			float closestDist = 10000000.0;
 			int poolSize = CPools::GetPedPool()->GetSize();

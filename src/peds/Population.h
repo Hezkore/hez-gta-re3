@@ -3,6 +3,13 @@
 #include "Game.h"
 #include "PedType.h"
 
+// Ped pool slots that random peds and cars leave free for mission and script peds
+#define PED_POOL_RESERVE 8
+// The most peds one population spawn places, such as a mall group
+#define MAX_PEDS_IN_ONE_PLACEMENT 6
+// A driver and a full set of passengers
+#define MAX_PEDS_IN_ONE_VEHICLE 9
+
 class CPed;
 class CVehicle;
 class CDummyObject;
@@ -72,6 +79,7 @@ public:
 	static bool IsSkateable(CVector const&);
 	static bool CanJeerAtStripper(int32 model);
 	static void RemovePedsIfThePoolGetsFull(void);
+	static bool HasPedPoolRoomFor(int32 peds);
 	static bool IsMale(int32);
 	static bool IsFemale(int32);
 	static bool IsSunbather(int32);
