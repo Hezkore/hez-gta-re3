@@ -524,7 +524,7 @@ CPopulation::AddToPopulation(float minDist, float maxDist, float minDistOffScree
 	int32 modelToAdd;
 	int pedAmount;
 
-	if (!HasPedPoolRoomFor(MAX_PEDS_IN_ONE_PLACEMENT))
+	if (!HasPedPoolRoomForRandomSpawn())
 		return;
 
 	CZoneInfo zoneInfo;
@@ -1222,9 +1222,9 @@ CPopulation::CanJeerAtStripper(int32 model)
 }
 
 bool
-CPopulation::HasPedPoolRoomFor(int32 peds)
+CPopulation::HasPedPoolRoomForRandomSpawn(void)
 {
-	return CPools::GetPedPool()->GetNoOfFreeSpaces() >= peds + PED_POOL_RESERVE;
+	return CPools::GetPedPool()->GetNoOfFreeSpaces() >= MAX_PEDS_IN_ONE_SPAWN + PED_POOL_RESERVE;
 }
 
 void
