@@ -116,7 +116,7 @@ cMusicManager::ResetMusicAfterReload()
 		if (trackPos != -1) {
 			if (trackPos > m_aTracks[i].m_nLength) {
 				debug("Radio Track %d saved position is %d, Length is only %d\n", i, trackPos, m_aTracks[i].m_nLength);
-				trackPos %= m_aTracks[i].m_nLength;
+				trackPos = m_aTracks[i].WrapPosition(trackPos);
 			}
 			m_aTracks[i].m_nPosition = trackPos;
 			m_aTracks[i].m_nLastPosCheckTimer = CTimer::GetTimeInMillisecondsPauseMode();
@@ -165,7 +165,7 @@ cMusicManager::SetStartingTrackPositions(bool8 isNewGameTimer)
 			if (i < STREAMED_SOUND_CITY_AMBIENT && isNewGameTimer)
 				m_aTracks[i].m_nPosition = NewGameRadioTimers[i];
 			else if (i < STREAMED_SOUND_ANNOUNCE_BRIDGE_CLOSED)
-				m_aTracks[i].m_nPosition = (pos * AudioManager.m_anRandomTable[i % 5]) % m_aTracks[i].m_nLength;
+				m_aTracks[i].m_nPosition = m_aTracks[i].WrapPosition(pos * AudioManager.m_anRandomTable[i % 5]);
 			else
 				m_aTracks[i].m_nPosition = 0;
 			
@@ -232,7 +232,7 @@ cMusicManager::SetRadioChannelByScript(uint32 station, int32 pos)
 		if (station <= STREAMED_SOUND_RADIO_POLICE) {
 			m_bRadioSetByScript = TRUE;
 			m_nRadioStationScript = station;
-			m_nRadioPosition = pos == -1 ? -1 : pos % m_aTracks[station].m_nLength;
+			m_nRadioPosition = pos == -1 ? -1 : m_aTracks[station].WrapPosition(pos);
 		}
 	}
 }
@@ -1193,7 +1193,7 @@ cMusicManager::GetTrackStartPos(uint32 track)
 		m_aTracks[track].m_nLastPosCheckTimer = CTimer::GetTimeInMillisecondsPauseMode();
 
 	if (pos > m_aTracks[track].m_nLength)
-		pos %= m_aTracks[track].m_nLength;
+		pos = m_aTracks[track].WrapPosition(pos);
 	return pos;
 }
 
