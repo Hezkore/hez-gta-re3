@@ -310,6 +310,140 @@ IsThisTrackAt16KHz(uint32 track)
 	return false;// track == STREAMED_SOUND_RADIO_KCHAT || track == STREAMED_SOUND_RADIO_VCPR || track == STREAMED_SOUND_RADIO_POLICE;
 }
 
+#define STREAMED_SAMPLE_RATE (32000)
+#define STREAMED_LOW_SAMPLE_RATE (16000)
+
+// Only matters for headerless .VB files, the others carry their own rate
+static uint32
+GetStreamedSampleRate(uint32 track)
+{
+	return IsThisTrackAt16KHz(track) ? STREAMED_LOW_SAMPLE_RATE : STREAMED_SAMPLE_RATE;
+}
+
+#define MAX_STREAMED_PATHS (3)
+#define STREAMED_PATH_LENGTH (64)
+#define STREAMED_PATH_LIST_LENGTH (MAX_STREAMED_PATHS * (STREAMED_PATH_LENGTH + 8))
+#define STREAM_CACHE_PATH "audio\\sound.cache"
+
+typedef char tStreamedPath[STREAMED_PATH_LENGTH];
+
+static const char *STREAMED_EXTENSIONS[] = { "VB", "MP3" };
+
+// Every path a streamed sound may be at, in the order they are tried
+static int32
+GetStreamedPaths(uint32 nFile, tStreamedPath *paths)
+{
+	int32 count = 0;
+	for (const char *extension : STREAMED_EXTENSIONS)
+		sprintf(paths[count++], "%s.%s", StreamedNameTable[nFile], extension);
+	return count;
+}
+
+static bool
+OpenStreamedSound(CStream *stream, uint32 nFile)
+{
+	tStreamedPath paths[MAX_STREAMED_PATHS];
+	int32 count = GetStreamedPaths(nFile, paths);
+	for (int32 i = 0; i < count; i++)
+		if (stream->Open(paths[i], GetStreamedSampleRate(nFile)))
+			return true;
+	return false;
+}
+
+static void
+ReportMissingStreamedSound(uint32 nFile)
+{
+	tStreamedPath paths[MAX_STREAMED_PATHS];
+	int32 count = GetStreamedPaths(nFile, paths);
+
+	char list[STREAMED_PATH_LIST_LENGTH] = "";
+	for (int32 i = 0; i < count; i++) {
+		if (i > 0)
+			strcat(list, i == count - 1 ? " or " : ", ");
+		strcat(list, "'");
+		strcat(list, paths[i]);
+		strcat(list, "'");
+	}
+	USERERROR("Can't open %s\n", list);
+}
+
+// Returns false when a file is missing
+static bool
+MeasureStreamLengths(CStream *stream)
+{
+	bool areAllFound = true;
+	for (int32 i = 0; i < TOTAL_STREAMED_SOUNDS; i++) {
+		if (stream && OpenStreamedSound(stream, i)) {
+			nStreamLength[i] = stream->GetLengthMS();
+			stream->Close();
+		} else {
+			ReportMissingStreamedSound(i);
+			nStreamLength[i] = 0;
+			areAllFound = false;
+		}
+	}
+	return areAllFound;
+}
+
+#ifdef AUDIO_CACHE
+// The size of the first path that exists, so the cache notices a swapped file, such as a .WAV for a .VB
+static uint32
+GetStreamedFileSize(uint32 nFile)
+{
+	tStreamedPath paths[MAX_STREAMED_PATHS];
+	int32 count = GetStreamedPaths(nFile, paths);
+	for (int32 i = 0; i < count; i++) {
+		FILE *file = fcaseopen(paths[i], "rb");
+		if (file) {
+			fseek(file, 0, SEEK_END);
+			uint32 size = ftell(file);
+			fclose(file);
+			return size;
+		}
+	}
+	return 0;
+}
+
+// The cache holds every length, then the size of each file it measured
+static bool
+LoadStreamLengthCache(void)
+{
+	FILE *cacheFile = fcaseopen(STREAM_CACHE_PATH, "rb");
+	if (!cacheFile)
+		return false;
+
+	uint32 cachedSizes[TOTAL_STREAMED_SOUNDS];
+	size_t count = fread(nStreamLength, sizeof(uint32), TOTAL_STREAMED_SOUNDS, cacheFile);
+	count += fread(cachedSizes, sizeof(uint32), TOTAL_STREAMED_SOUNDS, cacheFile);
+	fclose(cacheFile);
+	if (count != 2 * TOTAL_STREAMED_SOUNDS)
+		return false;
+
+	for (int32 i = 0; i < TOTAL_STREAMED_SOUNDS; i++)
+		if (nStreamLength[i] == 0 || cachedSizes[i] != GetStreamedFileSize(i))
+			return false;
+	return true;
+}
+
+static void
+SaveStreamLengthCache(void)
+{
+	FILE *cacheFile = fcaseopen(STREAM_CACHE_PATH, "wb");
+	if (!cacheFile) {
+		debug("Cannot save audio cache\n");
+		return;
+	}
+
+	uint32 sizes[TOTAL_STREAMED_SOUNDS];
+	for (int32 i = 0; i < TOTAL_STREAMED_SOUNDS; i++)
+		sizes[i] = GetStreamedFileSize(i);
+	fwrite(nStreamLength, sizeof(uint32), TOTAL_STREAMED_SOUNDS, cacheFile);
+	fwrite(sizes, sizeof(uint32), TOTAL_STREAMED_SOUNDS, cacheFile);
+	fclose(cacheFile);
+	debug("Saved audio cache\n");
+}
+#endif
+
 cSampleManager::cSampleManager(void)
 {
 	;
@@ -988,51 +1122,11 @@ cSampleManager::Initialise(void)
 	}
 
 #ifdef AUDIO_CACHE
-	FILE *cacheFile = fcaseopen("audio\\sound.cache", "rb");
-	if (cacheFile) {
-		debug("Loadind audio cache (If game crashes around here, then your cache is corrupted, remove audio/sound.cache)\n");
-		fread(nStreamLength, sizeof(uint32), TOTAL_STREAMED_SOUNDS, cacheFile);
-		fclose(cacheFile);
-	} else
-	{
-		debug("Cannot load audio cache\n");
-#endif
-
-		for ( int32 i = 0; i < TOTAL_STREAMED_SOUNDS; i++ )
-		{	
-			bool opened = false;
-			char filename[MAX_PATH];
-			sprintf(filename, "%s.VB", StreamedNameTable[i]);
-			if ( aStream[0] )
-				opened = aStream[0]->Open(filename, IsThisTrackAt16KHz(i) ? 16000 : 32000);
-			
-			if ( !opened )
-			{
-				sprintf(filename, "%s.MP3", StreamedNameTable[i]);
-				if ( aStream[0] )
-				{
-					opened = aStream[0]->Open(filename, IsThisTrackAt16KHz(i) ? 16000 : 32000);
-				}
-			}
-			if ( opened )
-			{
-				uint32 tatalms = aStream[0]->GetLengthMS();
-				aStream[0]->Close();
-				
-				nStreamLength[i] = tatalms;
-			} else
-				USERERROR("Can't open '%s'\n", StreamedNameTable[i]);
-		}
-#ifdef AUDIO_CACHE
-		cacheFile = fcaseopen("audio\\sound.cache", "wb");
-		if(cacheFile) {
-			debug("Saving audio cache\n");
-			fwrite(nStreamLength, sizeof(uint32), TOTAL_STREAMED_SOUNDS, cacheFile);
-			fclose(cacheFile);
-		} else {
-			debug("Cannot save audio cache\n");
-		}
-	}
+	// Only a full set is cached, so files added later are found on the next start
+	if (!LoadStreamLengthCache() && MeasureStreamLengths(aStream[0]))
+		SaveStreamLengthCache();
+#else
+	MeasureStreamLengths(aStream[0]);
 #endif
 
 	{
@@ -1821,8 +1915,6 @@ cSampleManager::StopChannel(uint32 nChannel)
 void
 cSampleManager::PreloadStreamedFile(uint32 nFile, uint8 nStream)
 {
-	char filename[MAX_PATH];
-	
 	ASSERT( nStream < MAX_STREAMS );
 
 	if ( nFile < TOTAL_STREAMED_SOUNDS )
@@ -1830,13 +1922,7 @@ cSampleManager::PreloadStreamedFile(uint32 nFile, uint8 nStream)
 		CStream *stream = aStream[nStream];
 
 		stream->Close();
-		sprintf(filename, "%s.VB", StreamedNameTable[nFile]);
-		bool opened = stream->Open(filename, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
-		if ( !opened )
-		{
-			sprintf(filename, "%s.MP3", StreamedNameTable[nFile]);
-			opened = stream->Open(filename, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
-		}
+		bool opened = OpenStreamedSound(stream, nFile);
 		
 		if ( opened && !stream->Setup() )
 		{
@@ -1898,16 +1984,8 @@ cSampleManager::StartStreamedFile(uint32 nFile, uint32 nPos, uint8 nStream)
 				if(!_GetMP3PosFromStreamPos(&position, &e) && !e) {
 					nFile = 0;
 
-					sprintf(filename, "%s.VB", StreamedNameTable[nFile]);
-
 					CStream *stream = aStream[nStream];
-					bool opened = stream->Open(filename, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
-					
-					if ( !opened )
-					{
-						sprintf(filename, "%s.MP3", StreamedNameTable[nFile]);
-						opened = stream->Open(filename, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
-					}
+					bool opened = OpenStreamedSound(stream, nFile);
 					
 					if ( opened && stream->Setup() ) {
 						stream->SetLoopCount(nStreamLoopedFlag[nStream] ? 0 : 1);
@@ -1926,7 +2004,7 @@ cSampleManager::StartStreamedFile(uint32 nFile, uint32 nPos, uint8 nStream)
 				} else {
 
 					if (e->pLinkPath != NULL)
-						aStream[nStream]->Open(e->pLinkPath, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
+						aStream[nStream]->Open(e->pLinkPath, GetStreamedSampleRate(nFile));
 					else {
 						strcpy(filename, _mp3DirectoryPath);
 						strcat(filename, e->aFilename);
@@ -1960,16 +2038,8 @@ cSampleManager::StartStreamedFile(uint32 nFile, uint32 nPos, uint8 nStream)
 					{
 						nFile = 0;
 						_bIsMp3Active = FALSE;
-						sprintf(filename, "%s.VB", StreamedNameTable[nFile]);
-
 						CStream* stream = aStream[nStream];
-						bool opened = stream->Open(filename, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
-
-						if ( !opened )
-						{
-							sprintf(filename, "%s.MP3", StreamedNameTable[nFile]);
-							opened = stream->Open(filename, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
-						}
+						bool opened = OpenStreamedSound(stream, nFile);
 						
 						if (opened && stream->Setup()) {
 							stream->SetLoopCount(nStreamLoopedFlag[nStream] ? 0 : 1);
@@ -1987,12 +2057,12 @@ cSampleManager::StartStreamedFile(uint32 nFile, uint32 nPos, uint8 nStream)
 					}
 				}
 				if (mp3->pLinkPath != NULL)
-					aStream[nStream]->Open(mp3->pLinkPath, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
+					aStream[nStream]->Open(mp3->pLinkPath, GetStreamedSampleRate(nFile));
 				else {
 					strcpy(filename, _mp3DirectoryPath);
 					strcat(filename, mp3->aFilename);
 
-					aStream[nStream]->Open(filename, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
+					aStream[nStream]->Open(filename, GetStreamedSampleRate(nFile));
 				}
 
 				if (aStream[nStream]->Setup()) {
@@ -2012,17 +2082,8 @@ cSampleManager::StartStreamedFile(uint32 nFile, uint32 nPos, uint8 nStream)
 		position = 0;
 		nFile = 0;
 	}
-	sprintf(filename, "%s.VB", StreamedNameTable[nFile]);
-
 	CStream *stream = aStream[nStream];
-	
-	bool opened = stream->Open(filename, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
-
-	if ( !opened )
-	{
-		sprintf(filename, "%s.MP3", StreamedNameTable[nFile]);
-		opened = stream->Open(filename, IsThisTrackAt16KHz(nFile) ? 16000 : 32000);
-	}
+	bool opened = OpenStreamedSound(stream, nFile);
 	
 	if ( opened && stream->Setup() ) {
 		stream->SetLoopCount(nStreamLoopedFlag[nStream] ? 0 : 1);

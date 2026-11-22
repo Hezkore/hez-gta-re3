@@ -227,6 +227,9 @@ class CWavFile : public IDecoder
 		delete[] m_pAdpcmBuffer;
 		delete[] m_ppPcmBuffers;
 		delete[] m_pAdpcmDecoders;
+		m_pAdpcmBuffer = nil;
+		m_ppPcmBuffers = nil;
+		m_pAdpcmDecoders = nil;
 	}
 
 	uint32 GetCurrentSample() const
@@ -1269,29 +1272,31 @@ bool CStream::Open(const char* filename, uint32 overrideSampleRate)
 		
 	DEV("Stream %s\n", m_aFilename);
 
+	IDecoder *decoder;
 	if (!strcasecmp(&m_aFilename[strlen(m_aFilename) - strlen(".wav")], ".wav"))
 #ifdef AUDIO_OAL_USE_SNDFILE
-		m_pSoundFile = new CSndFile(m_aFilename);
+		decoder = new CSndFile(m_aFilename);
 #else
-		m_pSoundFile = new CWavFile(m_aFilename);
+		decoder = new CWavFile(m_aFilename);
 #endif
 #ifdef AUDIO_OAL_USE_MPG123
 	else if (!strcasecmp(&m_aFilename[strlen(m_aFilename) - strlen(".mp3")], ".mp3"))
-		m_pSoundFile = new CMP3File(m_aFilename);
+		decoder = new CMP3File(m_aFilename);
 	else if (!strcasecmp(&m_aFilename[strlen(m_aFilename) - strlen(".adf")], ".adf"))
-		m_pSoundFile = new CADFFile(m_aFilename);
+		decoder = new CADFFile(m_aFilename);
 #endif
 	else if (!strcasecmp(&m_aFilename[strlen(m_aFilename) - strlen(".vb")], ".VB"))
-		m_pSoundFile = new CVbFile(m_aFilename, overrideSampleRate);
+		decoder = new CVbFile(m_aFilename, overrideSampleRate);
 #ifdef AUDIO_OAL_USE_OPUS
 	else if (!strcasecmp(&m_aFilename[strlen(m_aFilename) - strlen(".opus")], ".opus"))
-		m_pSoundFile = new COpusFile(m_aFilename);
+		decoder = new COpusFile(m_aFilename);
 #endif
-	else 
-		m_pSoundFile = nil;
+	else
+		decoder = nil;
 
-	if ( m_pSoundFile && m_pSoundFile->IsOpened() )
+	if ( decoder && decoder->IsOpened() )
 	{
+		m_pSoundFile = decoder;
 		uint32 bufSize = m_pSoundFile->GetBufferSize();
 		if(bufSize != 0) { // Otherwise it's deferred
 			m_pBuffer = malloc(bufSize);
@@ -1310,6 +1315,9 @@ bool CStream::Open(const char* filename, uint32 overrideSampleRate)
 #endif
 		return true;
 	}
+
+	// The stream thread may still read the old m_pSoundFile, so a failed decoder never replaces it
+	delete decoder;
 	return false;
 }
 
