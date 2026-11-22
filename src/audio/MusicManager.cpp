@@ -265,7 +265,7 @@ cMusicManager::Initialise()
 
 		for (int i = 0; i < TOTAL_STREAMED_SOUNDS; i++) {
 			m_aTracks[i].m_nLength = SampleManager.GetStreamedFileLength(i);
-			m_aTracks[i].m_nPosition = pos * AudioManager.m_anRandomTable[i % 5] % m_aTracks[i].m_nLength;
+			m_aTracks[i].m_nPosition = m_aTracks[i].WrapPosition(pos * AudioManager.m_anRandomTable[i % 5]);
 			m_aTracks[i].m_nLastPosCheckTimer = CTimer::GetTimeInMillisecondsPauseMode();
 		}
 
@@ -398,7 +398,7 @@ cMusicManager::SetRadioChannelByScript(uint8 station, int32 pos)
 	if (m_bIsInitialised && station < RADIO_OFF) {
 		m_bRadioSetByScript = TRUE;
 		m_nRadioStationScript = station;
-		m_nRadioPosition = pos == -1 ? -1 : pos % m_aTracks[station].m_nLength;
+		m_nRadioPosition = pos == -1 ? -1 : m_aTracks[station].WrapPosition(pos);
 	}
 }
 
@@ -801,7 +801,7 @@ cMusicManager::GetTrackStartPos(uint8 track)
 		m_aTracks[track].m_nLastPosCheckTimer = CTimer::GetTimeInMillisecondsPauseMode();
 
 	if (pos > m_aTracks[track].m_nLength)
-		pos %= m_aTracks[track].m_nLength;
+		pos = m_aTracks[track].WrapPosition(pos);
 	return pos;
 }
 

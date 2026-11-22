@@ -23,6 +23,7 @@ Audio is done with MSS (using dlls from original GTA) or OpenAL.
 * The left mouse button fires on a Wayland desktop.
 * The defaults are the best the game can look: map memory usage high, rim lights, lightmaps and road gloss on, draw distance at max, VSync on, no FPS limit.
 * On screens wider than 16:9 the HUD, subtitles and loading screens stay in a 16:9 box, and cutscenes are not zoomed in. EXTEND HUD under Display puts the HUD at the screen edges.
+* PS2 .VB radio and cutscene audio plays without VBDec, from the PS2 folders, such as `audio\MUSIC\HEAD.VB`, or the VBDec layout, such as `audio\HEAD.VB`.
 * The game starts on a Wayland desktop instead of quitting with `GLFW Error: X11: Platform not initialized`.
 
 ## Installation

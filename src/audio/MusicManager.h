@@ -8,6 +8,9 @@ public:
 	uint32 m_nLength;
 	uint32 m_nPosition;
 	uint32 m_nLastPosCheckTimer;
+
+	// A missing file has no length, so it stays at the start instead of dividing by zero
+	uint32 WrapPosition(uint32 pos) const { return m_nLength != 0 ? pos % m_nLength : 0; }
 };
 
 class CVehicle;
