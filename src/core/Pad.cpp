@@ -2164,6 +2164,7 @@ CControllerState CPad::GetStateForScripts(void)
 		state.LeftShoulder1 = NewState.DPadRight;	// radio
 		state.LeftShoulder2 = NewState.LeftShoulder1;	// look left
 		state.RightShoulder2 = NewState.RightShoulder1;	// look right
+		state.RightShock = NewState.DPadDown;	// sub-missions, since R3 looks behind
 	} else {
 		state.Circle = NewState.RightShoulder2;	// fire
 		state.RightShoulder1 = NewState.LeftShoulder2;	// target
@@ -2464,9 +2465,9 @@ bool CPad::GetLookBehindForCar(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	// both triggers, as every other setup and the pad picture have it
+	// R3 as in GTA IV and V, since both triggers are the gas and the brake there
 	if ( GetSetupInUse() == CONTROLLER_SETUP_GTA4 )
-		return !!(NewState.LeftShoulder2 && NewState.RightShoulder2);
+		return !!NewState.RightShock;
 
 	return !!(NewState.RightShoulder2 && NewState.LeftShoulder2);
 }
