@@ -2454,6 +2454,85 @@ main(int argc, char *argv[])
 RwV2d leftStickPos;
 RwV2d rightStickPos;
 
+// GLFW reads a trigger from -1 released to 1 pressed, and 0.0 when the pad has no such axis,
+// so a 0.0 keeps the trigger as it was instead of reading it half pressed
+static float StandardPadTriggerFromGlfw(float axis, float &lastTrigger)
+{
+	if ( axis != 0.0f )
+		lastTrigger = (axis + 1.0f) * 0.5f;
+	return lastTrigger;
+}
+
+static CStandardPadState StandardPadFromGlfw(const GLFWgamepadstate &gamepadState, RwInt32 padID)
+{
+	static float lastLeftTrigger[MAX_PADS];
+	static float lastRightTrigger[MAX_PADS];
+
+	const unsigned char *buttons = gamepadState.buttons;
+	const float *axes = gamepadState.axes;
+	CStandardPadState standard;
+	standard.A = buttons[GLFW_GAMEPAD_BUTTON_A] == GLFW_PRESS;
+	standard.B = buttons[GLFW_GAMEPAD_BUTTON_B] == GLFW_PRESS;
+	standard.X = buttons[GLFW_GAMEPAD_BUTTON_X] == GLFW_PRESS;
+	standard.Y = buttons[GLFW_GAMEPAD_BUTTON_Y] == GLFW_PRESS;
+	standard.LeftBumper = buttons[GLFW_GAMEPAD_BUTTON_LEFT_BUMPER] == GLFW_PRESS;
+	standard.RightBumper = buttons[GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER] == GLFW_PRESS;
+	standard.Back = buttons[GLFW_GAMEPAD_BUTTON_BACK] == GLFW_PRESS;
+	standard.Start = buttons[GLFW_GAMEPAD_BUTTON_START] == GLFW_PRESS;
+	standard.LeftThumb = buttons[GLFW_GAMEPAD_BUTTON_LEFT_THUMB] == GLFW_PRESS;
+	standard.RightThumb = buttons[GLFW_GAMEPAD_BUTTON_RIGHT_THUMB] == GLFW_PRESS;
+	standard.DPadUp = buttons[GLFW_GAMEPAD_BUTTON_DPAD_UP] == GLFW_PRESS;
+	standard.DPadDown = buttons[GLFW_GAMEPAD_BUTTON_DPAD_DOWN] == GLFW_PRESS;
+	standard.DPadLeft = buttons[GLFW_GAMEPAD_BUTTON_DPAD_LEFT] == GLFW_PRESS;
+	standard.DPadRight = buttons[GLFW_GAMEPAD_BUTTON_DPAD_RIGHT] == GLFW_PRESS;
+	standard.LeftTrigger = StandardPadTriggerFromGlfw(axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER], lastLeftTrigger[padID]);
+	standard.RightTrigger = StandardPadTriggerFromGlfw(axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER], lastRightTrigger[padID]);
+	standard.LeftX = axes[GLFW_GAMEPAD_AXIS_LEFT_X];
+	standard.LeftY = axes[GLFW_GAMEPAD_AXIS_LEFT_Y];
+	standard.RightX = axes[GLFW_GAMEPAD_AXIS_RIGHT_X];
+	standard.RightY = axes[GLFW_GAMEPAD_AXIS_RIGHT_Y];
+	return standard;
+}
+
+// a joystick with no SDL mapping goes through the joystick bindings in the controls menu
+static void CaptureJoystickThroughBindings(RwInt32 padID, int numAxes, const float *axes)
+{
+	RsPadButtonStatus bs;
+	bs.padID = padID;
+
+	RsPadEventHandler(rsPADBUTTONUP, (void *)&bs);
+	
+	leftStickPos.x = numAxes >= 1 ? axes[0] : 0.0f;
+	leftStickPos.y = numAxes >= 2 ? axes[1] : 0.0f;
+
+	rightStickPos.x = numAxes >= 3 ? axes[2] : 0.0f;
+	rightStickPos.y = numAxes >= 4 ? axes[3] : 0.0f;
+	
+	{
+		if (CPad::m_bMapPadOneToPadTwo)
+			bs.padID = 1;
+		
+		RsPadEventHandler(rsPADBUTTONUP,   (void *)&bs);
+		RsPadEventHandler(rsPADBUTTONDOWN, (void *)&bs);
+	}
+	
+	{
+		CPad *pad = CPad::GetPad(bs.padID);
+
+		if ( Abs(leftStickPos.x)  > 0.3f )
+			pad->PCTempJoyState.LeftStickX	= (int32)(leftStickPos.x  * 128.0f);
+		
+		if ( Abs(leftStickPos.y)  > 0.3f )
+			pad->PCTempJoyState.LeftStickY	= (int32)(leftStickPos.y  * 128.0f);
+		
+		if ( Abs(rightStickPos.x) > 0.3f )
+			pad->PCTempJoyState.RightStickX = (int32)(rightStickPos.x * 128.0f);
+
+		if ( Abs(rightStickPos.y) > 0.3f )
+			pad->PCTempJoyState.RightStickY = (int32)(rightStickPos.y * 128.0f);
+	}
+}
+
 void CapturePad(RwInt32 padID)
 {
 	int8 glfwPad = -1;
@@ -2473,30 +2552,13 @@ void CapturePad(RwInt32 padID)
 	const float *axes = glfwGetJoystickAxes(glfwPad, &numAxes);
 	GLFWgamepadstate gamepadState;
 
-	if (ControlsManager.m_bFirstCapture == false) {
+	if (ControlsManager.m_bFirstCapture == false)
 		memcpy(&ControlsManager.m_OldState, &ControlsManager.m_NewState, sizeof(ControlsManager.m_NewState));
-	} else {
-		// In case connected gamepad doesn't have L-R trigger axes.
-		ControlsManager.m_NewState.mappedButtons[15] = ControlsManager.m_NewState.mappedButtons[16] = 0;
-	}
 
 	ControlsManager.m_NewState.buttons = (uint8*)buttons;
 	ControlsManager.m_NewState.numButtons = numButtons;
 	ControlsManager.m_NewState.id = glfwPad;
 	ControlsManager.m_NewState.isGamepad = glfwGetGamepadState(glfwPad, &gamepadState);
-	if (ControlsManager.m_NewState.isGamepad) {
-		memcpy(&ControlsManager.m_NewState.mappedButtons, gamepadState.buttons, sizeof(gamepadState.buttons));
-		float lt = gamepadState.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER], rt = gamepadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER];
-
-		// glfw returns 0.0 for non-existent axises(which is bullocks) so we treat it as deadzone, and keep value of previous frame.
-		// otherwise if this axis is present, -1 = released, 1 = pressed
-		if (lt != 0.0f)
-			ControlsManager.m_NewState.mappedButtons[15] = lt > -0.8f;
-
-		if (rt != 0.0f)
-			ControlsManager.m_NewState.mappedButtons[16] = rt > -0.8f;
-	}
-	// TODO? L2-R2 axes(not buttons-that's fine) on joysticks that don't have SDL gamepad mapping AREN'T handled, and I think it's impossible to do without mapping.
 
 	if (ControlsManager.m_bFirstCapture == true) {
 		memcpy(&ControlsManager.m_OldState, &ControlsManager.m_NewState, sizeof(ControlsManager.m_NewState));
@@ -2504,46 +2566,13 @@ void CapturePad(RwInt32 padID)
 		ControlsManager.m_bFirstCapture = false;
 	}
 
-	RsPadButtonStatus bs;
-	bs.padID = padID;
+	CPad *pad = CPad::GetPad(CPad::m_bMapPadOneToPadTwo ? 1 : padID);
 
-	RsPadEventHandler(rsPADBUTTONUP, (void *)&bs);
-	
-	// Gamepad axes are guaranteed to return 0.0f if that particular gamepad doesn't have that axis.
-	// And that's really good for sticks, because gamepads return 0.0 for them when sticks are in released state.
-	if ( glfwPad != -1 ) {
-		leftStickPos.x = ControlsManager.m_NewState.isGamepad ? gamepadState.axes[GLFW_GAMEPAD_AXIS_LEFT_X] : numAxes >= 1 ? axes[0] : 0.0f;
-		leftStickPos.y = ControlsManager.m_NewState.isGamepad ? gamepadState.axes[GLFW_GAMEPAD_AXIS_LEFT_Y] : numAxes >= 2 ? axes[1] : 0.0f;
-
-		rightStickPos.x = ControlsManager.m_NewState.isGamepad ? gamepadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_X] : numAxes >= 3 ? axes[2] : 0.0f;
-		rightStickPos.y = ControlsManager.m_NewState.isGamepad ? gamepadState.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y] : numAxes >= 4 ? axes[3] : 0.0f;
-	}
-	
-	{
-		if (CPad::m_bMapPadOneToPadTwo)
-			bs.padID = 1;
-		
-		RsPadEventHandler(rsPADBUTTONUP,   (void *)&bs);
-		RsPadEventHandler(rsPADBUTTONDOWN, (void *)&bs);
-	}
-	
-	{
-		if (CPad::m_bMapPadOneToPadTwo)
-			bs.padID = 1;
-		
-		CPad *pad = CPad::GetPad(bs.padID);
-
-		if ( Abs(leftStickPos.x)  > 0.3f )
-			pad->PCTempJoyState.LeftStickX	= (int32)(leftStickPos.x  * 128.0f);
-		
-		if ( Abs(leftStickPos.y)  > 0.3f )
-			pad->PCTempJoyState.LeftStickY	= (int32)(leftStickPos.y  * 128.0f);
-		
-		if ( Abs(rightStickPos.x) > 0.3f )
-			pad->PCTempJoyState.RightStickX = (int32)(rightStickPos.x * 128.0f);
-
-		if ( Abs(rightStickPos.y) > 0.3f )
-			pad->PCTempJoyState.RightStickY = (int32)(rightStickPos.y * 128.0f);
+	if ( ControlsManager.m_NewState.isGamepad ) {
+		// a mapped pad is read raw, so every controller setup reads it as on the PS2, and no binding is needed
+		pad->AffectFromStandardPad(StandardPadFromGlfw(gamepadState, padID));
+	} else {
+		CaptureJoystickThroughBindings(padID, numAxes, axes);
 	}
 
 	_psHandleVibration();

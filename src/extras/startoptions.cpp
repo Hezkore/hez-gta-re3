@@ -14,6 +14,7 @@
 #include "PathFind.h"
 #include "PlayerPed.h"
 #include "Streaming.h"
+#include "Timer.h"
 #include "World.h"
 #include "Zones.h"
 
@@ -70,6 +71,12 @@ IsPlayerInControl(void)
 		&& TheCamera.GetScreenFadeStatus() == FADE_0;
 }
 
+static bool
+HasWaitingOptions(void)
+{
+	return cheats[0] != '\0' || carName[0] != '\0' || isTeleportWaiting;
+}
+
 static void
 TypeCheats(void)
 {
@@ -102,7 +109,7 @@ SpawnCarForPlayer(void)
 void
 StartOptions::Apply(void)
 {
-	if ( (cheats[0] == '\0' && carName[0] == '\0' && !isTeleportWaiting) || !IsPlayerInControl() )
+	if ( !HasWaitingOptions() || !IsPlayerInControl() )
 		return;
 
 	if ( cheats[0] != '\0' )
@@ -165,3 +172,110 @@ TeleportPlayer(CVector position, bool hasHeight)
 		position.z = CWorld::FindGroundZForCoord(position.x, position.y) + player->GetDistanceFromCentreOfMassToBaseOfModel();
 	player->Teleport(position);
 }
+
+#ifdef DEBUG
+#define PAD_FEED_EVENTS 64
+#define PAD_FEED_CONTROL_SIZE 8
+
+// One timed change of a pad control, counted from the moment the player can play
+struct PadFeedEvent
+{
+	uint32 atMilliseconds;
+	char control[PAD_FEED_CONTROL_SIZE];
+	float value;
+};
+
+struct PadFeedControl
+{
+	const char *name;
+	bool CStandardPadState::*button;
+	float CStandardPadState::*axis;
+};
+
+static const PadFeedControl padFeedControls[] = {
+	{ "a", &CStandardPadState::A, nil }, { "b", &CStandardPadState::B, nil },
+	{ "x", &CStandardPadState::X, nil }, { "y", &CStandardPadState::Y, nil },
+	{ "lb", &CStandardPadState::LeftBumper, nil }, { "rb", &CStandardPadState::RightBumper, nil },
+	{ "back", &CStandardPadState::Back, nil }, { "start", &CStandardPadState::Start, nil },
+	{ "ls", &CStandardPadState::LeftThumb, nil }, { "rs", &CStandardPadState::RightThumb, nil },
+	{ "up", &CStandardPadState::DPadUp, nil }, { "down", &CStandardPadState::DPadDown, nil },
+	{ "left", &CStandardPadState::DPadLeft, nil }, { "right", &CStandardPadState::DPadRight, nil },
+	{ "lt", nil, &CStandardPadState::LeftTrigger }, { "rt", nil, &CStandardPadState::RightTrigger },
+	{ "lx", nil, &CStandardPadState::LeftX }, { "ly", nil, &CStandardPadState::LeftY },
+	{ "rx", nil, &CStandardPadState::RightX }, { "ry", nil, &CStandardPadState::RightY },
+};
+
+static PadFeedEvent padFeedEvents[PAD_FEED_EVENTS];
+static int padFeedEventCount;
+static int padFeedNextEvent;
+static CStandardPadState padFeedState;
+static bool isPadFeedRunning;
+static uint32 padFeedStartMilliseconds;
+
+static const PadFeedControl *
+FindPadFeedControl(const char *name)
+{
+	for ( int i = 0; i < ARRAY_SIZE(padFeedControls); i++ )
+		if ( !strcmp(padFeedControls[i].name, name) )
+			return &padFeedControls[i];
+	return nil;
+}
+
+void
+StartOptions::SetPadFeed(const char *events)
+{
+	const char *next = events;
+	while ( *next && padFeedEventCount < PAD_FEED_EVENTS ) {
+		PadFeedEvent &event = padFeedEvents[padFeedEventCount];
+		int length = 0;
+		if ( sscanf(next, "%7[a-z]=%f@%u%n", event.control, &event.value, &event.atMilliseconds, &length) != 3
+		    || !FindPadFeedControl(event.control) ) {
+			printf("-pad needs control=value@milliseconds,..., not %s\n", next);
+			padFeedEventCount = 0;
+			return;
+		}
+		padFeedEventCount++;
+		next += length;
+		if ( *next == ',' )
+			next++;
+	}
+}
+
+static void
+PrintPadFeedState(const PadFeedEvent &event)
+{
+	CPlayerPed *player = FindPlayerPed();
+	CVehicle *vehicle = FindPlayerVehicle();
+	CPhysical *mover = vehicle ? (CPhysical *)vehicle : (CPhysical *)player;
+	float forwardSpeed = DotProduct(mover->GetMoveSpeed(), mover->GetForward());
+	printf("pad feed %s=%.2f at %u ms: ped state %d, weapon %d, camera mode %d, forward speed %.3f, setup %d\n",
+		event.control, event.value, event.atMilliseconds, player->GetPedState(), player->GetWeapon()->m_eWeaponType,
+		TheCamera.Cams[TheCamera.ActiveCam].Mode, forwardSpeed, CPad::GetPad(0)->Mode);
+}
+
+void
+StartOptions::FeedPad(void)
+{
+	if ( padFeedEventCount == 0 )
+		return;
+	if ( !isPadFeedRunning ) {
+		// the other options first, so the presses land on the start car or the teleported player
+		if ( HasWaitingOptions() || !IsPlayerInControl() )
+			return;
+		isPadFeedRunning = true;
+		padFeedStartMilliseconds = CTimer::GetTimeInMilliseconds();
+	}
+
+	uint32 elapsed = CTimer::GetTimeInMilliseconds() - padFeedStartMilliseconds;
+	for ( ; padFeedNextEvent < padFeedEventCount && padFeedEvents[padFeedNextEvent].atMilliseconds <= elapsed; padFeedNextEvent++ ) {
+		const PadFeedEvent &event = padFeedEvents[padFeedNextEvent];
+		const PadFeedControl *control = FindPadFeedControl(event.control);
+		if ( control->button )
+			padFeedState.*control->button = event.value != 0.0f;
+		else
+			padFeedState.*control->axis = event.value;
+		PrintPadFeedState(event);
+	}
+	CPad::GetPad(0)->AffectFromStandardPad(padFeedState);
+}
+#endif

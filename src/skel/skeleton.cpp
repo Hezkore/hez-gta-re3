@@ -158,6 +158,9 @@ rsPreInitCommandLine(RwChar *arg)
 	static const RwChar *OPTION_CHEAT = RWSTRING("-cheat");
 	static const RwChar *OPTION_SPAWN_CAR = RWSTRING("-spawncar");
 	static const RwChar *OPTION_TELEPORT = RWSTRING("-teleport");
+#ifdef DEBUG
+	static const RwChar *OPTION_PAD = RWSTRING("-pad");
+#endif
 	static const RwChar *optionTakingValue = nil;
 	if( optionTakingValue )
 	{
@@ -173,6 +176,10 @@ rsPreInitCommandLine(RwChar *arg)
 			StartOptions::AddCheat(arg);
 		else if( optionTakingValue == OPTION_SPAWN_CAR )
 			StartOptions::SetCar(arg);
+#ifdef DEBUG
+		else if( optionTakingValue == OPTION_PAD )
+			StartOptions::SetPadFeed(arg);
+#endif
 		else
 			StartOptions::SetTeleport(arg);
 
@@ -199,6 +206,13 @@ rsPreInitCommandLine(RwChar *arg)
 		optionTakingValue = OPTION_TELEPORT;
 		return TRUE;
 	}
+#ifdef DEBUG
+	if( !strcmp(arg, OPTION_PAD) )
+	{
+		optionTakingValue = OPTION_PAD;
+		return TRUE;
+	}
+#endif
 
 	if( !strcmp(arg, RWSTRING("-vms")) )
 	{

@@ -56,6 +56,19 @@ public:
 
 VALIDATE_SIZE(CMouseControllerState, 0x10);
 
+// A pad with the standard Xbox layout, as XInput or the SDL mapping read it, before a setup gives the buttons a meaning
+class CStandardPadState
+{
+public:
+	bool A, B, X, Y;
+	bool LeftBumper, RightBumper;
+	bool Back, Start;
+	bool LeftThumb, RightThumb;
+	bool DPadUp, DPadDown, DPadLeft, DPadRight;
+	float LeftTrigger, RightTrigger;	// 0 released to 1 fully pressed
+	float LeftX, LeftY, RightX, RightY;	// -1 to 1, with up and left negative
+};
+
 class CMousePointerStateHelper
 {
 public:
@@ -268,6 +281,7 @@ public:
 	static char *EditString(char *pStr, int32 nSize);
 	static int32 *EditCodesForControls(int32 *pRsKeys, int32 nSize);
 
+	void AffectFromStandardPad(const CStandardPadState &pad);
 #ifdef XINPUT
 	static int XInputJoy1;
 	static int XInputJoy2;

@@ -43,48 +43,6 @@ void CControllerConfigManager::MakeControllerActionsBlank()
 	}
 }
 
-#ifdef RW_GL3
-int MapIdToButtonId(int mapId) {
-	switch (mapId) {
-		case GLFW_GAMEPAD_BUTTON_A: // Cross
-			return 2;
-		case GLFW_GAMEPAD_BUTTON_B: // Circle
-			return 1;
-		case GLFW_GAMEPAD_BUTTON_X: // Square
-			return 3;
-		case GLFW_GAMEPAD_BUTTON_Y: // Triangle
-			return 4;
-		case GLFW_GAMEPAD_BUTTON_LEFT_BUMPER:
-			return 7;
-		case GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER:
-			return 8;
-		case GLFW_GAMEPAD_BUTTON_BACK:
-			return 9;
-		case GLFW_GAMEPAD_BUTTON_START:
-			return 12;
-		case GLFW_GAMEPAD_BUTTON_LEFT_THUMB:
-			return 10;
-		case GLFW_GAMEPAD_BUTTON_RIGHT_THUMB:
-			return 11;
-		case GLFW_GAMEPAD_BUTTON_DPAD_UP:
-			return 13;
-		case GLFW_GAMEPAD_BUTTON_DPAD_RIGHT:
-			return 14;
-		case GLFW_GAMEPAD_BUTTON_DPAD_DOWN:
-			return 15;
-		case GLFW_GAMEPAD_BUTTON_DPAD_LEFT:
-			return 16;
-		// GLFW sends those as axes, so I added them here manually.
-		case 15: // Left trigger
-			return 5;
-		case 16: // Right trigger
-			return 6;
-		default:
-			return 0;
-	}
-}
-#endif
-
 int32 CControllerConfigManager::GetJoyButtonJustDown()
 {
 #ifdef __DINPUT_INCLUDED__
@@ -98,16 +56,13 @@ int32 CControllerConfigManager::GetJoyButtonJustDown()
 			return i + 1;
 	}
 #elif defined RW_GL3
-	if (m_NewState.isGamepad) {
-		for (int32 i = 0; i < MAX_BUTTONS; i++) {
-			if (m_NewState.mappedButtons[i] && !(m_OldState.mappedButtons[i]))
-				return MapIdToButtonId(i);
-		}
-	} else {
-		for (int32 i = 0; i < Min(m_NewState.numButtons, MAX_BUTTONS); i++) {
-			if (m_NewState.buttons[i] && !(m_OldState.buttons[i]))
-				return i + 1;
-		}
+	// a mapped pad is read raw and never bound
+	if (m_NewState.isGamepad)
+		return 0;
+
+	for (int32 i = 0; i < Min(m_NewState.numButtons, MAX_BUTTONS); i++) {
+		if (m_NewState.buttons[i] && !(m_OldState.buttons[i]))
+			return i + 1;
 	}
 #endif
 	return 0;
@@ -2405,6 +2360,10 @@ wchar *CControllerConfigManager::GetControllerSettingTextJoystick(e_ControllerAc
 {
 	if (m_aSettings[action][JOYSTICK].m_Key == 0) 
 		return NULL;
+#ifdef RW_GL3
+	if (m_NewState.isGamepad)
+		return NULL;
+#endif
 
 	static wchar NewStringWithNumber[30];
 
@@ -2769,17 +2728,8 @@ void CControllerConfigManager::UpdateJoyButtonState(int32 padnumber)
 			m_aButtonStates[i] = false;
 	}
 #elif defined RW_GL3
-	if (m_NewState.isGamepad) {
-		for (int32 i = 0; i < MAX_BUTTONS; i++) {
-			if (i == GLFW_GAMEPAD_BUTTON_GUIDE)
-				continue;
-
-			m_aButtonStates[MapIdToButtonId(i)-1] = m_NewState.mappedButtons[i];
-		}
-	} else {
-		for (int32 i = 0; i < Min(m_NewState.numButtons, MAX_BUTTONS); i++) {
-			m_aButtonStates[i] = m_NewState.buttons[i];
-		}
+	for (int32 i = 0; i < Min(m_NewState.numButtons, MAX_BUTTONS); i++) {
+		m_aButtonStates[i] = m_NewState.buttons[i];
 	}
 #endif
 }

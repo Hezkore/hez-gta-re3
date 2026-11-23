@@ -12,6 +12,7 @@
 #endif
 
 #include "Pad.h"
+#include "startoptions.h"
 #include "ControllerConfig.h"
 #include "Timer.h"
 #include "Frontend.h"
@@ -41,6 +42,13 @@
 #endif
 
 CPad Pads[MAX_PADS];
+
+// a stick counts once either of its axes is past this, as XInput pads always did
+const float STANDARD_PAD_STICK_DEADZONE = 0.3f;
+// the trigger threshold XInput suggests, 30 of 255
+const float STANDARD_PAD_TRIGGER_DEADZONE = 30.0f / 255.0f;
+const float STANDARD_PAD_STICK_RANGE = 128.0f;
+const int16 STANDARD_PAD_FULLY_PRESSED = 255;
 #ifdef GTA_PS2
 u_long128 pad_dma_buf[scePadDmaBufferMax] __attribute__((aligned(64)));
 u_long128 pad2_dma_buf[scePadDmaBufferMax] __attribute__((aligned(64)));
@@ -1032,6 +1040,52 @@ void CPad::AddToPCCheatString(char c)
 	#undef _CHEATCMP
 }
 
+static int16 StandardPadButton(bool isDown)
+{
+	return isDown ? STANDARD_PAD_FULLY_PRESSED : 0;
+}
+
+static int16 StandardPadTrigger(float pressed)
+{
+	if (pressed < STANDARD_PAD_TRIGGER_DEADZONE)
+		return 0;
+	float pastDeadzone = (pressed - STANDARD_PAD_TRIGGER_DEADZONE) / (1.0f - STANDARD_PAD_TRIGGER_DEADZONE);
+	return (int16)Max(1.0f, Min(pastDeadzone, 1.0f) * STANDARD_PAD_FULLY_PRESSED);
+}
+
+static void StandardPadStick(float x, float y, int16 &stickX, int16 &stickY)
+{
+	if (Abs(x) > STANDARD_PAD_STICK_DEADZONE || Abs(y) > STANDARD_PAD_STICK_DEADZONE) {
+		stickX = (int16)(x * STANDARD_PAD_STICK_RANGE);
+		stickY = (int16)(y * STANDARD_PAD_STICK_RANGE);
+	}
+}
+
+// The standard pad lands on the PS2 buttons in their own places, so every setup reads it as the PS2 game did
+void CPad::AffectFromStandardPad(const CStandardPadState &pad)
+{
+	PCTempJoyState.Cross = StandardPadButton(pad.A);
+	PCTempJoyState.Circle = StandardPadButton(pad.B);
+	PCTempJoyState.Square = StandardPadButton(pad.X);
+	PCTempJoyState.Triangle = StandardPadButton(pad.Y);
+	PCTempJoyState.LeftShoulder1 = StandardPadButton(pad.LeftBumper);
+	PCTempJoyState.RightShoulder1 = StandardPadButton(pad.RightBumper);
+	PCTempJoyState.LeftShoulder2 = StandardPadTrigger(pad.LeftTrigger);
+	PCTempJoyState.RightShoulder2 = StandardPadTrigger(pad.RightTrigger);
+	PCTempJoyState.Select = StandardPadButton(pad.Back);
+#ifdef REGISTER_START_BUTTON
+	PCTempJoyState.Start = StandardPadButton(pad.Start);
+#endif
+	PCTempJoyState.LeftShock = StandardPadButton(pad.LeftThumb);
+	PCTempJoyState.RightShock = StandardPadButton(pad.RightThumb);
+	PCTempJoyState.DPadUp = StandardPadButton(pad.DPadUp);
+	PCTempJoyState.DPadDown = StandardPadButton(pad.DPadDown);
+	PCTempJoyState.DPadLeft = StandardPadButton(pad.DPadLeft);
+	PCTempJoyState.DPadRight = StandardPadButton(pad.DPadRight);
+	StandardPadStick(pad.LeftX, pad.LeftY, PCTempJoyState.LeftStickX, PCTempJoyState.LeftStickY);
+	StandardPadStick(pad.RightX, pad.RightY, PCTempJoyState.RightStickX, PCTempJoyState.RightStickY);
+}
+
 #ifdef XINPUT
 int CPad::XInputJoy1 = 0;
 int CPad::XInputJoy2 = 1;
@@ -1045,39 +1099,29 @@ void CPad::AffectFromXinput(uint32 pad)
 	memset(&xstate, 0, sizeof(XINPUT_STATE));
 	if (XInputGetState(pad, &xstate) == ERROR_SUCCESS)
 	{
-		PCTempJoyState.Circle = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_B) ? 255 : 0;
-		PCTempJoyState.Cross = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_A) ? 255 : 0;
-		PCTempJoyState.Square = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_X) ? 255 : 0;
-		PCTempJoyState.Triangle = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_Y) ? 255 : 0;
-		PCTempJoyState.DPadDown = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) ? 255 : 0;
-		PCTempJoyState.DPadLeft = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) ? 255 : 0;
-		PCTempJoyState.DPadRight = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) ? 255 : 0;
-		PCTempJoyState.DPadUp = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) ? 255 : 0;
-		PCTempJoyState.LeftShock = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) ? 255 : 0;
-		PCTempJoyState.LeftShoulder1 = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) ? 255 : 0;
-		PCTempJoyState.LeftShoulder2 = xstate.Gamepad.bLeftTrigger;
-		PCTempJoyState.RightShock = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) ? 255 : 0;
-		PCTempJoyState.RightShoulder1 = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) ? 255 : 0;
-		PCTempJoyState.RightShoulder2 = xstate.Gamepad.bRightTrigger;
-
-		PCTempJoyState.Select = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) ? 255 : 0;
-#ifdef REGISTER_START_BUTTON
-		PCTempJoyState.Start = (xstate.Gamepad.wButtons & XINPUT_GAMEPAD_START) ? 255 : 0;
-#endif
-		float lx = (float)xstate.Gamepad.sThumbLX / (float)0x7FFF;
-		float ly = (float)xstate.Gamepad.sThumbLY / (float)0x7FFF;
-		float rx = (float)xstate.Gamepad.sThumbRX / (float)0x7FFF;
-		float ry = (float)xstate.Gamepad.sThumbRY / (float)0x7FFF;
-
-		if (Abs(lx) > 0.3f || Abs(ly) > 0.3f) {
-			PCTempJoyState.LeftStickX = (int32)(lx * 128.0f);
-			PCTempJoyState.LeftStickY = (int32)(-ly * 128.0f);
-		}
-
-		if (Abs(rx) > 0.3f || Abs(ry) > 0.3f) {
-			PCTempJoyState.RightStickX = (int32)(rx * 128.0f);
-			PCTempJoyState.RightStickY = (int32)(-ry * 128.0f);
-		}
+		const WORD buttons = xstate.Gamepad.wButtons;
+		CStandardPadState standard;
+		standard.A = !!(buttons & XINPUT_GAMEPAD_A);
+		standard.B = !!(buttons & XINPUT_GAMEPAD_B);
+		standard.X = !!(buttons & XINPUT_GAMEPAD_X);
+		standard.Y = !!(buttons & XINPUT_GAMEPAD_Y);
+		standard.LeftBumper = !!(buttons & XINPUT_GAMEPAD_LEFT_SHOULDER);
+		standard.RightBumper = !!(buttons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
+		standard.Back = !!(buttons & XINPUT_GAMEPAD_BACK);
+		standard.Start = !!(buttons & XINPUT_GAMEPAD_START);
+		standard.LeftThumb = !!(buttons & XINPUT_GAMEPAD_LEFT_THUMB);
+		standard.RightThumb = !!(buttons & XINPUT_GAMEPAD_RIGHT_THUMB);
+		standard.DPadUp = !!(buttons & XINPUT_GAMEPAD_DPAD_UP);
+		standard.DPadDown = !!(buttons & XINPUT_GAMEPAD_DPAD_DOWN);
+		standard.DPadLeft = !!(buttons & XINPUT_GAMEPAD_DPAD_LEFT);
+		standard.DPadRight = !!(buttons & XINPUT_GAMEPAD_DPAD_RIGHT);
+		standard.LeftTrigger = xstate.Gamepad.bLeftTrigger / 255.0f;
+		standard.RightTrigger = xstate.Gamepad.bRightTrigger / 255.0f;
+		standard.LeftX = (float)xstate.Gamepad.sThumbLX / (float)0x7FFF;
+		standard.LeftY = -(float)xstate.Gamepad.sThumbLY / (float)0x7FFF;
+		standard.RightX = (float)xstate.Gamepad.sThumbRX / (float)0x7FFF;
+		standard.RightY = -(float)xstate.Gamepad.sThumbRY / (float)0x7FFF;
+		AffectFromStandardPad(standard);
 
 		XINPUT_VIBRATION VibrationState;
 
@@ -1110,6 +1154,9 @@ void CPad::UpdatePads(void)
 	GetPad(1)->AffectFromXinput(m_bMapPadOneToPadTwo ? 0 : 1);
 #else
 	CapturePad(0);
+#endif
+#ifdef DEBUG
+	StartOptions::FeedPad();
 #endif
 
 	// Improve keyboard input latency part 1

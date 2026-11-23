@@ -10,6 +10,11 @@ namespace StartOptions
 	void SetCar(const char *modelName);
 	void SetTeleport(const char *coordinates);
 	void Apply(void);
+#ifdef DEBUG
+	// -pad control=value@milliseconds,... plays pad presses through the standard pad, for tests
+	void SetPadFeed(const char *events);
+	void FeedPad(void);
+#endif
 }
 
 CVehicle *SpawnCarOnNearestRoad(int32 modelId);
