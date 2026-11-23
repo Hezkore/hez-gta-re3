@@ -254,6 +254,7 @@ CCamera::Init(void)
 void
 CCamera::Process(void)
 {
+	UpdateVehicleCameraPitch();
 	// static bool InterpolatorNotInitialised = true;	// unused
 	static CVector PreviousFudgedTargetCoors;	// only PS2
 	static float PlayerMinDist = 1.6f;	// not on PS2

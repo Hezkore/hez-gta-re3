@@ -29,18 +29,35 @@
 bool PrintDebugCode = false;
 int16 DebugCamMode;
 
+bool CCamera::bHighVehicleCamera = false;
+float CCamera::ms_fVehicleCameraPitch = 0.0f;
+
+// The High vehicle camera, as in GTA V, sits higher behind the vehicle and looks down on it, so the
+// front of a car shows. It eases there when the option changes, the same for every car camera.
+const float HIGH_VEHICLE_CAMERA_EXTRA_PITCH = 0.22f;
+const float VEHICLE_CAMERA_PITCH_EASE = 0.1f;
+
+void
+CCamera::UpdateVehicleCameraPitch(void)
+{
+	float target = bHighVehicleCamera ? HIGH_VEHICLE_CAMERA_EXTRA_PITCH : 0.0f;
+	ms_fVehicleCameraPitch += (target - ms_fVehicleCameraPitch) * Min(1.0f, VEHICLE_CAMERA_PITCH_EASE * CTimer::GetTimeStep());
+}
+
+// aircraft keep their own camera
+float
+CCamera::VehicleCameraExtraPitch(CEntity *entity)
+{
+	if (!entity->IsVehicle())
+		return 0.0f;
+	CVehicle *vehicle = (CVehicle *)entity;
+	if (vehicle->GetModelIndex() == MI_DODO)
+		return 0.0f;
+	return ms_fVehicleCameraPitch;
+}
+
 #ifdef FREE_CAM
 bool CCamera::bFreeCam = false;
-bool CCamera::bHighVehicleCamera = false;
-
-// the High vehicle camera, as in GTA V, sits higher behind the car and looks down on it, so the front shows
-const float HIGH_VEHICLE_CAMERA_EXTRA_PITCH = 0.25f;
-
-float
-CCamera::VehicleCameraExtraPitch(void)
-{
-	return bHighVehicleCamera ? HIGH_VEHICLE_CAMERA_EXTRA_PITCH : 0.0f;
-}
 int nPreviousMode = -1;
 #endif
 
@@ -1846,7 +1863,8 @@ CCam::WorkOutCamHeight(const CVector &TargetCoors, float TargetOrientation, floa
 		AlphaOffset = CGeneral::GetATanOfXY(10.8f, zoomvalue);	// mid
 	else if(TheCamera.CarZoomIndicator == CAM_ZOOM_3)
 		AlphaOffset = CGeneral::GetATanOfXY(7.0f, zoomvalue);	// far
-	AlphaOffset += CCamera::VehicleCameraExtraPitch();
+	float HighCameraPitch = CCamera::VehicleCameraExtraPitch(CamTargetEntity);
+	AlphaOffset += HighCameraPitch;
 
 
 	float Length = (Source - TargetCoors).Magnitude2D();
@@ -1967,7 +1985,7 @@ CCam::WorkOutCamHeight(const CVector &TargetCoors, float TargetOrientation, floa
 					a = CGeneral::GetATanOfXY(Length, dz);
 				while(a > PI) a -= 2*PI;
 				while(a < -PI) a += 2*PI;
-				DeltaAlpha = a - Alpha;
+				DeltaAlpha = a - HighCameraPitch - Alpha;
 			}
 		}else if(CamClear){
 			float CamRoof2 = CWorld::FindRoofZFor3DCoord(Source.x, Source.y, CamZ, &FoundRoof);
@@ -1986,7 +2004,7 @@ CCam::WorkOutCamHeight(const CVector &TargetCoors, float TargetOrientation, floa
 					a = CGeneral::GetATanOfXY(Length, dz);
 				while(a > PI) a -= 2*PI;
 				while(a < -PI) a += 2*PI;
-				DeltaAlpha = a - Alpha;
+				DeltaAlpha = a - HighCameraPitch - Alpha;
 			}
 		}
 
@@ -3353,6 +3371,8 @@ CCam::Process_BehindBoat(const CVector &CameraTarget, float TargetOrientation, f
 			(TheCamera.CarZoomValueSmooth+7.0f) * CVector(-c, -s, 0.0f) +
 			TargetCoors;
 		Source.z = WaterLevel + TheCamera.CarZoomValueSmooth;
+		// High lifts the boat camera by the same angle as the car cameras
+		Source.z += (Source - TargetCoors).Magnitude2D() * Sin(CCamera::VehicleCameraExtraPitch(CamTargetEntity));
 	}
 
 	if(TheCamera.CarZoomValueSmooth < 0.05f){
@@ -4864,8 +4884,7 @@ CCam::Process_FollowCar_SA(const CVector& CameraTarget, float TargetOrientation,
 			break;
 		}
 	}
-	if (!isHeli && !isPlane)
-		zoomModeAlphaOffset += CCamera::VehicleCameraExtraPitch();
+	zoomModeAlphaOffset += CCamera::VehicleCameraExtraPitch(car);
 
 	CColModel* carCol = (CColModel*)car->GetColModel();
 	float colMaxZ = carCol->boundingBox.max.z;  // As opposed to LCS and SA, VC does this: carCol->boundingBox.max.z - carCol->boundingBox.min.z;
