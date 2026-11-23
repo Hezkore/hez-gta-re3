@@ -5041,8 +5041,8 @@ CCam::Process_FollowCar_SA(const CVector& CameraTarget, float TargetOrientation,
 	}
 
 	// Using GetCarGun(LR/UD) will give us same unprocessed RightStick value as SA
-	float stickX = -(pad->GetCarGunLeftRight());
-	float stickY = -pad->GetCarGunUpDown();
+	float stickX = -CPad::ScaleSquaredLookBySensitivity(pad->GetCarGunLeftRight());
+	float stickY = -CPad::ScaleSquaredLookBySensitivity(pad->GetCarGunUpDown());
 
 	// In SA this is for not let num2/num8 move camera when Keyboard & Mouse controls are used.
 	// if (CCamera::m_bUseMouse3rdPerson)

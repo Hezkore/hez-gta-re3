@@ -817,7 +817,7 @@ public:
 	void SwitchMenuOnAndOff();
 	void UnloadTextures();
 	void WaitForUserCD();
-	void PrintController();
+	void PrintController(float rowsBottomY);
 	int GetNumOptionsCntrlConfigScreens();
 	int ConstructStatLine(int);
 

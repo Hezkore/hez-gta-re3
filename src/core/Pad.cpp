@@ -46,6 +46,7 @@ CPad Pads[MAX_PADS];
 // the trigger threshold XInput suggests, 30 of 255
 const float STANDARD_PAD_TRIGGER_DEADZONE = 30.0f / 255.0f;
 const int16 STANDARD_PAD_FULLY_PRESSED = 255;
+const float STANDARD_PAD_STICK_RANGE = 128.0f;
 // how far a stick goes before the GTA IV setup reads a flick for zooming or switching targets
 const int16 GTA4_STICK_PUSHED = 64;
 #ifdef GTA_PS2
@@ -1052,12 +1053,46 @@ static int16 StandardPadTrigger(float pressed)
 	return (int16)Max(1.0f, Min(pastDeadzone, 1.0f) * STANDARD_PAD_FULLY_PRESSED);
 }
 
-static void StandardPadStick(float x, float y, int16 &stickX, int16 &stickY)
+int8 CPad::StickDeadzone = STICK_DEADZONE_DEFAULT_STEPS;
+int8 CPad::LookSensitivity = LOOK_SENSITIVITY_DEFAULT_STEPS;
+
+// the ini can hold anything, so the settings are brought into range once as they load
+void CPad::ClampSettings(void)
 {
-	if (Abs(x) > STANDARD_PAD_STICK_DEADZONE || Abs(y) > STANDARD_PAD_STICK_DEADZONE) {
-		stickX = (int16)(x * STANDARD_PAD_STICK_RANGE);
-		stickY = (int16)(y * STANDARD_PAD_STICK_RANGE);
+	StickDeadzone = Clamp(StickDeadzone, STICK_DEADZONE_MIN_STEPS, STICK_DEADZONE_MAX_STEPS);
+	LookSensitivity = Clamp(LookSensitivity, LOOK_SENSITIVITY_MIN_STEPS, LOOK_SENSITIVITY_MAX_STEPS);
+}
+
+// A scaled radial deadzone: the whole tilt counts, not each axis, and past the deadzone the stick
+// starts again from zero, so there is no jump at its edge and no snapping to the axes.
+// Each axis is cut at full instead of the tilt, so a push into a corner still gives a full axis.
+void CPad::StickFromAxes(float x, float y, int16 &stickX, int16 &stickY)
+{
+	float deadzone = StickDeadzone * STICK_DEADZONE_PERCENT_STEP / 100.0f;
+	float tilt = Sqrt(x * x + y * y);
+	if (tilt <= deadzone) {
+		stickX = stickY = 0;
+		return;
 	}
+	float scale = (tilt - deadzone) / (1.0f - deadzone) / tilt;
+	stickX = (int16)(Clamp(x * scale, -1.0f, 1.0f) * STANDARD_PAD_STICK_RANGE);
+	stickY = (int16)(Clamp(y * scale, -1.0f, 1.0f) * STANDARD_PAD_STICK_RANGE);
+}
+
+static float LookSensitivityFactor(void)
+{
+	return (float)CPad::LookSensitivity / LOOK_SENSITIVITY_DEFAULT_STEPS;
+}
+
+int16 CPad::ScaleByLookSensitivity(float speed)
+{
+	return (int16)(speed * LookSensitivityFactor());
+}
+
+// for the cameras that square the stick, so the turn still scales evenly with the setting
+float CPad::ScaleSquaredLookBySensitivity(float value)
+{
+	return value * Sqrt(LookSensitivityFactor());
 }
 
 // The standard pad lands on the PS2 buttons in their own places, so every setup reads it as the PS2 game did
@@ -1081,8 +1116,8 @@ void CPad::AffectFromStandardPad(const CStandardPadState &pad)
 	PCTempJoyState.DPadDown = StandardPadButton(pad.DPadDown);
 	PCTempJoyState.DPadLeft = StandardPadButton(pad.DPadLeft);
 	PCTempJoyState.DPadRight = StandardPadButton(pad.DPadRight);
-	StandardPadStick(pad.LeftX, pad.LeftY, PCTempJoyState.LeftStickX, PCTempJoyState.LeftStickY);
-	StandardPadStick(pad.RightX, pad.RightY, PCTempJoyState.RightStickX, PCTempJoyState.RightStickY);
+	StickFromAxes(pad.LeftX, pad.LeftY, PCTempJoyState.LeftStickX, PCTempJoyState.LeftStickY);
+	StickFromAxes(pad.RightX, pad.RightY, PCTempJoyState.RightStickX, PCTempJoyState.RightStickY);
 }
 
 #ifdef XINPUT
@@ -2832,13 +2867,13 @@ int16 CPad::SniperModeLookLeftRight(void)
 {
 	// the GTA IV setup aims with the right stick, and its left stick zooms
 	if ( GetSetupInUse() == CONTROLLER_SETUP_GTA4 )
-		return NewState.RightStickX;
+		return (int16)ScaleSquaredLookBySensitivity(NewState.RightStickX);
 
 	int16 axis = NewState.LeftStickX;
 	int16 dpad = (NewState.DPadRight - NewState.DPadLeft) / 2;
 
 	if ( Abs(axis) > Abs(dpad) )
-		return axis;
+		return (int16)ScaleSquaredLookBySensitivity(axis);
 	else
 		return dpad;
 }
@@ -2862,26 +2897,29 @@ int16 CPad::SniperModeLookUpDown(void)
 	}
 #endif
 	if ( isGta4Setup )
-		return axis;
+		return (int16)ScaleSquaredLookBySensitivity(axis);
 
 	if ( Abs(axis) > Abs(dpad) )
-		return axis;
+		return (int16)ScaleSquaredLookBySensitivity(axis);
 	else
 		return dpad;
 }
 
-// how fast the right stick turns the camera, past a deadzone
-const float FREE_LOOK_DEADZONE_X = 10.0f;
-const float FREE_LOOK_DEADZONE_Y = 40.0f;
-const float FREE_LOOK_SPEED = 127.0f / 64.0f;
+// How fast the right stick turns the camera. The free camera leaves the centre to the stick deadzone
+// setting, and up and down keep a little more so a sideways turn does not tilt the view. The full
+// speeds are the ones the camera always had. The classic camera only turns once the stick is pushed far.
+const float FREE_LOOK_DEADZONE_Y = 16.0f;
+const float FREE_LOOK_FULL_SPEED_X = (128.0f - 10.0f) * 127.0f / 64.0f;
+const float FREE_LOOK_FULL_SPEED_Y = (128.0f - 40.0f) * 127.0f / 64.0f;
 const float CLASSIC_LOOK_DEADZONE = 85.0f;
-const float CLASSIC_LOOK_SPEED = 127.0f / 32.0f;
+const float CLASSIC_LOOK_FULL_SPEED = (128.0f - 85.0f) * 127.0f / 32.0f;
 
-static int16 LookAroundSpeed(float axis, float deadzone, float speed)
+static int16 LookAroundSpeed(float axis, float deadzone, float fullSpeed)
 {
 	if ( Abs(axis) <= deadzone )
 		return 0;
-	return (int16)((axis + (axis > 0 ? -deadzone : deadzone)) * speed);
+	float past = (Abs(axis) - deadzone) / (STANDARD_PAD_STICK_RANGE - deadzone);
+	return CPad::ScaleByLookSensitivity((axis > 0 ? past : -past) * fullSpeed);
 }
 
 int16 CPad::LookAroundLeftRight(void)
@@ -2891,10 +2929,10 @@ int16 CPad::LookAroundLeftRight(void)
 	// the free camera reads the whole stick on one even curve, since the classic curve past its
 	// big deadzone starts again from zero and would slow the turn down at two thirds of a tilt
 	if ( TheCamera.Cams[0].Using3rdPersonMouseCam() )
-		return LookAroundSpeed(axis, FREE_LOOK_DEADZONE_X, FREE_LOOK_SPEED);
+		return LookAroundSpeed(axis, 0.0f, FREE_LOOK_FULL_SPEED_X);
 
 	if ( !GetLookBehindForPed() )
-		return LookAroundSpeed(axis, CLASSIC_LOOK_DEADZONE, CLASSIC_LOOK_SPEED);
+		return LookAroundSpeed(axis, CLASSIC_LOOK_DEADZONE, CLASSIC_LOOK_FULL_SPEED);
 
 	return 0;
 }
@@ -2914,10 +2952,10 @@ int16 CPad::LookAroundUpDown(void)
 	// the free camera reads the whole stick on one even curve, since the classic curve past its
 	// big deadzone starts again from zero and would slow the turn down at two thirds of a tilt
 	if ( TheCamera.Cams[0].Using3rdPersonMouseCam() )
-		return LookAroundSpeed(axis, FREE_LOOK_DEADZONE_Y, FREE_LOOK_SPEED);
+		return LookAroundSpeed(axis, FREE_LOOK_DEADZONE_Y, FREE_LOOK_FULL_SPEED_Y);
 
 	if ( !GetLookBehindForPed() )
-		return LookAroundSpeed(axis, CLASSIC_LOOK_DEADZONE, CLASSIC_LOOK_SPEED);
+		return LookAroundSpeed(axis, CLASSIC_LOOK_DEADZONE, CLASSIC_LOOK_FULL_SPEED);
 
 	return 0;
 }

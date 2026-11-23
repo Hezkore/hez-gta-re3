@@ -1908,7 +1908,7 @@ CMenuManager::Draw()
 	}
 
 	if (m_nCurrScreen == MENUPAGE_CONTROLLER_SETTINGS)
-		PrintController();
+		PrintController(headerHeight + nextYToUse);
 	else if (m_nCurrScreen == MENUPAGE_SKIN_SELECT_OLD) {
 		CSprite2d::DrawRect(CRect(MENU_X_LEFT_ALIGNED(180), MENU_Y(98), MENU_X_LEFT_ALIGNED(230), MENU_Y(123)), CRGBA(255, 255, 255, FadeIn(255)));
 		CSprite2d::DrawRect(CRect(MENU_X_LEFT_ALIGNED(181), MENU_Y(99), MENU_X_LEFT_ALIGNED(229), MENU_Y(122)), CRGBA(m_PrefsPlayerRed, m_PrefsPlayerGreen, m_PrefsPlayerBlue, FadeIn(255)));
@@ -5828,9 +5828,8 @@ CMenuManager::WaitForUserCD()
 
 #ifdef GAMEPAD_MENU
 void
-CMenuManager::PrintController(void)
+CMenuManager::PrintController(float rowsBottomY)
 {
-	const float scale = 0.9f;
 	const float CONTROLLER_SIZE_X = 235.2f;
 	const float CONTROLLER_SIZE_Y = 175.2f;
 	const float CONTROLLER_POS_X = (DEFAULT_SCREEN_WIDTH - CONTROLLER_SIZE_X) / 2.0f;
@@ -5839,8 +5838,20 @@ CMenuManager::PrintController(void)
 	float centerX = CONTROLLER_POS_X + CONTROLLER_SIZE_X / 2;
 	float centerY = CONTROLLER_POS_Y + CONTROLLER_SIZE_Y / 2;
 
+	// The picture goes under the last row and shrinks when the rows leave too little room above
+	// the helper text. Its labels reach from the L2 label above it to the two line L3 label below it.
+	const float L2_LABEL_ABOVE_PICTURE = 14.0f;
+	const float MAX_SCALE = 0.9f;
+	const float MIN_SCALE = 0.6f;	// the labels stay readable, even if a very long page reaches them
+	const float GAP_UNDER_ROWS = 8.0f;
+	const float BOTTOM_LIMIT = DEFAULT_SCREEN_HEIGHT - HELPER_TEXT_BOTTOM_MARGIN;
+	const float LABELS_ABOVE_CENTER = CONTROLLER_SIZE_Y / 2 + L2_LABEL_ABOVE_PICTURE;
+	const float LABELS_BELOW_CENTER = CONTROLLER_SIZE_Y / 2 + 10.0f;
+	float scale = Clamp((BOTTOM_LIMIT - rowsBottomY - GAP_UNDER_ROWS) / (LABELS_ABOVE_CENTER + LABELS_BELOW_CENTER), MIN_SCALE, MAX_SCALE);
+	float pictureCenterY = Max(centerY, rowsBottomY + GAP_UNDER_ROWS + LABELS_ABOVE_CENTER * scale);
+
 #define X(f) ((f)*scale + centerX)
-#define Y(f) ((f)*scale + centerY)
+#define Y(f) ((f)*scale + pictureCenterY)
 
 	m_aFrontEndSprites[FE_CONTROLLERSH].Draw(MENU_X_LEFT_ALIGNED(X(-CONTROLLER_SIZE_X / 2)), MENU_Y(Y(-CONTROLLER_SIZE_Y / 2)), MENU_X((CONTROLLER_SIZE_X + 4.8f) * scale), MENU_Y((CONTROLLER_SIZE_Y + 4.8f) * scale), CRGBA(0, 0, 0, 255));
 	m_aFrontEndSprites[FE_CONTROLLER].Draw(MENU_X_LEFT_ALIGNED(X(-CONTROLLER_SIZE_X / 2)), MENU_Y(Y(-CONTROLLER_SIZE_Y / 2)), MENU_X(CONTROLLER_SIZE_X * scale), MENU_Y(CONTROLLER_SIZE_Y * scale), CRGBA(255, 255, 255, 255));
@@ -5865,7 +5876,7 @@ CMenuManager::PrintController(void)
 	CFont::SetColor(CRGBA(255, 255, 255, FadeIn(255)));
 	CFont::SetWrapx(SCREEN_WIDTH);
 
-	float TEXT_L2_X = 50.0f + CONTROLLER_POS_X - centerX, TEXT_L2_Y = -14.0f + CONTROLLER_POS_Y - centerY;
+	float TEXT_L2_X = 50.0f + CONTROLLER_POS_X - centerX, TEXT_L2_Y = -L2_LABEL_ABOVE_PICTURE + CONTROLLER_POS_Y - centerY;
 	float TEXT_L1_X = -4.0f + CONTROLLER_POS_X - centerX, TEXT_L1_Y = 25.0f + CONTROLLER_POS_Y - centerY, TEXT_L1_Y_VEH = 3.0f + TEXT_L1_Y;
 	float TEXT_DPAD_X = -4.0f + CONTROLLER_POS_X - centerX, TEXT_DPAD_Y = 65.0f + CONTROLLER_POS_Y - centerY;
 	float TEXT_LSTICK_X = -4.0f + CONTROLLER_POS_X - centerX, TEXT_LSTICK_Y = 97.0f + CONTROLLER_POS_Y - centerY;
@@ -6175,7 +6186,7 @@ CMenuManager::PrintController(void)
 }
 #else
 void
-CMenuManager::PrintController(void)
+CMenuManager::PrintController(float)
 {
 	// FIX: Originally this function doesn't have StretchX/Y, everything had constant pixel size (due to screen was abandoned early?)
 	//		Also texts and their alignment were very bad, so I tried to make them readable (commented out the original code, and marked the ones I added with X)

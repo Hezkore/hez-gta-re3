@@ -96,6 +96,14 @@
 	#define INVERT_PAD_SELECTOR
 #endif
 
+wchar *LookSensitivityDraw(bool *disabled, bool userHovering);
+void LookSensitivityButtonPress(int8 action);
+wchar *StickDeadzoneDraw(bool *disabled, bool userHovering);
+void StickDeadzoneButtonPress(int8 action);
+#define PAD_STICK_SETTINGS \
+	MENUACTION_CFO_DYNAMIC, "FEC_GLS", { new CCFODynamic(&CPad::LookSensitivity, "Controller", "LookSensitivity", LookSensitivityDraw, LookSensitivityButtonPress) }, \
+	MENUACTION_CFO_DYNAMIC, "FEC_GDZ", { new CCFODynamic(&CPad::StickDeadzone, "Controller", "StickDeadzone", StickDeadzoneDraw, StickDeadzoneButtonPress) },
+
 #ifdef GAMEPAD_MENU
 	#define SELECT_CONTROLLER_TYPE  MENUACTION_CFO_SELECT, "FEC_TYP", { new CCFOSelect((int8*)&CMenuManager::m_PrefsControllerType, "Controller", "Type", controllerTypes, ARRAY_SIZE(controllerTypes), false, ControllerTypeAfterChange) },
 #else
@@ -387,6 +395,44 @@ void DetectJoystickGoBack() {
 }
 #endif
 
+static wchar *PercentText(int8 steps, int8 percentPerStep)
+{
+	static wchar text[16];
+	char ascii[16];
+	sprintf(ascii, "%d%%", steps * percentPerStep);
+	AsciiToUnicode(ascii, text);
+	return text;
+}
+
+// a setting that left and right step through without wrapping, saved at once like the other options
+static void StepPadSetting(int8 *steps, int8 action, int8 minSteps, int8 maxSteps)
+{
+	if (action != FEOPTION_ACTION_LEFT && action != FEOPTION_ACTION_RIGHT)
+		return;
+	*steps = Clamp(*steps + (action == FEOPTION_ACTION_RIGHT ? 1 : -1), minSteps, maxSteps);
+	FrontEndMenuManager.SaveSettings();
+}
+
+wchar *LookSensitivityDraw(bool *disabled, bool userHovering)
+{
+	return PercentText(CPad::LookSensitivity, LOOK_SENSITIVITY_PERCENT_STEP);
+}
+
+void LookSensitivityButtonPress(int8 action)
+{
+	StepPadSetting(&CPad::LookSensitivity, action, LOOK_SENSITIVITY_MIN_STEPS, LOOK_SENSITIVITY_MAX_STEPS);
+}
+
+wchar *StickDeadzoneDraw(bool *disabled, bool userHovering)
+{
+	return PercentText(CPad::StickDeadzone, STICK_DEADZONE_PERCENT_STEP);
+}
+
+void StickDeadzoneButtonPress(int8 action)
+{
+	StepPadSetting(&CPad::StickDeadzone, action, STICK_DEADZONE_MIN_STEPS, STICK_DEADZONE_MAX_STEPS);
+}
+
 #ifdef GAMEPAD_MENU
 const char* controllerTypes[] = { "FEC_DS2", "FEC_DS3", "FEC_DS4", "FEC_360", "FEC_ONE", "FEC_NSW" };
 void ControllerTypeAfterChange(int8 before, int8 after)
@@ -426,6 +472,7 @@ CMenuScreenCustom aScreens[MENUPAGES] = {
 		MENUACTION_CTRLCONFIG,		"FEC_CCF", { nil, SAVESLOT_NONE, MENUPAGE_CONTROLLER_SETTINGS },
 		MENUACTION_CTRLDISPLAY,		"FEC_CDP", { nil, SAVESLOT_NONE, MENUPAGE_CONTROLLER_SETTINGS },
 		INVERT_PAD_SELECTOR
+		PAD_STICK_SETTINGS
 #ifdef PAD_VIBRATION
 		MENUACTION_CTRLVIBRATION,	"FEC_VIB", { nil, SAVESLOT_NONE, MENUPAGE_CONTROLLER_SETTINGS },
 #endif
