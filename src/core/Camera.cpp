@@ -250,6 +250,7 @@ CCamera::Init(void)
 void
 CCamera::Process(void)
 {
+	UpdateVehicleCameraPitch();
 	// static bool InterpolatorNotInitialised = true;	// unused
 	static float PlayerMinDist = 1.3f;
 	static bool WasPreviouslyInterSyhonFollowPed = false;	// only written

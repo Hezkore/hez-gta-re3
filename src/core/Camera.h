@@ -541,10 +541,12 @@ public:
 	uint32 m_uiFadeTimeStartedMusic;
 
 	static bool m_bUseMouse3rdPerson;
+	static bool bHighVehicleCamera;
+	static float ms_fVehicleCameraPitch;
+	static void UpdateVehicleCameraPitch(void);
+	static float VehicleCameraExtraPitch(CEntity *vehicle);
 #ifdef FREE_CAM
 	static bool bFreeCam;
-	static bool bHighVehicleCamera;
-	static float VehicleCameraExtraPitch(void);
 #endif
 
 	// High level and misc
