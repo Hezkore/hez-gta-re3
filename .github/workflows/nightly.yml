@@ -60,10 +60,8 @@ jobs:
       matrix:
         include:
           - { game: re3, branch: master, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: re3-linux-amd64 }
-          - { game: re3, branch: master, os: windows-2022, platform: win-amd64-librw_gl3_glfw-oal, asset: re3-windows-amd64 }
           - { game: re3, branch: master, os: windows-2022, platform: win-amd64-librw_d3d9-oal, asset: re3-windows-amd64-d3d9 }
           - { game: reVC, branch: miami, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: reVC-linux-amd64 }
-          - { game: reVC, branch: miami, os: windows-2022, platform: win-amd64-librw_gl3_glfw-oal, asset: reVC-windows-amd64 }
           - { game: reVC, branch: miami, os: windows-2022, platform: win-amd64-librw_d3d9-oal, asset: reVC-windows-amd64-d3d9 }
           - { game: reLCS, branch: lcs, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: reLCS-alpha-linux-amd64 }
           - { game: reLCS, branch: lcs, os: windows-2022, platform: win-amd64-librw_d3d9-oal, asset: reLCS-alpha-windows-amd64-d3d9 }
@@ -90,16 +88,10 @@ jobs:
         if: runner.os == 'Windows'
         uses: microsoft/setup-msbuild@v3
 
-      - name: Download glfw
-        if: runner.os == 'Windows'
-        run: |
-          curl -L -o glfw.zip https://github.com/glfw/glfw/releases/download/3.3.2/glfw-3.3.2.bin.WIN64.zip
-          7z x glfw.zip
-
       - name: Build
         if: runner.os == 'Windows'
         run: |
-          ./premake5.exe vs2019 --with-librw --no-full-paths --glfwdir64=glfw-3.3.2.bin.WIN64
+          ./premake5.exe vs2019 --with-librw --no-full-paths
           msbuild -m build/${{ matrix.game }}.sln /property:Configuration=Release /property:Platform=${{ matrix.platform }}
           mv bin/${{ matrix.platform }}/Release/${{ matrix.game }}.exe gamefiles/
           mv vendor/mpg123/dist/Win64/libmpg123-0.dll gamefiles/
