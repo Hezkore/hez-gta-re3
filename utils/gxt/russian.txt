@@ -7986,6 +7986,9 @@ PS2 ALPHA TEST
 [FEC_FRC]
 СВОБОДНАЯ КАМЕРА
 
+[FEC_VCH]
+ВЫСОТА КАМЕРЫ ТРАНСПОРТА
+
 { Linux joy detection }
 [FEC_JOD]
 DETECT JOYSTICK

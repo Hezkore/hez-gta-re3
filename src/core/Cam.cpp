@@ -31,6 +31,16 @@ int16 DebugCamMode;
 
 #ifdef FREE_CAM
 bool CCamera::bFreeCam = false;
+bool CCamera::bHighVehicleCamera = false;
+
+// the High vehicle camera, as in GTA V, sits higher behind the car and looks down on it, so the front shows
+const float HIGH_VEHICLE_CAMERA_EXTRA_PITCH = 0.1f;
+
+float
+CCamera::VehicleCameraExtraPitch(void)
+{
+	return bHighVehicleCamera ? HIGH_VEHICLE_CAMERA_EXTRA_PITCH : 0.0f;
+}
 int nPreviousMode = -1;
 #endif
 
@@ -1836,6 +1846,7 @@ CCam::WorkOutCamHeight(const CVector &TargetCoors, float TargetOrientation, floa
 		AlphaOffset = CGeneral::GetATanOfXY(10.8f, zoomvalue);	// mid
 	else if(TheCamera.CarZoomIndicator == CAM_ZOOM_3)
 		AlphaOffset = CGeneral::GetATanOfXY(7.0f, zoomvalue);	// far
+	AlphaOffset += CCamera::VehicleCameraExtraPitch();
 
 
 	float Length = (Source - TargetCoors).Magnitude2D();
@@ -4853,6 +4864,8 @@ CCam::Process_FollowCar_SA(const CVector& CameraTarget, float TargetOrientation,
 			break;
 		}
 	}
+	if (!isHeli && !isPlane)
+		zoomModeAlphaOffset += CCamera::VehicleCameraExtraPitch();
 
 	CColModel* carCol = (CColModel*)car->GetColModel();
 	float colMaxZ = carCol->boundingBox.max.z;  // As opposed to LCS and SA, VC does this: carCol->boundingBox.max.z - carCol->boundingBox.min.z;
