@@ -2870,17 +2870,31 @@ int16 CPad::SniperModeLookUpDown(void)
 		return dpad;
 }
 
+// how fast the right stick turns the camera, past a deadzone
+const float FREE_LOOK_DEADZONE_X = 10.0f;
+const float FREE_LOOK_DEADZONE_Y = 40.0f;
+const float FREE_LOOK_SPEED = 127.0f / 64.0f;
+const float CLASSIC_LOOK_DEADZONE = 85.0f;
+const float CLASSIC_LOOK_SPEED = 127.0f / 32.0f;
+
+static int16 LookAroundSpeed(float axis, float deadzone, float speed)
+{
+	if ( Abs(axis) <= deadzone )
+		return 0;
+	return (int16)((axis + (axis > 0 ? -deadzone : deadzone)) * speed);
+}
+
 int16 CPad::LookAroundLeftRight(void)
 {
 	float axis = GetPad(0)->NewState.RightStickX;
 
-	if ( Abs(axis) > 85 && !GetLookBehindForPed() )
-		return (int16) ( (axis + ( ( axis > 0 ) ? -85 : 85) )
-							* (127.0f / 32.0f) ); // 3.96875f
+	// the free camera reads the whole stick on one even curve, since the classic curve past its
+	// big deadzone starts again from zero and would slow the turn down at two thirds of a tilt
+	if ( TheCamera.Cams[0].Using3rdPersonMouseCam() )
+		return LookAroundSpeed(axis, FREE_LOOK_DEADZONE_X, FREE_LOOK_SPEED);
 
-	else if ( TheCamera.Cams[0].Using3rdPersonMouseCam() && Abs(axis) > 10 )
-		return (int16) ( (axis + ( ( axis > 0 ) ? -10 : 10) )
-							* (127.0f / 64.0f) ); // 1.984375f
+	if ( !GetLookBehindForPed() )
+		return LookAroundSpeed(axis, CLASSIC_LOOK_DEADZONE, CLASSIC_LOOK_SPEED);
 
 	return 0;
 }
@@ -2897,13 +2911,13 @@ int16 CPad::LookAroundUpDown(void)
 		axis = -axis;
 #endif
 
-	if ( Abs(axis) > 85 && !GetLookBehindForPed() )
-		return (int16) ( (axis + ( ( axis > 0 ) ? -85 : 85) )
-							* (127.0f / 32.0f) ); // 3.96875f
+	// the free camera reads the whole stick on one even curve, since the classic curve past its
+	// big deadzone starts again from zero and would slow the turn down at two thirds of a tilt
+	if ( TheCamera.Cams[0].Using3rdPersonMouseCam() )
+		return LookAroundSpeed(axis, FREE_LOOK_DEADZONE_Y, FREE_LOOK_SPEED);
 
-	else if ( TheCamera.Cams[0].Using3rdPersonMouseCam() && Abs(axis) > 40 )
-		return (int16) ( (axis + ( ( axis > 0 ) ? -40 : 40) )
-							* (127.0f / 64.0f) ); // 1.984375f
+	if ( !GetLookBehindForPed() )
+		return LookAroundSpeed(axis, CLASSIC_LOOK_DEADZONE, CLASSIC_LOOK_SPEED);
 
 	return 0;
 }
