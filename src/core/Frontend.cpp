@@ -159,6 +159,7 @@ int8 CMenuManager::m_PrefsSmoothAnims = 1;
 
 // index of m_PrefsFrameLimiter, 0 is no limit
 const int32 frameLimits[] = { 0, 30, 60, 75, 90, 120, 144, 165, 240 };
+const char *controllerSetupNames[NUM_CONTROLLER_SETUPS] = { "FEC_CF1", "FEC_CF2", "FEC_CF3", "FEC_CF4" };
 const char *frameLimitTexts[] = { "FEM_OFF", "FEM_30", "FEM_60", "FEM_75", "FEM_90", "FEM_120", "FEM_144", "FEM_165", "FEM_240" };
 int32 numFrameLimits = ARRAY_SIZE(frameLimits);
 
@@ -1457,20 +1458,7 @@ CMenuManager::Draw()
 					rightText = TheText.Get("FEM_OFF");
 				break;
 			case MENUACTION_CTRLCONFIG:
-				switch (CPad::GetPad(0)->Mode) {
-				case 0:
-					rightText = TheText.Get("FEC_CF1");
-					break;
-				case 1:
-					rightText = TheText.Get("FEC_CF2");
-					break;
-				case 2:
-					rightText = TheText.Get("FEC_CF3");
-					break;
-				case 3:
-					rightText = TheText.Get("FEC_CF4");
-					break;
-				}
+				rightText = TheText.Get(controllerSetupNames[CPad::GetPad(0)->Mode]);
 				break;
 			case MENUACTION_CTRLDISPLAY:
 				if (m_DisplayControllerOnFoot)
@@ -5357,11 +5345,7 @@ CMenuManager::ProcessButtonPresses(void)
 		switch (aScreens[m_nCurrScreen].m_aEntries[m_nCurrOption].m_Action) {
 #ifdef FIX_BUGS
 			case MENUACTION_CTRLCONFIG:
-				CPad::GetPad(0)->Mode += changeValueBy;
-				if (CPad::GetPad(0)->Mode > 3)
-					CPad::GetPad(0)->Mode = 0;
-				else if (CPad::GetPad(0)->Mode < 0)
-					CPad::GetPad(0)->Mode = 3;
+				CPad::GetPad(0)->Mode = (CPad::GetPad(0)->Mode + changeValueBy + NUM_CONTROLLER_SETUPS) % NUM_CONTROLLER_SETUPS;
 				SaveSettings();
 				DMAudio.PlayFrontEndSound(SOUND_FRONTEND_MENU_SETTING_CHANGE, 0);
 				break;
@@ -5511,8 +5495,8 @@ CMenuManager::ProcessOnOffMenuOptions()
 #ifndef FIX_BUGS
 	case MENUACTION_CTRLCONFIG:
 		CPad::GetPad(0)->Mode++;
-		if (CPad::GetPad(0)->Mode > 3)
-			CPad::GetPad(0)->Mode = 0;
+		if (CPad::GetPad(0)->Mode >= NUM_CONTROLLER_SETUPS)
+			CPad::GetPad(0)->Mode = CONTROLLER_SETUP_1;
 		DMAudio.PlayFrontEndSound(SOUND_FRONTEND_MENU_SETTING_CHANGE, 0);
 		break;
 #endif // !FIX_BUGS
@@ -5964,7 +5948,7 @@ CMenuManager::PrintController(void)
 
 	if (m_DisplayControllerOnFoot) {
 		switch (CPad::GetPad(0)->Mode) {
-			case 0:
+			case CONTROLLER_SETUP_1:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L2_X)), MENU_Y(Y(TEXT_L2_Y)), TheText.Get("FEC_CWL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L1_X)), MENU_Y(Y(TEXT_L1_Y)), TheText.Get("FEC_LOF"));
@@ -5985,7 +5969,7 @@ CMenuManager::PrintController(void)
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_R3_X)), MENU_Y(Y(TEXT_R3_Y)), TheText.Get("FEC_LB3"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_R3_X)), MENU_Y(Y(TEXT_R3_Y + 13.0f)), TheText.Get("FEC_R3"));
 				break;
-			case 1:
+			case CONTROLLER_SETUP_2:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L2_X)), MENU_Y(Y(TEXT_L2_Y)), TheText.Get("FEC_CWL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L1_X)), MENU_Y(Y(TEXT_L1_Y)), TheText.Get("FEC_LOF"));
@@ -6006,7 +5990,7 @@ CMenuManager::PrintController(void)
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_R3_X)), MENU_Y(Y(TEXT_R3_Y)), TheText.Get("FEC_LB3"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_R3_X)), MENU_Y(Y(TEXT_R3_Y + 13.0f)), TheText.Get("FEC_R3"));
 				break;
-			case 2:
+			case CONTROLLER_SETUP_3:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L2_X)), MENU_Y(Y(TEXT_L2_Y)), TheText.Get("FEC_CWL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L1_X)), MENU_Y(Y(TEXT_L1_Y)), TheText.Get("FEC_ENV"));
@@ -6027,7 +6011,7 @@ CMenuManager::PrintController(void)
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_R3_X)), MENU_Y(Y(TEXT_R3_Y)), TheText.Get("FEC_LB3"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_R3_X)), MENU_Y(Y(TEXT_R3_Y + 13.0f)), TheText.Get("FEC_R3"));
 				break;
-			case 3:
+			case CONTROLLER_SETUP_4:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L2_X)), MENU_Y(Y(TEXT_L2_Y)), TheText.Get("FEC_CWL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L1_X)), MENU_Y(Y(TEXT_L1_Y)), TheText.Get("FEC_TAR"));
@@ -6054,7 +6038,7 @@ CMenuManager::PrintController(void)
 	} else {
 		CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L2R2_X)), MENU_Y(Y(TEXT_L2R2_Y)), TheText.Get("FEC_LB"));
 		switch (CPad::GetPad(0)->Mode) {
-			case 0:
+			case CONTROLLER_SETUP_1:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L2_X)), MENU_Y(Y(TEXT_L2_Y)), TheText.Get("FEC_LL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L1_X)), MENU_Y(Y(TEXT_L1_Y_VEH)), TheText.Get("FEC_RSC"));
@@ -6075,7 +6059,7 @@ CMenuManager::PrintController(void)
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_RSTICK_X)), MENU_Y(Y(TEXT_RSTICK_Y)), TheText.Get("FEC_TUC"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_R3_X)), MENU_Y(Y(TEXT_R3_Y)), TheText.Get("FEC_SM3"));
 				break;
-			case 1:
+			case CONTROLLER_SETUP_2:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L2_X)), MENU_Y(Y(TEXT_L2_Y)), TheText.Get("FEC_LL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L1_X)), MENU_Y(Y(TEXT_L1_Y_VEH)), TheText.Get("FEC_HOR"));
@@ -6096,7 +6080,7 @@ CMenuManager::PrintController(void)
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_RSTICK_X)), MENU_Y(Y(TEXT_RSTICK_Y)), TheText.Get("FEC_TUC"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_R3_X)), MENU_Y(Y(TEXT_R3_Y)), TheText.Get("FEC_SM3"));
 				break;
-			case 2:
+			case CONTROLLER_SETUP_3:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L2_X)), MENU_Y(Y(TEXT_L2_Y)), TheText.Get("FEC_LL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L1_X)), MENU_Y(Y(TEXT_L1_Y_VEH)), TheText.Get("FEC_EXV"));
@@ -6117,7 +6101,7 @@ CMenuManager::PrintController(void)
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_RSTICK_X)), MENU_Y(Y(TEXT_RSTICK_Y)), TheText.Get("FEC_TUC"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_R3_X)), MENU_Y(Y(TEXT_R3_Y)), TheText.Get("FEC_SM3"));
 				break;
-			case 3:
+			case CONTROLLER_SETUP_4:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L2_X)), MENU_Y(Y(TEXT_L2_Y)), TheText.Get("FEC_LL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(X(TEXT_L1_X)), MENU_Y(Y(TEXT_L1_Y_VEH)), TheText.Get("FEC_HAB"));
@@ -6181,7 +6165,7 @@ CMenuManager::PrintController(void)
 
 	if (m_DisplayControllerOnFoot) {
 		switch (CPad::GetPad(0)->Mode) {
-			case 0:
+			case CONTROLLER_SETUP_1:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(210.0f), MENU_Y(146.0f), TheText.Get("FEC_CWL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(156.0f), MENU_Y(185.0f), TheText.Get("FEC_LOF"));
@@ -6202,7 +6186,7 @@ CMenuManager::PrintController(void)
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(398.0f), MENU_Y(269.0f), TheText.Get("FEC_LB3"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(398.0f), MENU_Y(282.0f), TheText.Get("FEC_R3"));
 				break;
-			case 1:
+			case CONTROLLER_SETUP_2:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(210.0f), MENU_Y(146.0f), TheText.Get("FEC_CWL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(156.0f), MENU_Y(185.0f), TheText.Get("FEC_LOF"));
@@ -6223,7 +6207,7 @@ CMenuManager::PrintController(void)
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(398.0f), MENU_Y(269.0f), TheText.Get("FEC_LB3"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(398.0f), MENU_Y(282.0f), TheText.Get("FEC_R3"));
 				break;
-			case 2:
+			case CONTROLLER_SETUP_3:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(210.0f), MENU_Y(146.0f), TheText.Get("FEC_CWL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(156.0f), MENU_Y(185.0f), TheText.Get("FEC_ENV"));
@@ -6244,7 +6228,7 @@ CMenuManager::PrintController(void)
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(398.0f), MENU_Y(269.0f), TheText.Get("FEC_LB3"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(398.0f), MENU_Y(282.0f), TheText.Get("FEC_R3"));
 				break;
-			case 3:
+			case CONTROLLER_SETUP_4:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(210.0f), MENU_Y(146.0f), TheText.Get("FEC_CWL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(156.0f), MENU_Y(185.0f), TheText.Get("FEC_TAR"));
@@ -6270,7 +6254,7 @@ CMenuManager::PrintController(void)
 		}
 	} else {
 		switch (CPad::GetPad(0)->Mode) {
-			case 0:
+			case CONTROLLER_SETUP_1:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(210.0f), MENU_Y(146.0f), TheText.Get("FEC_LL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(156.0f), MENU_Y(185.0f), TheText.Get("FEC_RSC"));
@@ -6293,7 +6277,7 @@ CMenuManager::PrintController(void)
 				// FIX: Coordinates of this line is undefined in PC...
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(398.0f), MENU_Y(304.0f), TheText.Get("FEC_SM3"));
 				break;
-			case 1:
+			case CONTROLLER_SETUP_2:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(210.0f), MENU_Y(146.0f), TheText.Get("FEC_LL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(156.0f), MENU_Y(185.0f), TheText.Get("FEC_HOR"));
@@ -6316,7 +6300,7 @@ CMenuManager::PrintController(void)
 				// FIX: Coordinates of this line is undefined in PC...
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(398.0f), MENU_Y(304.0f), TheText.Get("FEC_SM3"));
 				break;
-			case 2:
+			case CONTROLLER_SETUP_3:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(210.0f), MENU_Y(146.0f), TheText.Get("FEC_LL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(156.0f), MENU_Y(185.0f), TheText.Get("FEC_EXV"));
@@ -6339,7 +6323,7 @@ CMenuManager::PrintController(void)
 				// FIX: Coordinates of this line is undefined in PC...
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(398.0f), MENU_Y(304.0f), TheText.Get("FEC_SM3"));
 				break;
-			case 3:
+			case CONTROLLER_SETUP_4:
 				CFont::SetRightJustifyOn(); // X
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(210.0f), MENU_Y(146.0f), TheText.Get("FEC_LL"));
 				CFont::PrintString(MENU_X_LEFT_ALIGNED(156.0f), MENU_Y(185.0f), TheText.Get("FEC_HAB"));

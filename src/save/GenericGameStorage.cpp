@@ -155,7 +155,9 @@ GenericSave(int file)
 	WriteDataToBufferPointer(buf, CClock::ms_nGameClockHours);
 	WriteDataToBufferPointer(buf, CClock::ms_nGameClockMinutes);
 	currPad = CPad::GetPad(0);
-	WriteDataToBufferPointer(buf, currPad->Mode);
+	// the setup lives in the settings, and a save only holds one the original game and older builds know
+	int16 setupForSave = CPad::ClassicSetup(currPad->Mode);
+	WriteDataToBufferPointer(buf, setupForSave);
 	WriteDataToBufferPointer(buf, CTimer::m_snTimeInMilliseconds);
 	WriteDataToBufferPointer(buf, CTimer::ms_fTimeScale);
 	WriteDataToBufferPointer(buf, CTimer::ms_fTimeStep);
@@ -285,7 +287,8 @@ GenericLoad()
 	ReadDataFromBufferPointer(buf, CClock::ms_nGameClockHours);
 	ReadDataFromBufferPointer(buf, CClock::ms_nGameClockMinutes);
 	currPad = CPad::GetPad(0);
-	ReadDataFromBufferPointer(buf, currPad->Mode);
+	int16 setupInSave; // the setup in the settings wins
+	ReadDataFromBufferPointer(buf, setupInSave);
 	ReadDataFromBufferPointer(buf, CTimer::m_snTimeInMilliseconds);
 	ReadDataFromBufferPointer(buf, CTimer::ms_fTimeScale);
 	ReadDataFromBufferPointer(buf, CTimer::ms_fTimeStep);
