@@ -248,9 +248,9 @@ PrintPadFeedState(const PadFeedEvent &event)
 	CVehicle *vehicle = FindPlayerVehicle();
 	CPhysical *mover = vehicle ? (CPhysical *)vehicle : (CPhysical *)player;
 	float forwardSpeed = DotProduct(mover->GetMoveSpeed(), mover->GetForward());
-	printf("pad feed %s=%.2f at %u ms: ped state %d, weapon %d with %d ammo, camera mode %d, forward speed %.3f, setup %d\n",
+	printf("pad feed %s=%.2f at %u ms: ped state %d, weapon %d with %d ammo, camera mode %d, forward speed %.3f, setup %d, fade %d\n",
 		event.control, event.value, event.atMilliseconds, player->GetPedState(), player->GetWeapon()->m_eWeaponType, player->GetWeapon()->m_nAmmoTotal,
-		TheCamera.Cams[TheCamera.ActiveCam].Mode, forwardSpeed, CPad::GetPad(0)->Mode);
+		TheCamera.Cams[TheCamera.ActiveCam].Mode, forwardSpeed, CPad::GetPad(0)->Mode, TheCamera.GetScreenFadeStatus());
 }
 
 void
@@ -263,10 +263,10 @@ StartOptions::FeedPad(void)
 		if ( HasWaitingOptions() || !IsPlayerInControl() )
 			return;
 		isPadFeedRunning = true;
-		padFeedStartMilliseconds = CTimer::GetTimeInMilliseconds();
+		padFeedStartMilliseconds = CTimer::GetTimeInMillisecondsPauseMode(); // runs on in the menus too
 	}
 
-	uint32 elapsed = CTimer::GetTimeInMilliseconds() - padFeedStartMilliseconds;
+	uint32 elapsed = CTimer::GetTimeInMillisecondsPauseMode() - padFeedStartMilliseconds;
 	for ( ; padFeedNextEvent < padFeedEventCount && padFeedEvents[padFeedNextEvent].atMilliseconds <= elapsed; padFeedNextEvent++ ) {
 		const PadFeedEvent &event = padFeedEvents[padFeedNextEvent];
 		const PadFeedControl *control = FindPadFeedControl(event.control);
