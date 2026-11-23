@@ -361,8 +361,9 @@ enum Config {
 //#	define PS2_MENU_USEALLPAGEICONS
 #else
 #	define MAP_ENHANCEMENTS			// Adding waypoint and better mouse support
-#	if defined(XINPUT) || defined(GTA_HANDHELD)
-#		define GAMEPAD_MENU		// Add gamepad menu
+#	define GAMEPAD_MENU		// Add gamepad menu
+#	if defined(XINPUT) || defined(__SWITCH__)
+#		define PAD_VIBRATION		// only XInput and the Switch can shake the pad
 #	endif
 #	define TRIANGLE_BACK_BUTTON
 //#	define CIRCLE_BACK_BUTTON
