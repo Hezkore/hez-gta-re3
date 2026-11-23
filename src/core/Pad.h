@@ -57,9 +57,15 @@ public:
 
 VALIDATE_SIZE(CMouseControllerState, 0x10);
 
-// a stick counts once either of its axes is past this, as XInput pads always did
-const float STANDARD_PAD_STICK_DEADZONE = 0.3f;
-const float STANDARD_PAD_STICK_RANGE = 128.0f;
+// the gamepad settings, kept in steps that the menu shows as percents
+const int8 STICK_DEADZONE_PERCENT_STEP = 5;
+const int8 STICK_DEADZONE_MIN_STEPS = 2;	// 10%, as the menus move on any stick value past it
+const int8 STICK_DEADZONE_MAX_STEPS = 10;
+const int8 STICK_DEADZONE_DEFAULT_STEPS = 5;	// 25%, close to the deadzone XInput suggests
+const int8 LOOK_SENSITIVITY_PERCENT_STEP = 10;
+const int8 LOOK_SENSITIVITY_MIN_STEPS = 1;
+const int8 LOOK_SENSITIVITY_MAX_STEPS = 20;
+const int8 LOOK_SENSITIVITY_DEFAULT_STEPS = 10;	// 100%
 
 // A pad with the standard Xbox layout, as XInput or the SDL mapping read it, before a setup gives the buttons a meaning
 class CStandardPadState
@@ -311,6 +317,12 @@ public:
 	void SetDrunkInputDelay(int32 delay) { DrunkDrivingBufferUsed = delay; }
 
 	void AffectFromStandardPad(const CStandardPadState &pad);
+	static int8 StickDeadzone;
+	static int8 LookSensitivity;
+	static void StickFromAxes(float x, float y, int16 &stickX, int16 &stickY);
+	static void ClampSettings(void);
+	static int16 ScaleByLookSensitivity(float speed);
+	static float ScaleSquaredLookBySensitivity(float value);
 #ifdef XINPUT
 	static int XInputJoy1;
 	static int XInputJoy2;

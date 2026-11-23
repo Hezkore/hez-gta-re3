@@ -863,7 +863,8 @@ public:
 	// uint8 GetNumberOfMenuOptions();
 #ifdef GAMEPAD_MENU
 	void LoadController(int8 type);
-	void PrintController(void);
+	void PrintController(float rowsBottomY);
+	float GetRowsBottomY(void);
 #endif
 };
 

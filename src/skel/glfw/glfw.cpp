@@ -2549,21 +2549,9 @@ static void CaptureJoystickThroughBindings(RwInt32 padID, int numAxes, const flo
 		RsPadEventHandler(rsPADBUTTONDOWN, (void *)&bs);
 	}
 	
-	{
-		CPad *pad = CPad::GetPad(bs.padID);
-
-		if ( Abs(leftStickPos.x) > STANDARD_PAD_STICK_DEADZONE )
-			pad->PCTempJoyState.LeftStickX	= (int32)(leftStickPos.x * STANDARD_PAD_STICK_RANGE);
-		
-		if ( Abs(leftStickPos.y) > STANDARD_PAD_STICK_DEADZONE )
-			pad->PCTempJoyState.LeftStickY	= (int32)(leftStickPos.y * STANDARD_PAD_STICK_RANGE);
-		
-		if ( Abs(rightStickPos.x) > STANDARD_PAD_STICK_DEADZONE )
-			pad->PCTempJoyState.RightStickX = (int32)(rightStickPos.x * STANDARD_PAD_STICK_RANGE);
-
-		if ( Abs(rightStickPos.y) > STANDARD_PAD_STICK_DEADZONE )
-			pad->PCTempJoyState.RightStickY = (int32)(rightStickPos.y * STANDARD_PAD_STICK_RANGE);
-	}
+	CPad *pad = CPad::GetPad(bs.padID);
+	CPad::StickFromAxes(leftStickPos.x, leftStickPos.y, pad->PCTempJoyState.LeftStickX, pad->PCTempJoyState.LeftStickY);
+	CPad::StickFromAxes(rightStickPos.x, rightStickPos.y, pad->PCTempJoyState.RightStickX, pad->PCTempJoyState.RightStickY);
 }
 
 void CapturePad(RwInt32 padID)

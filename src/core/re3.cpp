@@ -591,6 +591,8 @@ bool LoadINISettings()
 	CCarCtrl::MaxNumberOfCarsInUse = DEFAULT_MAX_NUMBER_OF_CARS * CIniFile::CarNumberMultiplier;
 #endif
 
+	CPad::ClampSettings();
+
 	return true;
 }
 
