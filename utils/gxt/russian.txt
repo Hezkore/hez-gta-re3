@@ -2471,6 +2471,9 @@ CAPSLOCK
 [FEC_CWR]
 Прокрутка оружия вправо
 
+[FEC_CWE]
+Смена оружия
+
 [FEC_DBG]
 ОТЛАДОЧНОЕ МЕНЮ
 
@@ -8089,6 +8092,9 @@ DUALSHOCK 4
 
 [FEC_CF4]
 СХЕМА 4
+
+[FEC_CF5]
+GTA IV
 
 [FEC_CDP]
 ТИП УПРАВЛЕНИЯ

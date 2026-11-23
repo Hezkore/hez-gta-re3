@@ -154,6 +154,7 @@ enum eControllerSetup
 	CONTROLLER_SETUP_2,
 	CONTROLLER_SETUP_3,
 	CONTROLLER_SETUP_4,
+	CONTROLLER_SETUP_GTA4,	// laid out as in GTA IV, where this game has the same action
 	NUM_CONTROLLER_SETUPS
 };
 

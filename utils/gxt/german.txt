@@ -2426,6 +2426,9 @@ Eine Waffe nach links
 [FEC_CWR]
 Eine Waffe nach rechts
 
+[FEC_CWE]
+Waffe wechseln
+
 [FEC_LOF]
 Nach vorne schauen
 
@@ -8166,6 +8169,9 @@ KONFIGURATION 3
 
 [FEC_CF4]
 KONFIGURATION 4
+
+[FEC_CF5]
+GTA IV
 
 [FEC_CDP]
 CONTROLLER-ANZEIGE

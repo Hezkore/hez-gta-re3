@@ -371,12 +371,10 @@ CFont::LoadButtons(const char* txdPath)
 		CTxdStore::AddRef(ButtonsSlot);
 		CTxdStore::PushCurrentTxd();
 		CTxdStore::SetCurrentTxd(ButtonsSlot);
-#if 0  // unused
 		ButtonSprite[BUTTON_UP].SetTexture("up");
 		ButtonSprite[BUTTON_DOWN].SetTexture("down");
 		ButtonSprite[BUTTON_LEFT].SetTexture("left");
 		ButtonSprite[BUTTON_RIGHT].SetTexture("right");
-#endif
 		ButtonSprite[BUTTON_CROSS].SetTexture("cross");
 		ButtonSprite[BUTTON_CIRCLE].SetTexture("circle");
 		ButtonSprite[BUTTON_SQUARE].SetTexture("square");
@@ -1212,12 +1210,10 @@ CFont::GetStringWidth(wchar *s, bool spaces)
 						s++;
 #ifdef BUTTON_ICONS
 						switch (*s) {
-#if 0 // unused
 						case 'U':
 						case 'D':
 						case '<':
 						case '>':
-#endif
 						case 'X':
 						case 'O':
 						case 'Q':
@@ -1250,12 +1246,10 @@ CFont::GetStringWidth(wchar *s, bool spaces)
 				s++;
 #ifdef BUTTON_ICONS
 				switch (*s) {
-#if 0 // unused
 				case 'U':
 				case 'D':
 				case '<':
 				case '>':
-#endif
 				case 'X':
 				case 'O':
 				case 'Q':
@@ -1367,12 +1361,10 @@ CFont::ParseToken(wchar *s, wchar* ss, bool japShit)
 		case 'w': SetColor(CRGBA(175, 175, 175, 255)); break;
 		case 'y': SetColor(CRGBA(210, 196, 106, 255)); break;
 #ifdef BUTTON_ICONS
-#if 0 // unused
 		case 'U': PS2Symbol = BUTTON_UP; break;
 		case 'D': PS2Symbol = BUTTON_DOWN; break;
 		case '<': PS2Symbol = BUTTON_LEFT; break;
 		case '>': PS2Symbol = BUTTON_RIGHT; break;
-#endif
 		case 'X': PS2Symbol = BUTTON_CROSS; break;
 		case 'O': PS2Symbol = BUTTON_CIRCLE; break;
 		case 'Q': PS2Symbol = BUTTON_SQUARE; break;
@@ -1418,12 +1410,10 @@ CFont::ParseToken(wchar *s, wchar*)
 		case 'w': SetColor(CRGBA(175, 175, 175, 255)); break;
 		case 'y': SetColor(CRGBA(210, 196, 106, 255)); break;
 #ifdef BUTTON_ICONS
-#if 0 // unused
 		case 'U': PS2Symbol = BUTTON_UP; break;
 		case 'D': PS2Symbol = BUTTON_DOWN; break;
 		case '<': PS2Symbol = BUTTON_LEFT; break;
 		case '>': PS2Symbol = BUTTON_RIGHT; break;
-#endif
 		case 'X': PS2Symbol = BUTTON_CROSS; break;
 		case 'O': PS2Symbol = BUTTON_CIRCLE; break;
 		case 'Q': PS2Symbol = BUTTON_SQUARE; break;

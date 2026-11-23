@@ -69,12 +69,10 @@ enum
 enum
 {
 	BUTTON_NONE = -1,
-#if 0 // unused
 	BUTTON_UP,
 	BUTTON_DOWN,
 	BUTTON_LEFT,
 	BUTTON_RIGHT,
-#endif
 	BUTTON_CROSS,
 	BUTTON_CIRCLE,
 	BUTTON_SQUARE,

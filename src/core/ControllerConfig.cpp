@@ -2392,7 +2392,11 @@ int32 CControllerConfigManager::GetNumOfSettingsForAction(e_ControllerAction act
 #define VFB(b)
 #endif
 
-#define CONTROLLER_BUTTONS(T, O, X, Q, L1, L2, L3, R1, R2, R3, SELECT)                                                                                         \
+// sticks have no icon, so their hints are words
+#define STICK_LEFT "LEFT STICK"
+#define STICK_RIGHT "RIGHT STICK"
+
+#define CONTROLLER_BUTTONS(T, O, X, Q, L1, L2, L3, R1, R2, R3, SELECT, DLEFT, DRIGHT)                                                                                         \
 	{{                                                                                                                                                         \
 	     O,      /* PED_FIREWEAPON */                                                                                                                          \
 	     R2,     /* PED_CYCLE_WEAPON_RIGHT */                                                                                                                  \
@@ -2568,13 +2572,57 @@ int32 CControllerConfigManager::GetNumOfSettingsForAction(e_ControllerAction act
 	     nil,    /* SWITCH_DEBUG_CAM_ON */                                                                                                                     \
 	     nil,    /* TAKE_SCREEN_SHOT */                                                                                                                        \
 	     nil,    /* SHOW_MOUSE_POINTER_TOGGLE */                                                                                                               \
+	 },                                                                                                                                                        \
+	 {                                                                                                                                                         \
+	     R2,     /* PED_FIREWEAPON */                                                                                                                          \
+	     DRIGHT, /* PED_CYCLE_WEAPON_RIGHT */                                                                                                                  \
+	     DLEFT,  /* PED_CYCLE_WEAPON_LEFT */                                                                                                                   \
+	     nil,    /* GO_FORWARD */                                                                                                                              \
+	     nil,    /* GO_BACK */                                                                                                                                 \
+	     nil,    /* GO_LEFT */                                                                                                                                 \
+	     nil,    /* GO_RIGHT */                                                                                                                                \
+	     STICK_LEFT, /* PED_SNIPER_ZOOM_IN */                                                                                                                      \
+	     STICK_LEFT, /* PED_SNIPER_ZOOM_OUT */                                                                                                                     \
+	     T,      /* VEHICLE_ENTER_EXIT */                                                                                                                      \
+	     SELECT, /* CAMERA_CHANGE_VIEW_ALL_SITUATIONS */                                                                                                       \
+	     Q,      /* PED_JUMPING */                                                                                                                             \
+	     X,      /* PED_SPRINT */                                                                                                                              \
+	     R3,     /* PED_LOOKBEHIND */                                                                                                                          \
+	     VFB(O)  /* VEHICLE_FIREWEAPON */                                                                                                                      \
+	     R2,     /* VEHICLE_ACCELERATE */                                                                                                                      \
+	     L2,     /* VEHICLE_BRAKE */                                                                                                                           \
+	     DRIGHT, /* VEHICLE_CHANGE_RADIO_STATION */                                                                                                            \
+	     L3,     /* VEHICLE_HORN */                                                                                                                            \
+	     R3,     /* TOGGLE_SUBMISSIONS */                                                                                                                      \
+	     X,      /* VEHICLE_HANDBRAKE */                                                                                                                       \
+	     nil,    /* PED_1RST_PERSON_LOOK_LEFT */                                                                                                               \
+	     nil,    /* PED_1RST_PERSON_LOOK_RIGHT */                                                                                                              \
+	     L1,     /* VEHICLE_LOOKLEFT */                                                                                                                        \
+	     R1,     /* VEHICLE_LOOKRIGHT */                                                                                                                       \
+	     nil,    /* VEHICLE_LOOKBEHIND */                                                                                                                      \
+	     nil,    /* VEHICLE_TURRETLEFT */                                                                                                                      \
+	     nil,    /* VEHICLE_TURRETRIGHT */                                                                                                                     \
+	     nil,    /* VEHICLE_TURRETUP */                                                                                                                        \
+	     nil,    /* VEHICLE_TURRETDOWN */                                                                                                                      \
+	     STICK_RIGHT, /* PED_CYCLE_TARGET_LEFT */                                                                                                                   \
+	     STICK_RIGHT, /* PED_CYCLE_TARGET_RIGHT */                                                                                                                  \
+	     R1,     /* PED_CENTER_CAMERA_BEHIND_PLAYER */                                                                                                         \
+	     L2,     /* PED_LOCK_TARGET */                                                                                                                         \
+	     nil,    /* NETWORK_TALK */                                                                                                                            \
+	     nil,    /* PED_1RST_PERSON_LOOK_UP */                                                                                                                 \
+	     nil,    /* PED_1RST_PERSON_LOOK_DOWN */                                                                                                               \
+	     nil,    /* _CONTROLLERACTION_36 */                                                                                                                    \
+	     nil,    /* TOGGLE_DPAD */                                                                                                                             \
+	     nil,    /* SWITCH_DEBUG_CAM_ON */                                                                                                                     \
+	     nil,    /* TAKE_SCREEN_SHOT */                                                                                                                        \
+	     nil,    /* SHOW_MOUSE_POINTER_TOGGLE */                                                                                                               \
 	 }}
 
 
-const char *XboxButtons_noIcons[][MAX_CONTROLLERACTIONS] = CONTROLLER_BUTTONS("Y", "B", "A", "X", "LB", "LT", "LS", "RB", "RT", "RS", "BACK");
+const char *XboxButtons_noIcons[][MAX_CONTROLLERACTIONS] = CONTROLLER_BUTTONS("Y", "B", "A", "X", "LB", "LT", "LS", "RB", "RT", "RS", "BACK", "D-PAD LEFT", "D-PAD RIGHT");
 
 #ifdef BUTTON_ICONS
-const char *XboxButtons[][MAX_CONTROLLERACTIONS] = CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "BACK");
+const char *XboxButtons[][MAX_CONTROLLERACTIONS] = CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "BACK", "~<~", "~>~");
 #endif
 
 
@@ -2591,11 +2639,11 @@ const char *XboxButtons[][MAX_CONTROLLERACTIONS] = CONTROLLER_BUTTONS("~T~", "~O
 #endif
 
 const char *PlayStationButtons_noIcons[][MAX_CONTROLLERACTIONS] =
-    CONTROLLER_BUTTONS(PS2_TRIANGLE, PS2_CIRCLE, PS2_CROSS, PS2_SQUARE, "L1", "L2", "L3", "R1", "R2", "R3", "SELECT");
+    CONTROLLER_BUTTONS(PS2_TRIANGLE, PS2_CIRCLE, PS2_CROSS, PS2_SQUARE, "L1", "L2", "L3", "R1", "R2", "R3", "SELECT", "D-PAD LEFT", "D-PAD RIGHT");
 
 #ifdef BUTTON_ICONS
 const char *PlayStationButtons[][MAX_CONTROLLERACTIONS] =
-    CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "SELECT");
+    CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "SELECT", "~<~", "~>~");
 #endif
 
 #undef PS2_TRIANGLE
@@ -2604,14 +2652,16 @@ const char *PlayStationButtons[][MAX_CONTROLLERACTIONS] =
 #undef PS2_SQUARE
 
 const char *NintendoSwitchButtons_noIcons[][MAX_CONTROLLERACTIONS] =
-    CONTROLLER_BUTTONS("Y", "A", "B", "X", "L", "ZL", "LS", "R", "ZR", "RS", "BACK");
+    CONTROLLER_BUTTONS("Y", "A", "B", "X", "L", "ZL", "LS", "R", "ZR", "RS", "BACK", "D-PAD LEFT", "D-PAD RIGHT");
 
 #ifdef BUTTON_ICONS
 const char *NintendoSwitchButtons[][MAX_CONTROLLERACTIONS] =
-    CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "BACK");
+    CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "BACK", "~<~", "~>~");
 #endif
 
 #undef CONTROLLER_BUTTONS
+#undef STICK_LEFT
+#undef STICK_RIGHT
 #undef VFB
 
 void CControllerConfigManager::GetWideStringOfCommandKeys(uint16 action, wchar *text, uint16 leight)

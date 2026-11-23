@@ -2417,6 +2417,9 @@ Scorri armi a sinistra
 [FEC_CWR]
 Scorri armi a destra
 
+[FEC_CWE]
+Cambia arma
+
 [FEC_LOF]
 Guarda avanti
 
@@ -8178,6 +8181,9 @@ CONFIGURAZIONE 3
 
 [FEC_CF4]
 CONFIGURAZIONE 4
+
+[FEC_CF5]
+GTA IV
 
 [FEC_CDP]
 SCHERMATA CONTROLLER

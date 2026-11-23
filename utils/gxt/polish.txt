@@ -2377,6 +2377,9 @@ Przełącz rodzaj broni w lewo
 	
 [FEC_CWR]
 Przełącz rodzaj broni w prawo
+
+[FEC_CWE]
+Zmiana broni
 	
 [FEC_LOF]
 Spójrz do przodu
@@ -8087,6 +8090,9 @@ SETUP3
 	
 [FEC_CF4]
 SETUP4
+
+[FEC_CF5]
+GTA IV
 	
 [FEC_CDP]
 STEROWNIK EKRANU

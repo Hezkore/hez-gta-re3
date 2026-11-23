@@ -2371,6 +2371,9 @@ Cycle Weapon left
 [FEC_CWR]
 Cycle Weapon right
 
+[FEC_CWE]
+Cycle weapons
+
 [FEC_LOF]
 Look forward
 
@@ -8117,6 +8120,9 @@ SETUP 3
 
 [FEC_CF4]
 SETUP 4
+
+[FEC_CF5]
+GTA IV
 
 [FEC_CDP]
 CONTROLLER DISPLAY

@@ -2390,6 +2390,9 @@ Montrer les armes à gauche
 [FEC_CWR]
 Montrer les armes à droite
 
+[FEC_CWE]
+Changer d'arme
+
 [FEC_LOF]
 Regarder devant
 
@@ -8349,6 +8352,9 @@ CONFIGURATION 3
 
 [FEC_CF4]
 CONFIGURATION 4
+
+[FEC_CF5]
+GTA IV
 
 [FEC_CDP]
 AFFICHAGE DE LA MANETTE

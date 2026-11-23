@@ -2408,6 +2408,9 @@ Siguiente arma
 [FEC_CWR]
 Arma anterior
 
+[FEC_CWE]
+Cambiar arma
+
 [FEC_LOF]
 Mirar hacia delante
 
@@ -8148,6 +8151,9 @@ AJUSTE 3
 
 [FEC_CF4]
 AJUSTE 4
+
+[FEC_CF5]
+GTA IV
 
 [FEC_CDP]
 CONTROLES A MOSTRAR
