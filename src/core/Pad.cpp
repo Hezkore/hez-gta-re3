@@ -1586,6 +1586,30 @@ int16 CPad::ClassicSetup(int16 setup)
 	return setup;
 }
 
+// Mission scripts check PS2 buttons where setup 1 has them. In the GTA IV setup a button also answers
+// when the GTA IV button for the same action is down, so both "press" prompts and action checks work.
+CControllerState CPad::GetStateForScripts(void)
+{
+	if ( GetSetupInUse() != CONTROLLER_SETUP_GTA4 )
+		return NewState;
+
+	CControllerState state = NewState;
+	if ( FindPlayerVehicle() ) {
+		state.Cross = Max(NewState.Cross, NewState.RightShoulder2);	// accelerate
+		state.Square = Max(NewState.Square, NewState.LeftShoulder2);	// brake
+		state.RightShoulder1 = Max(NewState.RightShoulder1, NewState.Cross);	// handbrake
+		state.LeftShoulder1 = Max(NewState.LeftShoulder1, NewState.DPadRight);	// radio
+		state.LeftShoulder2 = NewState.LeftShoulder1;	// look left
+		state.RightShoulder2 = NewState.RightShoulder1;	// look right
+	} else {
+		state.Circle = Max(NewState.Circle, NewState.RightShoulder2);	// fire
+		state.RightShoulder1 = Max(NewState.RightShoulder1, NewState.LeftShoulder2);	// target
+		state.LeftShoulder2 = NewState.DPadLeft;	// previous weapon
+		state.RightShoulder2 = NewState.DPadRight;	// next weapon
+	}
+	return state;
+}
+
 
 int16 CPad::GetSteeringLeftRight(void)
 {

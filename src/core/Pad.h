@@ -497,6 +497,7 @@ public:
 	void SetMode(int16 mode) { Mode = mode; }
 	int16 GetSetupInUse(void);
 	static int16 ClassicSetup(int16 setup);
+	CControllerState GetStateForScripts(void);
 	
 	static bool IsNoOrObsolete() { return bDisplayNoControllerMessage || bObsoleteControllerMessage; }
 };

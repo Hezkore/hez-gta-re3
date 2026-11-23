@@ -1282,28 +1282,28 @@ void CRunningScript::DoDeatharrestCheck()
 
 int16 CRunningScript::GetPadState(uint16 pad, uint16 button)
 {
-	CPad* pPad = CPad::GetPad(pad);
+	CControllerState state = CPad::GetPad(pad)->GetStateForScripts();
 	switch (button) {
-	case 0: return pPad->NewState.LeftStickX;
-	case 1: return pPad->NewState.LeftStickY;
-	case 2: return pPad->NewState.RightStickX;
-	case 3: return pPad->NewState.RightStickY;
-	case 4: return pPad->NewState.LeftShoulder1;
-	case 5: return pPad->NewState.LeftShoulder2;
-	case 6: return pPad->NewState.RightShoulder1;
-	case 7: return pPad->NewState.RightShoulder2;
-	case 8: return pPad->NewState.DPadUp;
-	case 9: return pPad->NewState.DPadDown;
-	case 10: return pPad->NewState.DPadLeft;
-	case 11: return pPad->NewState.DPadRight;
-	case 12: return pPad->NewState.Start;
-	case 13: return pPad->NewState.Select;
-	case 14: return pPad->NewState.Square;
-	case 15: return pPad->NewState.Triangle;
-	case 16: return pPad->NewState.Cross;
-	case 17: return pPad->NewState.Circle;
-	case 18: return pPad->NewState.LeftShock;
-	case 19: return pPad->NewState.RightShock;
+	case 0: return state.LeftStickX;
+	case 1: return state.LeftStickY;
+	case 2: return state.RightStickX;
+	case 3: return state.RightStickY;
+	case 4: return state.LeftShoulder1;
+	case 5: return state.LeftShoulder2;
+	case 6: return state.RightShoulder1;
+	case 7: return state.RightShoulder2;
+	case 8: return state.DPadUp;
+	case 9: return state.DPadDown;
+	case 10: return state.DPadLeft;
+	case 11: return state.DPadRight;
+	case 12: return state.Start;
+	case 13: return state.Select;
+	case 14: return state.Square;
+	case 15: return state.Triangle;
+	case 16: return state.Cross;
+	case 17: return state.Circle;
+	case 18: return state.LeftShock;
+	case 19: return state.RightShock;
 	default: break;
 	}
 	return 0;

@@ -248,8 +248,8 @@ PrintPadFeedState(const PadFeedEvent &event)
 	CVehicle *vehicle = FindPlayerVehicle();
 	CPhysical *mover = vehicle ? (CPhysical *)vehicle : (CPhysical *)player;
 	float forwardSpeed = DotProduct(mover->GetMoveSpeed(), mover->GetForward());
-	printf("pad feed %s=%.2f at %u ms: ped state %d, weapon %d, camera mode %d, forward speed %.3f, setup %d\n",
-		event.control, event.value, event.atMilliseconds, player->GetPedState(), player->GetWeapon()->m_eWeaponType,
+	printf("pad feed %s=%.2f at %u ms: ped state %d, weapon %d with %d ammo, camera mode %d, forward speed %.3f, setup %d\n",
+		event.control, event.value, event.atMilliseconds, player->GetPedState(), player->GetWeapon()->m_eWeaponType, player->GetWeapon()->m_nAmmoTotal,
 		TheCamera.Cams[TheCamera.ActiveCam].Mode, forwardSpeed, CPad::GetPad(0)->Mode);
 }
 
