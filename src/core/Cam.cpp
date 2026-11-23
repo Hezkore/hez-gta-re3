@@ -41,7 +41,7 @@ bool CCamera::bFreeCam = false;
 bool CCamera::bHighVehicleCamera = false;
 
 // the High vehicle camera, as in GTA V, sits higher behind the car and looks down on it, so the front shows
-const float HIGH_VEHICLE_CAMERA_EXTRA_PITCH = 0.1f;
+const float HIGH_VEHICLE_CAMERA_EXTRA_PITCH = 0.25f;
 
 float
 CCamera::VehicleCameraExtraPitch(void)
