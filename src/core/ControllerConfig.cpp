@@ -2398,7 +2398,7 @@ int32 CControllerConfigManager::GetNumOfSettingsForAction(e_ControllerAction act
 #define RIGHT_STICK_LEFT "RIGHT STICK LEFT"
 #define RIGHT_STICK_RIGHT "RIGHT STICK RIGHT"
 
-#define CONTROLLER_BUTTONS(T, O, X, Q, L1, L2, L3, R1, R2, R3, SELECT, DLEFT, DRIGHT)                                                                                         \
+#define CONTROLLER_BUTTONS(T, O, X, Q, L1, L2, L3, R1, R2, R3, SELECT, DLEFT, DRIGHT, DDOWN)                                                                                         \
 	{{                                                                                                                                                         \
 	     O,      /* PED_FIREWEAPON */                                                                                                                          \
 	     R2,     /* PED_CYCLE_WEAPON_RIGHT */                                                                                                                  \
@@ -2595,7 +2595,7 @@ int32 CControllerConfigManager::GetNumOfSettingsForAction(e_ControllerAction act
 	     L2,     /* VEHICLE_BRAKE */                                                                                                                           \
 	     DRIGHT, /* VEHICLE_CHANGE_RADIO_STATION */                                                                                                            \
 	     L3,     /* VEHICLE_HORN */                                                                                                                            \
-	     R3,     /* TOGGLE_SUBMISSIONS */                                                                                                                      \
+	     DDOWN,  /* TOGGLE_SUBMISSIONS */                                                                                                                      \
 	     X,      /* VEHICLE_HANDBRAKE */                                                                                                                       \
 	     nil,    /* PED_1RST_PERSON_LOOK_LEFT */                                                                                                               \
 	     nil,    /* PED_1RST_PERSON_LOOK_RIGHT */                                                                                                              \
@@ -2621,10 +2621,10 @@ int32 CControllerConfigManager::GetNumOfSettingsForAction(e_ControllerAction act
 	 }}
 
 
-const char *XboxButtons_noIcons[][MAX_CONTROLLERACTIONS] = CONTROLLER_BUTTONS("Y", "B", "A", "X", "LB", "LT", "LS", "RB", "RT", "RS", "BACK", "D-PAD LEFT", "D-PAD RIGHT");
+const char *XboxButtons_noIcons[][MAX_CONTROLLERACTIONS] = CONTROLLER_BUTTONS("Y", "B", "A", "X", "LB", "LT", "LS", "RB", "RT", "RS", "BACK", "D-PAD LEFT", "D-PAD RIGHT", "D-PAD DOWN");
 
 #ifdef BUTTON_ICONS
-const char *XboxButtons[][MAX_CONTROLLERACTIONS] = CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "BACK", "~<~", "~>~");
+const char *XboxButtons[][MAX_CONTROLLERACTIONS] = CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "BACK", "~<~", "~>~", "~D~");
 #endif
 
 
@@ -2641,11 +2641,11 @@ const char *XboxButtons[][MAX_CONTROLLERACTIONS] = CONTROLLER_BUTTONS("~T~", "~O
 #endif
 
 const char *PlayStationButtons_noIcons[][MAX_CONTROLLERACTIONS] =
-    CONTROLLER_BUTTONS(PS2_TRIANGLE, PS2_CIRCLE, PS2_CROSS, PS2_SQUARE, "L1", "L2", "L3", "R1", "R2", "R3", "SELECT", "D-PAD LEFT", "D-PAD RIGHT");
+    CONTROLLER_BUTTONS(PS2_TRIANGLE, PS2_CIRCLE, PS2_CROSS, PS2_SQUARE, "L1", "L2", "L3", "R1", "R2", "R3", "SELECT", "D-PAD LEFT", "D-PAD RIGHT", "D-PAD DOWN");
 
 #ifdef BUTTON_ICONS
 const char *PlayStationButtons[][MAX_CONTROLLERACTIONS] =
-    CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "SELECT", "~<~", "~>~");
+    CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "SELECT", "~<~", "~>~", "~D~");
 #endif
 
 #undef PS2_TRIANGLE
@@ -2654,11 +2654,11 @@ const char *PlayStationButtons[][MAX_CONTROLLERACTIONS] =
 #undef PS2_SQUARE
 
 const char *NintendoSwitchButtons_noIcons[][MAX_CONTROLLERACTIONS] =
-    CONTROLLER_BUTTONS("Y", "A", "B", "X", "L", "ZL", "LS", "R", "ZR", "RS", "BACK", "D-PAD LEFT", "D-PAD RIGHT");
+    CONTROLLER_BUTTONS("Y", "A", "B", "X", "L", "ZL", "LS", "R", "ZR", "RS", "BACK", "D-PAD LEFT", "D-PAD RIGHT", "D-PAD DOWN");
 
 #ifdef BUTTON_ICONS
 const char *NintendoSwitchButtons[][MAX_CONTROLLERACTIONS] =
-    CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "BACK", "~<~", "~>~");
+    CONTROLLER_BUTTONS("~T~", "~O~", "~X~", "~Q~", "~K~", "~M~", "~A~", "~J~", "~V~", "~C~", "BACK", "~<~", "~>~", "~D~");
 #endif
 
 #undef CONTROLLER_BUTTONS
