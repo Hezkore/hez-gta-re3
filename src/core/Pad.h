@@ -56,6 +56,10 @@ public:
 
 VALIDATE_SIZE(CMouseControllerState, 0x10);
 
+// a stick counts once either of its axes is past this, as XInput pads always did
+const float STANDARD_PAD_STICK_DEADZONE = 0.3f;
+const float STANDARD_PAD_STICK_RANGE = 128.0f;
+
 // A pad with the standard Xbox layout, as XInput or the SDL mapping read it, before a setup gives the buttons a meaning
 class CStandardPadState
 {

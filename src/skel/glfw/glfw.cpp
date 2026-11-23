@@ -2519,17 +2519,17 @@ static void CaptureJoystickThroughBindings(RwInt32 padID, int numAxes, const flo
 	{
 		CPad *pad = CPad::GetPad(bs.padID);
 
-		if ( Abs(leftStickPos.x)  > 0.3f )
-			pad->PCTempJoyState.LeftStickX	= (int32)(leftStickPos.x  * 128.0f);
+		if ( Abs(leftStickPos.x) > STANDARD_PAD_STICK_DEADZONE )
+			pad->PCTempJoyState.LeftStickX	= (int32)(leftStickPos.x * STANDARD_PAD_STICK_RANGE);
 		
-		if ( Abs(leftStickPos.y)  > 0.3f )
-			pad->PCTempJoyState.LeftStickY	= (int32)(leftStickPos.y  * 128.0f);
+		if ( Abs(leftStickPos.y) > STANDARD_PAD_STICK_DEADZONE )
+			pad->PCTempJoyState.LeftStickY	= (int32)(leftStickPos.y * STANDARD_PAD_STICK_RANGE);
 		
-		if ( Abs(rightStickPos.x) > 0.3f )
-			pad->PCTempJoyState.RightStickX = (int32)(rightStickPos.x * 128.0f);
+		if ( Abs(rightStickPos.x) > STANDARD_PAD_STICK_DEADZONE )
+			pad->PCTempJoyState.RightStickX = (int32)(rightStickPos.x * STANDARD_PAD_STICK_RANGE);
 
-		if ( Abs(rightStickPos.y) > 0.3f )
-			pad->PCTempJoyState.RightStickY = (int32)(rightStickPos.y * 128.0f);
+		if ( Abs(rightStickPos.y) > STANDARD_PAD_STICK_DEADZONE )
+			pad->PCTempJoyState.RightStickY = (int32)(rightStickPos.y * STANDARD_PAD_STICK_RANGE);
 	}
 }
 

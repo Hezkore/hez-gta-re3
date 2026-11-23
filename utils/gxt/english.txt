@@ -2486,7 +2486,7 @@ Setup3
 Setup4
 
 [FEC_CF5]
-GTA IV
+GTA 4
 
 [FEC_CDP]
 Controller Display:

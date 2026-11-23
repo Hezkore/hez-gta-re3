@@ -2393,8 +2393,10 @@ int32 CControllerConfigManager::GetNumOfSettingsForAction(e_ControllerAction act
 #endif
 
 // sticks have no icon, so their hints are words
-#define STICK_LEFT "LEFT STICK"
-#define STICK_RIGHT "RIGHT STICK"
+#define LEFT_STICK_UP "LEFT STICK UP"
+#define LEFT_STICK_DOWN "LEFT STICK DOWN"
+#define RIGHT_STICK_LEFT "RIGHT STICK LEFT"
+#define RIGHT_STICK_RIGHT "RIGHT STICK RIGHT"
 
 #define CONTROLLER_BUTTONS(T, O, X, Q, L1, L2, L3, R1, R2, R3, SELECT, DLEFT, DRIGHT)                                                                                         \
 	{{                                                                                                                                                         \
@@ -2581,8 +2583,8 @@ int32 CControllerConfigManager::GetNumOfSettingsForAction(e_ControllerAction act
 	     nil,    /* GO_BACK */                                                                                                                                 \
 	     nil,    /* GO_LEFT */                                                                                                                                 \
 	     nil,    /* GO_RIGHT */                                                                                                                                \
-	     STICK_LEFT, /* PED_SNIPER_ZOOM_IN */                                                                                                                      \
-	     STICK_LEFT, /* PED_SNIPER_ZOOM_OUT */                                                                                                                     \
+	     LEFT_STICK_UP, /* PED_SNIPER_ZOOM_IN */                                                                                                                      \
+	     LEFT_STICK_DOWN, /* PED_SNIPER_ZOOM_OUT */                                                                                                                     \
 	     T,      /* VEHICLE_ENTER_EXIT */                                                                                                                      \
 	     SELECT, /* CAMERA_CHANGE_VIEW_ALL_SITUATIONS */                                                                                                       \
 	     Q,      /* PED_JUMPING */                                                                                                                             \
@@ -2604,8 +2606,8 @@ int32 CControllerConfigManager::GetNumOfSettingsForAction(e_ControllerAction act
 	     nil,    /* VEHICLE_TURRETRIGHT */                                                                                                                     \
 	     nil,    /* VEHICLE_TURRETUP */                                                                                                                        \
 	     nil,    /* VEHICLE_TURRETDOWN */                                                                                                                      \
-	     STICK_RIGHT, /* PED_CYCLE_TARGET_LEFT */                                                                                                                   \
-	     STICK_RIGHT, /* PED_CYCLE_TARGET_RIGHT */                                                                                                                  \
+	     RIGHT_STICK_LEFT, /* PED_CYCLE_TARGET_LEFT */                                                                                                                   \
+	     RIGHT_STICK_RIGHT, /* PED_CYCLE_TARGET_RIGHT */                                                                                                                  \
 	     R1,     /* PED_CENTER_CAMERA_BEHIND_PLAYER */                                                                                                         \
 	     L2,     /* PED_LOCK_TARGET */                                                                                                                         \
 	     nil,    /* NETWORK_TALK */                                                                                                                            \
@@ -2660,15 +2662,17 @@ const char *NintendoSwitchButtons[][MAX_CONTROLLERACTIONS] =
 #endif
 
 #undef CONTROLLER_BUTTONS
-#undef STICK_LEFT
-#undef STICK_RIGHT
+#undef LEFT_STICK_UP
+#undef LEFT_STICK_DOWN
+#undef RIGHT_STICK_LEFT
+#undef RIGHT_STICK_RIGHT
 #undef VFB
 
 void CControllerConfigManager::GetWideStringOfCommandKeys(uint16 action, wchar *text, uint16 leight)
 {
 #ifdef DETECT_PAD_INPUT_SWITCH
 	if (CPad::GetPad(0)->IsAffectedByController) {
-		wchar wstr[16];
+		wchar wstr[32]; // fits the longest hint, "RIGHT STICK RIGHT"
 
 		const char* (*Buttons)[MAX_CONTROLLERACTIONS];
 

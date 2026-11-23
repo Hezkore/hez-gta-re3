@@ -43,11 +43,8 @@
 
 CPad Pads[MAX_PADS];
 
-// a stick counts once either of its axes is past this, as XInput pads always did
-const float STANDARD_PAD_STICK_DEADZONE = 0.3f;
 // the trigger threshold XInput suggests, 30 of 255
 const float STANDARD_PAD_TRIGGER_DEADZONE = 30.0f / 255.0f;
-const float STANDARD_PAD_STICK_RANGE = 128.0f;
 const int16 STANDARD_PAD_FULLY_PRESSED = 255;
 // how far a stick goes before the GTA IV setup reads a flick for zooming or switching targets
 const int16 GTA4_STICK_PUSHED = 64;
@@ -1586,8 +1583,8 @@ int16 CPad::ClassicSetup(int16 setup)
 	return setup;
 }
 
-// Mission scripts check PS2 buttons where setup 1 has them. In the GTA IV setup a button also answers
-// when the GTA IV button for the same action is down, so both "press" prompts and action checks work.
+// Mission scripts check PS2 buttons where setup 1 has them, so in the GTA IV setup each of those
+// buttons reads the GTA IV button for the same action instead
 CControllerState CPad::GetStateForScripts(void)
 {
 	if ( GetSetupInUse() != CONTROLLER_SETUP_GTA4 )
@@ -1595,15 +1592,15 @@ CControllerState CPad::GetStateForScripts(void)
 
 	CControllerState state = NewState;
 	if ( FindPlayerVehicle() ) {
-		state.Cross = Max(NewState.Cross, NewState.RightShoulder2);	// accelerate
-		state.Square = Max(NewState.Square, NewState.LeftShoulder2);	// brake
-		state.RightShoulder1 = Max(NewState.RightShoulder1, NewState.Cross);	// handbrake
-		state.LeftShoulder1 = Max(NewState.LeftShoulder1, NewState.DPadRight);	// radio
+		state.Cross = NewState.RightShoulder2;	// accelerate
+		state.Square = NewState.LeftShoulder2;	// brake
+		state.RightShoulder1 = NewState.Cross;	// handbrake
+		state.LeftShoulder1 = NewState.DPadRight;	// radio
 		state.LeftShoulder2 = NewState.LeftShoulder1;	// look left
 		state.RightShoulder2 = NewState.RightShoulder1;	// look right
 	} else {
-		state.Circle = Max(NewState.Circle, NewState.RightShoulder2);	// fire
-		state.RightShoulder1 = Max(NewState.RightShoulder1, NewState.LeftShoulder2);	// target
+		state.Circle = NewState.RightShoulder2;	// fire
+		state.RightShoulder1 = NewState.LeftShoulder2;	// target
 		state.LeftShoulder2 = NewState.DPadLeft;	// previous weapon
 		state.RightShoulder2 = NewState.DPadRight;	// next weapon
 	}
@@ -1633,8 +1630,8 @@ int16 CPad::GetSteeringLeftRight(void)
 		}
 
 		case CONTROLLER_SETUP_2:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return NewState.LeftStickX;
 
@@ -1667,8 +1664,8 @@ int16 CPad::GetSteeringUpDown(void)
 		}
 
 		case CONTROLLER_SETUP_2:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return NewState.LeftStickY;
 
@@ -1687,9 +1684,9 @@ int16 CPad::GetCarGunUpDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_3:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return NewState.RightStickY;
 
@@ -1715,9 +1712,9 @@ int16 CPad::GetCarGunLeftRight(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_3:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return NewState.RightStickX;
 
@@ -1757,8 +1754,8 @@ int16 CPad::GetPedWalkLeftRight(void)
 		}
 
 		case CONTROLLER_SETUP_2:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return NewState.LeftStickX;
 
@@ -1792,8 +1789,8 @@ int16 CPad::GetPedWalkUpDown(void)
 		}
 
 		case CONTROLLER_SETUP_2:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return NewState.LeftStickY;
 
@@ -1823,8 +1820,8 @@ int16 CPad::GetAnalogueUpDown(void)
 		}
 
 		case CONTROLLER_SETUP_2:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return NewState.LeftStickY;
 
@@ -1967,9 +1964,9 @@ bool CPad::GetCarGunFired(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_3:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return !!NewState.Circle;
 
@@ -1995,9 +1992,9 @@ bool CPad::CarGunJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_3:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return !!(NewState.Circle && !OldState.Circle);
 
@@ -2102,9 +2099,9 @@ bool CPad::GetExitVehicle(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_4:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return !!NewState.Triangle;
 
@@ -2130,9 +2127,9 @@ bool CPad::ExitVehicleJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_4:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return !!(NewState.Triangle && !OldState.Triangle);
 
@@ -2271,9 +2268,9 @@ bool CPad::CycleCameraModeUpJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_3:
 		case CONTROLLER_SETUP_4:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return !!(NewState.Select && !OldState.Select);
 
@@ -2296,9 +2293,9 @@ bool CPad::CycleCameraModeDownJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_3:
 		case CONTROLLER_SETUP_4:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return false;
 
@@ -2352,7 +2349,7 @@ bool CPad::ChangeStationJustDown(void)
 		}
 		case CONTROLLER_SETUP_GTA4:
 		{
-			return !!((NewState.DPadRight && !OldState.DPadRight) || (NewState.DPadLeft && !OldState.DPadLeft));
+			return !!(NewState.DPadRight && !OldState.DPadRight);
 		}
 	}
 
@@ -2460,9 +2457,9 @@ bool CPad::GetSprint(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
-		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_4:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return !!NewState.Cross;
 

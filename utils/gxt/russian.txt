@@ -8094,7 +8094,7 @@ DUALSHOCK 4
 СХЕМА 4
 
 [FEC_CF5]
-GTA IV
+GTA 4
 
 [FEC_CDP]
 ТИП УПРАВЛЕНИЯ
