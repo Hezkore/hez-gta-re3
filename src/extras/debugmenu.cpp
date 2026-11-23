@@ -1025,7 +1025,9 @@ DebugMenuProcess(void)
 	if(!menuInitialized)
 		DebugMenuInit();
 	updateMouse();
-
+	// The pads update once per logical frame, but many frames can be drawn between two,
+	// so the input runs here, or one click would count once for every drawn frame
+	processInput();
 }
 
 void
@@ -1060,7 +1062,6 @@ DebugMenuRender(void)
 	toplevel.r.h = screenHeight - 10 - toplevel.r.y;
 	toplevel.update();
 	toplevel.draw();
-	processInput();
 	RtCharsetBufferFlush();
 
 	drawMouse();
