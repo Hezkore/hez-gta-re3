@@ -56,7 +56,8 @@
 #endif
 
 #ifdef FREE_CAM
-	#define FREE_CAM_TOGGLE MENUACTION_CFO_SELECT, "FEC_FRC", { new CCFOSelect((int8*)&TheCamera.bFreeCam, "Display", "FreeCam", off_on, 2, false) }, 0, 0, MENUALIGN_LEFT,
+	#define FREE_CAM_TOGGLE MENUACTION_CFO_SELECT, "FEC_FRC", { new CCFOSelect((int8*)&TheCamera.bFreeCam, "Display", "FreeCam", off_on, 2, false) }, 0, 0, MENUALIGN_LEFT, \
+		MENUACTION_CFO_SELECT, "FEC_VCH", { new CCFOSelect((int8*)&TheCamera.bHighVehicleCamera, "Display", "VehicleCameraHeight", lowHigh, 2, false) }, 0, 0, MENUALIGN_LEFT,
 #else
 	#define FREE_CAM_TOGGLE
 #endif
@@ -112,6 +113,7 @@ void StickDeadzoneButtonPress(int8 action);
 
 const char *filterNames[] = { "FEM_NON", "FEM_SIM", "FEM_NRM", "FEM_MOB" };
 const char *off_on[] = { "FEM_OFF", "FEM_ON" };
+const char *lowHigh[] = { "FEM_LOW", "FEM_HIG" };
 const char *motionBlurTexts[] = { "FEM_OFF", "FEM_FNT", "FEM_STR" };
 extern const char *frameLimitTexts[];
 extern int32 numFrameLimits;
@@ -159,6 +161,7 @@ void RestoreDefDisplay(int8 action) {
 	#endif
 	#ifdef FREE_CAM
 		TheCamera.bFreeCam = false;
+		TheCamera.bHighVehicleCamera = false;
 	#endif
 	#ifdef PED_CAR_DENSITY_SLIDERS
 		CIniFile::LoadIniFile();

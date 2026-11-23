@@ -543,6 +543,8 @@ public:
 	static bool m_bUseMouse3rdPerson;
 #ifdef FREE_CAM
 	static bool bFreeCam;
+	static bool bHighVehicleCamera;
+	static float VehicleCameraExtraPitch(void);
 #endif
 
 	// High level and misc
