@@ -2381,7 +2381,8 @@ int32 CControllerConfigManager::GetNumOfSettingsForAction(e_ControllerAction act
 	if (m_aSettings[action][KEYBOARD].m_Key       != rsNULL) num++;
 	if (m_aSettings[action][OPTIONAL_EXTRA].m_Key != rsNULL) num++;
 	if (m_aSettings[action][MOUSE].m_Key          != 0)      num++;
-	if (m_aSettings[action][JOYSTICK].m_Key       != 0)      num++;
+	// counted only when it has a name, as a known pad's buttons are not bound
+	if (GetControllerSettingTextJoystick(action) != NULL) num++;
 
 	return num;
 }
