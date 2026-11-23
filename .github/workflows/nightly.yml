@@ -59,11 +59,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { game: re3, branch: master, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: re3-linux-amd64 }
+          - { game: re3, branch: master, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: re3-linux-amd64-opengl }
           - { game: re3, branch: master, os: windows-2022, platform: win-amd64-librw_d3d9-oal, asset: re3-windows-amd64-d3d9 }
-          - { game: reVC, branch: miami, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: reVC-linux-amd64 }
+          - { game: reVC, branch: miami, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: reVC-linux-amd64-opengl }
           - { game: reVC, branch: miami, os: windows-2022, platform: win-amd64-librw_d3d9-oal, asset: reVC-windows-amd64-d3d9 }
-          - { game: reLCS, branch: lcs, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: reLCS-alpha-linux-amd64 }
+          - { game: reLCS, branch: lcs, os: ubuntu-latest, platform: linux-amd64-librw_gl3_glfw-oal, asset: reLCS-alpha-linux-amd64-opengl }
           - { game: reLCS, branch: lcs, os: windows-2022, platform: win-amd64-librw_d3d9-oal, asset: reLCS-alpha-windows-amd64-d3d9 }
     steps:
       - uses: actions/checkout@v7
