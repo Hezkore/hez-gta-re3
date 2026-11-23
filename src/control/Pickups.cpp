@@ -130,15 +130,16 @@ ModifyStringLabelForControlSetting(char *str)
 	if (str[len - 2] != '_')
 		return;
 
-	switch (CPad::GetPad(0)->Mode) {
-		case 0:
-		case 1:
+	// the GTA IV setup collects with LB, as setups 1 and 2 do
+	switch (CPad::ClassicSetup(CPad::GetPad(0)->Mode)) {
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
 			str[len - 1] = 'L';
 			break;
-		case 2:
+		case CONTROLLER_SETUP_3:
 			str[len - 1] = 'T';
 			break;
-		case 3:
+		case CONTROLLER_SETUP_4:
 			str[len - 1] = 'C';
 			break;
 		default:
@@ -389,16 +390,16 @@ CPickup::Update(CPlayerPed *player, CVehicle *vehicle, int playerId)
 								}
 							}
 							if (!m_bWasControlMessageShown) {
-								switch (CPad::GetPad(0)->Mode)
+								switch (CPad::ClassicSetup(CPad::GetPad(0)->Mode))
 								{
-								case 0:
-								case 1:
+								case CONTROLLER_SETUP_1:
+								case CONTROLLER_SETUP_2:
 									CHud::SetHelpMessage(TheText.Get("PU_CF1"), false);
 									break;
-								case 2:
+								case CONTROLLER_SETUP_3:
 									CHud::SetHelpMessage(TheText.Get("PU_CF3"), false);
 									break;
-								case 3:
+								case CONTROLLER_SETUP_4:
 									CHud::SetHelpMessage(TheText.Get("PU_CF4"), false);
 									break;
 								default:

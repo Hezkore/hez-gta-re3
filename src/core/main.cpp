@@ -2342,7 +2342,7 @@ void SystemInit()
 #ifdef GTA_PS2_STUFF
 	CPad::Initialise();
 #endif
-	CPad::GetPad(0)->Mode = 0;
+	CPad::GetPad(0)->Mode = CONTROLLER_SETUP_1;
 	
 	CGame::frenchGame = false;
 	CGame::germanGame = false;

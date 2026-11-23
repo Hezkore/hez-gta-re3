@@ -734,7 +734,7 @@ void CPad::Initialise(void)
 	for (int i = 0; i < MAX_PADS; i++)
 	{
 		CPad::GetPad(i)->Clear(true);
-		CPad::GetPad(i)->Mode = 0;
+		CPad::GetPad(i)->Mode = CONTROLLER_SETUP_1;
 	}
 
 	bObsoleteControllerMessage	   = false;
@@ -2132,11 +2132,23 @@ CPad *CPad::GetPad(int32 pad)
 {
 	return &Pads[pad];
 }
+// keyboard and mouse always read as setup 1
+int16 CPad::GetSetupInUse(void)
+{
 #ifdef DETECT_PAD_INPUT_SWITCH
-#define CURMODE (IsAffectedByController ? Mode : 0)
-#else
-#define CURMODE (Mode)
+	if (!IsAffectedByController)
+		return CONTROLLER_SETUP_1;
 #endif
+	return Mode;
+}
+
+// the setup a save, a mission script or an older build understands
+int16 CPad::ClassicSetup(int16 setup)
+{
+	if (setup < CONTROLLER_SETUP_1 || setup > CONTROLLER_SETUP_4)
+		return CONTROLLER_SETUP_1;
+	return setup;
+}
 
 int16 CPad::GetSteeringLeftRight(void)
 {
@@ -2144,10 +2156,10 @@ int16 CPad::GetSteeringLeftRight(void)
 		return 0;
 
 	int16 value;
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
 		{
 			int16 axis = NewState.LeftStickX;
 			int16 dpad = (NewState.DPadRight - NewState.DPadLeft) / 2;
@@ -2163,8 +2175,8 @@ int16 CPad::GetSteeringLeftRight(void)
 			break;
 		}
 
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			SteeringLeftRightBuffer[0] = NewState.LeftStickX;
 			value = SteeringLeftRightBuffer[DrunkDrivingBufferUsed];
@@ -2185,10 +2197,10 @@ int16 CPad::GetSteeringUpDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return 0;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
 		{
 			int16 axis = NewState.LeftStickY;
 			int16 dpad = (NewState.DPadDown - NewState.DPadUp) / 2;
@@ -2201,8 +2213,8 @@ int16 CPad::GetSteeringUpDown(void)
 			break;
 		}
 
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftStickY;
 
@@ -2218,18 +2230,18 @@ int16 CPad::GetCarGunUpDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return 0;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_3:
 		{
 			return NewState.RightStickY;
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return (NewState.DPadUp - NewState.DPadDown) / 2;
 
@@ -2245,18 +2257,18 @@ int16 CPad::GetCarGunLeftRight(void)
 	if ( ArePlayerControlsDisabled() )
 		return 0;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_3:
 		{
 			return NewState.RightStickX;
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return (NewState.DPadRight - NewState.DPadLeft) / 2;
 
@@ -2272,10 +2284,10 @@ int16 CPad::GetPedWalkLeftRight(void)
 	if ( ArePlayerControlsDisabled() )
 		return 0;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
 		{
 			int16 axis = NewState.LeftStickX;
 			int16 dpad = (NewState.DPadRight - NewState.DPadLeft) / 2;
@@ -2288,8 +2300,8 @@ int16 CPad::GetPedWalkLeftRight(void)
 			break;
 		}
 
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftStickX;
 
@@ -2305,10 +2317,10 @@ int16 CPad::GetPedWalkUpDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return 0;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
 		{
 			int16 axis = NewState.LeftStickY;
 			int16 dpad = (NewState.DPadDown - NewState.DPadUp) / 2;
@@ -2321,8 +2333,8 @@ int16 CPad::GetPedWalkUpDown(void)
 			break;
 		}
 
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftStickY;
 
@@ -2335,10 +2347,10 @@ int16 CPad::GetPedWalkUpDown(void)
 
 int16 CPad::GetAnalogueUpDown(void)
 {
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
 		{
 			int16 axis = NewState.LeftStickY;
 			int16 dpad = (NewState.DPadDown - NewState.DPadUp) / 2;
@@ -2351,8 +2363,8 @@ int16 CPad::GetAnalogueUpDown(void)
 			break;
 		}
 
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftStickY;
 
@@ -2365,10 +2377,10 @@ int16 CPad::GetAnalogueUpDown(void)
 
 int16 CPad::GetAnalogueLeftRight(void)
 {
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
 		{
 			int16 axis = NewState.LeftStickX;
 			int16 dpad = (NewState.DPadRight - NewState.DPadLeft) / 2;
@@ -2381,8 +2393,8 @@ int16 CPad::GetAnalogueLeftRight(void)
 			break;
 		}
 
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftStickX;
 
@@ -2431,30 +2443,30 @@ bool CPad::GetHorn(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
+		case CONTROLLER_SETUP_1:
 		{
 			return !!NewState.LeftShock;
 
 			break;
 		}
 
-		case 1:
+		case CONTROLLER_SETUP_2:
 		{
 			return !!NewState.LeftShoulder1;
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!NewState.RightShoulder1;
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!NewState.LeftShock;
 
@@ -2470,30 +2482,30 @@ bool CPad::HornJustDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
+		case CONTROLLER_SETUP_1:
 		{
 			return !!(NewState.LeftShock && !OldState.LeftShock);
 
 			break;
 		}
 
-		case 1:
+		case CONTROLLER_SETUP_2:
 		{
 			return !!(NewState.LeftShoulder1 && !OldState.LeftShoulder1);
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!(NewState.RightShoulder1 && !OldState.RightShoulder1);
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!(NewState.LeftShock && !OldState.LeftShock);
 
@@ -2509,18 +2521,18 @@ bool CPad::GetCarGunFired(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!NewState.Circle;
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!NewState.RightShoulder1;
 
@@ -2536,18 +2548,18 @@ bool CPad::CarGunJustDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!(NewState.Circle && !OldState.Circle);
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!(NewState.RightShoulder1 && !OldState.RightShoulder1);
 
@@ -2563,24 +2575,24 @@ int16 CPad::GetHandBrake(void)
 	if ( ArePlayerControlsDisabled() )
 		return 0;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
 		{
 			return NewState.RightShoulder1;
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return NewState.Triangle;
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftShoulder1;
 
@@ -2596,24 +2608,24 @@ int16 CPad::GetBrake(void)
 	if ( ArePlayerControlsDisabled() )
 		return 0;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
 		{
 			return NewState.Square;
 
 			break;
 		}
 
-		case 1:
+		case CONTROLLER_SETUP_2:
 		{
 			return NewState.Square;
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			int16 axis = 2 * NewState.RightStickY;
 
@@ -2638,18 +2650,18 @@ bool CPad::GetExitVehicle(void)
 	if ( JustOutOfFrontend != 0 )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!NewState.Triangle;
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!NewState.LeftShoulder1;
 
@@ -2668,18 +2680,18 @@ bool CPad::ExitVehicleJustDown(void)
 	if ( JustOutOfFrontend != 0 )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!(NewState.Triangle && !OldState.Triangle);
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!(NewState.LeftShoulder1 && !OldState.LeftShoulder1);
 
@@ -2695,24 +2707,24 @@ int32 CPad::GetWeapon(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
 		{
 			return NewState.Circle;
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return NewState.Cross;
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return NewState.RightShoulder1;
 
@@ -2728,24 +2740,24 @@ bool CPad::WeaponJustDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
 		{
 			return !!(NewState.Circle && !OldState.Circle);
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!(NewState.Cross && !OldState.Cross);
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!(NewState.RightShoulder1 && !OldState.RightShoulder1);
 
@@ -2761,24 +2773,24 @@ int16 CPad::GetAccelerate(void)
 	if ( ArePlayerControlsDisabled() )
 		return 0;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
 		{
 			return NewState.Cross;
 
 			break;
 		}
 
-		case 1:
+		case CONTROLLER_SETUP_2:
 		{
 			return NewState.Cross;
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			int16 axis = -2 * NewState.RightStickY;
 
@@ -2797,18 +2809,18 @@ int16 CPad::GetAccelerate(void)
 bool CPad::CycleCameraModeJustDown(void)
 {
 	bool result;
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
-		case 3:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
+		case CONTROLLER_SETUP_4:
 		{
 			result = !!(NewState.Select && !OldState.Select);
 
 			break;
 		}
 
-		case 1:
+		case CONTROLLER_SETUP_2:
 		{
 			result = !!(NewState.DPadUp && !OldState.DPadUp);
 
@@ -2823,9 +2835,9 @@ bool CPad::CycleCameraModeJustDown(void)
 
 	if (!result)
 	{
-		switch (CURMODE)
+		switch (GetSetupInUse())
 		{
-			case 1:
+			case CONTROLLER_SETUP_2:
 			{
 				result = !!(NewState.DPadDown && !OldState.DPadDown);
 				break;
@@ -2843,18 +2855,18 @@ bool CPad::CycleCameraModeJustDown(void)
 
 bool CPad::CycleCameraModeUpJustDown(void)
 {
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
-		case 3:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!(NewState.Select && !OldState.Select);
 
 			break;
 		}
 
-		case 1:
+		case CONTROLLER_SETUP_2:
 		{
 			return !!(NewState.DPadUp && !OldState.DPadUp);
 
@@ -2867,18 +2879,18 @@ bool CPad::CycleCameraModeUpJustDown(void)
 
 bool CPad::CycleCameraModeDownJustDown(void)
 {
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 2:
-		case 3:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_3:
+		case CONTROLLER_SETUP_4:
 		{
 			return false;
 
 			break;
 		}
 
-		case 1:
+		case CONTROLLER_SETUP_2:
 		{
 			return !!(NewState.DPadDown && !OldState.DPadDown);
 
@@ -2894,30 +2906,30 @@ bool CPad::ChangeStationJustDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
+		case CONTROLLER_SETUP_1:
 		{
 			return !!(NewState.LeftShoulder1 && !OldState.LeftShoulder1);
 
 			break;
 		}
 
-		case 1:
+		case CONTROLLER_SETUP_2:
 		{
 			return !!(NewState.Select && !OldState.Select);
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!(NewState.LeftShock && !OldState.LeftShock);
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!(NewState.Circle && !OldState.Circle);
 
@@ -2949,18 +2961,18 @@ bool CPad::GetTarget(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!NewState.RightShoulder1;
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!NewState.LeftShoulder1;
 
@@ -2976,18 +2988,18 @@ bool CPad::TargetJustDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 2:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!(NewState.RightShoulder1 && !OldState.RightShoulder1);
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!(NewState.LeftShoulder1 && !OldState.LeftShoulder1);
 
@@ -3003,23 +3015,23 @@ bool CPad::CollectPickupJustDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
 		{
 			return !!(NewState.LeftShoulder1 && !OldState.LeftShoulder1);
 
 			break;
 		}
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!(NewState.Triangle && !OldState.Triangle);
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!(NewState.Circle && !OldState.Circle);
 
@@ -3051,18 +3063,18 @@ bool CPad::GetSprint(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!NewState.Cross;
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!NewState.Circle;
 
@@ -3206,24 +3218,24 @@ bool CPad::ForceCameraBehindPlayer(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
 		{
 			return !!NewState.LeftShoulder1;
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!NewState.Triangle;
 
 			break;
 		}
 
-		case 3:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!NewState.Circle;
 
@@ -3239,18 +3251,18 @@ bool CPad::SniperZoomIn(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!NewState.Square;
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!NewState.Triangle;
 
@@ -3266,18 +3278,18 @@ bool CPad::SniperZoomOut(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
-	switch (CURMODE)
+	switch (GetSetupInUse())
 	{
-		case 0:
-		case 1:
-		case 3:
+		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_4:
 		{
 			return !!NewState.Cross;
 
 			break;
 		}
 
-		case 2:
+		case CONTROLLER_SETUP_3:
 		{
 			return !!NewState.Square;
 
@@ -3288,7 +3300,6 @@ bool CPad::SniperZoomOut(void)
 	return false;
 }
 
-#undef CURMODE
 
 int16 CPad::SniperModeLookLeftRight(void)
 {

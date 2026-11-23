@@ -148,6 +148,16 @@ enum
 	MAX_PADS
 };
 
+// The controller setups picked in the gamepad settings, the first four as on the PS2
+enum eControllerSetup
+{
+	CONTROLLER_SETUP_1,
+	CONTROLLER_SETUP_2,
+	CONTROLLER_SETUP_3,
+	CONTROLLER_SETUP_4,
+	NUM_CONTROLLER_SETUPS
+};
+
 class CPad
 {
 public:
@@ -499,6 +509,8 @@ public:
 	
 	int16 GetMode() { return Mode; }
 	void SetMode(int16 mode) { Mode = mode; }
+	int16 GetSetupInUse(void);
+	static int16 ClassicSetup(int16 setup);
 	
 	static bool IsNoOrObsolete() { return bDisplayNoControllerMessage || bObsoleteControllerMessage; }
 };

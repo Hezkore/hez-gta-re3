@@ -425,7 +425,7 @@ psInitialize(void)
 	
 #ifdef PS2_MENU
 	CPad::Initialise();
-	CPad::GetPad(0)->Mode = 0;
+	CPad::GetPad(0)->Mode = CONTROLLER_SETUP_1;
 
 	CGame::frenchGame = false;
 	CGame::germanGame = false;

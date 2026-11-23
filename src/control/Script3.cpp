@@ -1203,9 +1203,9 @@ int8 CRunningScript::ProcessCommands600To699(int32 command)
 	}
 	case COMMAND_GET_CONTROLLER_MODE:
 #if defined(GTA_PC) && !defined(DETECT_PAD_INPUT_SWITCH)
-		ScriptParams[0] = 0;
+		ScriptParams[0] = CONTROLLER_SETUP_1;
 #else
-		ScriptParams[0] = CPad::IsAffectedByController ? CPad::GetPad(0)->Mode : 0;
+		ScriptParams[0] = CPad::ClassicSetup(CPad::GetPad(0)->GetSetupInUse());
 #endif
 		StoreParameters(&m_nIp, 1);
 		return 0;

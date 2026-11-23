@@ -600,35 +600,14 @@ void CGarage::Update()
 							CGarages::GivePlayerDetonator();
 						CStats::KgsOfExplosivesUsed += KGS_OF_EXPLOSIVES_IN_BOMB;
 					}
-#ifdef DETECT_PAD_INPUT_SWITCH
-					int16 Mode = CPad::IsAffectedByController ? CPad::GetPad(0)->Mode : 0;
-#else
-					int16 Mode = CPad::GetPad(0)->Mode;
-#endif
+					// setup 4 arms the bomb on another button, so its help names that one
+					bool isSetup4 = CPad::GetPad(0)->GetSetupInUse() == CONTROLLER_SETUP_4;
 					switch (m_eGarageType) {
 					case GARAGE_BOMBSHOP1:
-						switch (Mode) {
-						case 0:
-						case 1:
-						case 2:
-							CHud::SetHelpMessage(TheText.Get("GA_6"), false); // Arm with ~h~~k~~PED_FIREWEAPON~ button~w~. Bomb will go off when engine is started.
-							break;
-						case 3:
-							CHud::SetHelpMessage(TheText.Get("GA_6B"), false); // Arm with ~h~~k~~PED_FIREWEAPON~ button~w~. Bomb will go off when engine is started.
-							break;
-						}
+						CHud::SetHelpMessage(TheText.Get(isSetup4 ? "GA_6B" : "GA_6"), false); // Arm with ~h~~k~~PED_FIREWEAPON~ button~w~. Bomb will go off when engine is started.
 						break;
 					case GARAGE_BOMBSHOP2:
-						switch (Mode) {
-						case 0:
-						case 1:
-						case 2:
-							CHud::SetHelpMessage(TheText.Get("GA_7"), false); // Park it, prime it by pressing the ~h~~k~~PED_FIREWEAPON~ button~w~ and LEG IT!
-							break;
-						case 3:
-							CHud::SetHelpMessage(TheText.Get("GA_7B"), false); // Park it, prime it by pressing the ~h~~k~~PED_FIREWEAPON~ button~w~ and LEG IT!
-							break;
-						}
+						CHud::SetHelpMessage(TheText.Get(isSetup4 ? "GA_7B" : "GA_7"), false); // Park it, prime it by pressing the ~h~~k~~PED_FIREWEAPON~ button~w~ and LEG IT!
 						break;
 					case GARAGE_BOMBSHOP3:
 						CHud::SetHelpMessage(TheText.Get("GA_8"), false); // Use the detonator to activate the bomb.
