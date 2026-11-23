@@ -463,6 +463,9 @@ public:
 
 	bool GetTriangleJustDown()       { return !!(NewState.Triangle && !OldState.Triangle); }
 	bool GetCircleJustDown()         { return !!(NewState.Circle && !OldState.Circle); }
+	// the menus go back with Y as on the PS2 and with B as on Xbox pads, and use B for nothing else
+	bool GetTriangleOrCircleJustDown() { return GetTriangleJustDown() || GetCircleJustDown(); }
+	bool GetTriangleOrCircleJustUp() { return GetTriangleJustUp() || GetCircleJustUp(); }
 	bool GetCrossJustDown()          { return !!(NewState.Cross && !OldState.Cross); }
 	bool GetSquareJustDown()         { return !!(NewState.Square && !OldState.Square); }
 	bool GetDPadUpJustDown()         { return !!(NewState.DPadUp && !OldState.DPadUp); }

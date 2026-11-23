@@ -259,10 +259,10 @@ StartOptions::FeedPad(void)
 		if ( HasWaitingOptions() || !IsPlayerInControl() )
 			return;
 		isPadFeedRunning = true;
-		padFeedStartMilliseconds = CTimer::GetTimeInMilliseconds();
+		padFeedStartMilliseconds = CTimer::GetTimeInMillisecondsPauseMode(); // runs on in the menus too
 	}
 
-	uint32 elapsed = CTimer::GetTimeInMilliseconds() - padFeedStartMilliseconds;
+	uint32 elapsed = CTimer::GetTimeInMillisecondsPauseMode() - padFeedStartMilliseconds;
 	for ( ; padFeedNextEvent < padFeedEventCount && padFeedEvents[padFeedNextEvent].atMilliseconds <= elapsed; padFeedNextEvent++ ) {
 		const PadFeedEvent &event = padFeedEvents[padFeedNextEvent];
 		const PadFeedControl *control = FindPadFeedControl(event.control);

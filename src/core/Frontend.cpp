@@ -92,8 +92,8 @@ int GetOptionCount(int screen)
 #endif
 
 #ifdef TRIANGLE_BACK_BUTTON
-#define GetBackJustUp GetTriangleJustUp
-#define GetBackJustDown GetTriangleJustDown
+#define GetBackJustUp GetTriangleOrCircleJustUp
+#define GetBackJustDown GetTriangleOrCircleJustDown
 #elif defined(CIRCLE_BACK_BUTTON)
 #define GetBackJustUp GetCircleJustUp
 #define GetBackJustDown GetCircleJustDown
