@@ -355,8 +355,9 @@ enum Config {
 //#	define PS2_MENU_USEALLPAGEICONS
 #else
 
-#	if defined(XINPUT) || defined(GTA_HANDHELD)
-#		define GAMEPAD_MENU		// Add gamepad menu
+#	define GAMEPAD_MENU		// Add gamepad menu
+#	if defined(XINPUT) || defined(__SWITCH__)
+#		define PAD_VIBRATION		// only XInput and the Switch can shake the pad
 #	endif
 
 #	define SCROLLABLE_STATS_PAGE	// only draggable by mouse atm
