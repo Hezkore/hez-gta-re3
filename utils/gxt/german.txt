@@ -1797,7 +1797,7 @@ Konfig. 3
 Konfig. 4
 
 [FEC_CF5]
-GTA IV
+GTA 4
 
 [FEC_CDP]
 Controller-Anzeige :

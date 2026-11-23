@@ -48,7 +48,7 @@ Some of them can be toggled at runtime, some cannot.
 * Debug menu to do and change various things (Ctrl-M to open)
 * Debug camera (Ctrl-B to toggle)
 * Rotatable camera
-* XInput controller support (Windows)
+* Gamepad support with the four PS2 controller setups and a GTA IV setup
 * No loading screens between islands ("map memory usage" in menu)
 * Rendering
   * Widescreen support (properly scaled HUD, Menu and FOV)

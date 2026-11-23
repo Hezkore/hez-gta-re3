@@ -57,6 +57,10 @@ public:
 
 VALIDATE_SIZE(CMouseControllerState, 0x10);
 
+// a stick counts once either of its axes is past this, as XInput pads always did
+const float STANDARD_PAD_STICK_DEADZONE = 0.3f;
+const float STANDARD_PAD_STICK_RANGE = 128.0f;
+
 // A pad with the standard Xbox layout, as XInput or the SDL mapping read it, before a setup gives the buttons a meaning
 class CStandardPadState
 {
@@ -273,6 +277,7 @@ public:
 	bool CycleCameraModeUpJustDown(void);
 	bool CycleCameraModeDownJustDown(void);
 	bool ChangeStationJustDown(void);
+	bool ChangeStationBackJustDown(void);
 	bool CycleWeaponLeftJustDown(void);
 	bool CycleWeaponRightJustDown(void);
 	bool GetTarget(void);
@@ -511,8 +516,8 @@ public:
 	int16 GetMode() { return Mode; }
 	void SetMode(int16 mode) { Mode = mode; }
 	int16 GetSetupInUse(void);
-	// the GTA IV setup keeps the D-pad for weapons and the radio
-	bool IsSteeringWithDPad(void) { return GetSetupInUse() != CONTROLLER_SETUP_GTA4 && (GetDPadLeft() || GetDPadRight()); }
+	// the chase cameras tilt on a held D-pad side, except in the GTA IV setup, which keeps the D-pad for the radio
+	bool IsDPadTiltingCamera(void) { return GetSetupInUse() != CONTROLLER_SETUP_GTA4 && (GetDPadLeft() || GetDPadRight()); }
 	static int16 ClassicSetup(int16 setup);
 	CControllerState GetStateForScripts(void);
 	

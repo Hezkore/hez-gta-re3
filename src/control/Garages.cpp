@@ -600,14 +600,12 @@ void CGarage::Update()
 							CGarages::GivePlayerDetonator();
 						CStats::KgsOfExplosivesUsed += KGS_OF_EXPLOSIVES_IN_BOMB;
 					}
-					// setup 4 arms the bomb on another button, so its help names that one
-					bool isSetup4 = CPad::GetPad(0)->GetSetupInUse() == CONTROLLER_SETUP_4;
 					switch (m_eGarageType) {
 					case GARAGE_BOMBSHOP1:
-						CHud::SetHelpMessage(TheText.Get(isSetup4 ? "GA_6B" : "GA_6"), false); // Arm with ~h~~k~~PED_FIREWEAPON~ button~w~. Bomb will go off when engine is started.
+						CHud::SetHelpMessage(TheText.Get("GA_6"), false); // Arm with ~h~~k~~PED_FIREWEAPON~ button~w~. Bomb will go off when engine is started.
 						break;
 					case GARAGE_BOMBSHOP2:
-						CHud::SetHelpMessage(TheText.Get(isSetup4 ? "GA_7B" : "GA_7"), false); // Park it, prime it by pressing the ~h~~k~~PED_FIREWEAPON~ button~w~ and LEG IT!
+						CHud::SetHelpMessage(TheText.Get("GA_7"), false); // Park it, prime it by pressing the ~h~~k~~PED_FIREWEAPON~ button~w~ and LEG IT!
 						break;
 					case GARAGE_BOMBSHOP3:
 						CHud::SetHelpMessage(TheText.Get("GA_8"), false); // Use the detonator to activate the bomb.

@@ -34,6 +34,21 @@ uint32 RadioStaticTimer;
 
 CVector vecRiotPosition(300.7f, -322.0f, 12.0f);
 
+#ifdef RADIO_SCROLL_TO_PREV_STATION
+// the retune timer and static restart as on a next station press, skipping the MP3 player when there is none
+static void
+RetuneToPreviousStation(CVehicle *vehicle)
+{
+	gNumRetunePresses--;
+	gRetuneCounter = 20;
+	RadioStaticCounter = 0;
+	int track = gNumRetunePresses + vehicle->m_nRadioStation;
+	while(track < 0) track += NUM_RADIOS + 1;
+	while(track >= NUM_RADIOS + 1) track -= NUM_RADIOS + 1;
+	if(!DMAudio.IsMP3RadioChannelAvailable() && track == USERTRACK) gNumRetunePresses--;
+}
+#endif
+
 uint32 NewGameRadioTimers[10] =
 {
 	948160,
@@ -561,21 +576,18 @@ cMusicManager::ServiceGameMode()
 				}
 			}
 #ifdef RADIO_SCROLL_TO_PREV_STATION
+			else if(CPad::GetPad(0)->ChangeStationBackJustDown()) {
+				if(!UsesPoliceRadio(vehicle) && !UsesTaxiRadio(vehicle))
+					RetuneToPreviousStation(vehicle);
+			}
 			else if(!CPad::GetPad(0)->ArePlayerControlsDisabled() && (CPad::GetPad(0)->GetMouseWheelDownJustDown() || CPad::GetPad(0)->GetMouseWheelUpJustDown())) {
 				if(!UsesPoliceRadio(vehicle) && !UsesTaxiRadio(vehicle)) {
 					int scrollNext = ControlsManager.GetControllerKeyAssociatedWithAction(VEHICLE_CHANGE_RADIO_STATION, MOUSE);
 					int scrollPrev = scrollNext == rsMOUSEWHEELUPBUTTON ? rsMOUSEWHEELDOWNBUTTON
 																		: scrollNext == rsMOUSEWHEELDOWNBUTTON ? rsMOUSEWHEELUPBUTTON : -1;
 
-					if(scrollPrev != -1 && !ControlsManager.IsAnyVehicleActionAssignedToMouseKey(scrollPrev)) {
-						gNumRetunePresses--;
-						gRetuneCounter = 20;
-						RadioStaticCounter = 0;
-						int track = gNumRetunePresses + vehicle->m_nRadioStation;
-						while(track < 0) track += NUM_RADIOS + 1;
-						while(track >= NUM_RADIOS + 1) track -= NUM_RADIOS + 1;
-						if(!DMAudio.IsMP3RadioChannelAvailable() && track == USERTRACK) gNumRetunePresses--;
-					}
+					if(scrollPrev != -1 && !ControlsManager.IsAnyVehicleActionAssignedToMouseKey(scrollPrev))
+						RetuneToPreviousStation(vehicle);
 				}
 			}
 #endif

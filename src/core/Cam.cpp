@@ -1874,7 +1874,7 @@ CCam::Process_Cam_On_A_String(const CVector &CameraTarget, float TargetOrientati
 		Up.Normalise();
 	}else{
 		float TargetRoll;
-		if(CPad::GetPad(0)->IsSteeringWithDPad()){
+		if(CPad::GetPad(0)->IsDPadTiltingCamera()){
 			float fwdSpeed = 180.0f*DotProduct(((CVehicle*)CamTargetEntity)->m_vecMoveSpeed, CamTargetEntity->GetForward());
 			if(fwdSpeed > 210.0f) fwdSpeed = 210.0f;
 			if(CPad::GetPad(0)->GetDPadLeft())
@@ -3302,7 +3302,7 @@ CCam::Process_BehindBoat(const CVector &CameraTarget, float TargetOrientation, f
 
 
 	float TargetRoll;
-	if(CPad::GetPad(0)->IsSteeringWithDPad()){
+	if(CPad::GetPad(0)->IsDPadTiltingCamera()){
 #ifdef FIX_BUGS
 		float fwdSpeed = 180.0f*DotProduct(((CVehicle*)CamTargetEntity)->m_vecMoveSpeed, CamTargetEntity->GetForward());
 		if(fwdSpeed > 210.0f) fwdSpeed = 210.0f;

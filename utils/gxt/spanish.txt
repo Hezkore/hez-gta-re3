@@ -1520,7 +1520,7 @@ Configuración 3
 Configuración 4
 
 [FEC_CF5]
-GTA IV
+GTA 4
 
 [FEC_CDP]
 Pantalla del mando

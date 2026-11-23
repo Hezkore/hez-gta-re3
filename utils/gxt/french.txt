@@ -1779,7 +1779,7 @@ Config. 3
 Config. 4
 
 [FEC_CF5]
-GTA IV
+GTA 4
 
 [FEC_CDP]
 Affichage manette :
