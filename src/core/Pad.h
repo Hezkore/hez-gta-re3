@@ -155,6 +155,7 @@ enum eControllerSetup
 	CONTROLLER_SETUP_2,
 	CONTROLLER_SETUP_3,
 	CONTROLLER_SETUP_4,
+	CONTROLLER_SETUP_GTA4,	// laid out as in GTA IV, where this game has the same action
 	NUM_CONTROLLER_SETUPS
 };
 
@@ -510,7 +511,10 @@ public:
 	int16 GetMode() { return Mode; }
 	void SetMode(int16 mode) { Mode = mode; }
 	int16 GetSetupInUse(void);
+	// the GTA IV setup keeps the D-pad for weapons and the radio
+	bool IsSteeringWithDPad(void) { return GetSetupInUse() != CONTROLLER_SETUP_GTA4 && (GetDPadLeft() || GetDPadRight()); }
 	static int16 ClassicSetup(int16 setup);
+	CControllerState GetStateForScripts(void);
 	
 	static bool IsNoOrObsolete() { return bDisplayNoControllerMessage || bObsoleteControllerMessage; }
 };

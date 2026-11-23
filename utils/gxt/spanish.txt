@@ -1441,6 +1441,9 @@ Escoger arma hacia la izquierda
 [FEC_CWR]
 Escoger arma hacia la derecha
 
+[FEC_CWE]
+Cambiar arma
+
 [FEC_LOF]
 Mirar hacia adelante
 
@@ -1515,6 +1518,9 @@ Configuración 3
 
 [FEC_CF4]
 Configuración 4
+
+[FEC_CF5]
+GTA IV
 
 [FEC_CDP]
 Pantalla del mando

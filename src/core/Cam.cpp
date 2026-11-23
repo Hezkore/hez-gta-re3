@@ -1874,7 +1874,7 @@ CCam::Process_Cam_On_A_String(const CVector &CameraTarget, float TargetOrientati
 		Up.Normalise();
 	}else{
 		float TargetRoll;
-		if(CPad::GetPad(0)->GetDPadLeft() || CPad::GetPad(0)->GetDPadRight()){
+		if(CPad::GetPad(0)->IsSteeringWithDPad()){
 			float fwdSpeed = 180.0f*DotProduct(((CVehicle*)CamTargetEntity)->m_vecMoveSpeed, CamTargetEntity->GetForward());
 			if(fwdSpeed > 210.0f) fwdSpeed = 210.0f;
 			if(CPad::GetPad(0)->GetDPadLeft())
@@ -2620,7 +2620,7 @@ CCam::Process_1stPerson(const CVector &CameraTarget, float TargetOrientation, fl
 
 		if(((CVehicle*)CamTargetEntity)->IsBike() &&
 		   (((CBike*)CamTargetEntity)->bWheelieCam || TheCamera.m_fAvoidTheGeometryProbsTimer > 0.0f)){
-			if(CPad::GetPad(0)->GetLeftShoulder2() || CPad::GetPad(0)->GetRightShoulder2()){
+			if(CPad::GetPad(0)->GetLookLeft() || CPad::GetPad(0)->GetLookRight() || CPad::GetPad(0)->GetLookBehindForCar()){
 				TheCamera.m_fAvoidTheGeometryProbsTimer = 0.0f;
 				((CBike*)CamTargetEntity)->bWheelieCam = false;
 			}else if(Process_WheelCam(CameraTarget, TargetOrientation, SpeedVar, TargetSpeedVar)){
@@ -3302,7 +3302,7 @@ CCam::Process_BehindBoat(const CVector &CameraTarget, float TargetOrientation, f
 
 
 	float TargetRoll;
-	if(CPad::GetPad(0)->GetDPadLeft() || CPad::GetPad(0)->GetDPadRight()){
+	if(CPad::GetPad(0)->IsSteeringWithDPad()){
 #ifdef FIX_BUGS
 		float fwdSpeed = 180.0f*DotProduct(((CVehicle*)CamTargetEntity)->m_vecMoveSpeed, CamTargetEntity->GetForward());
 		if(fwdSpeed > 210.0f) fwdSpeed = 210.0f;

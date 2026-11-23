@@ -1703,6 +1703,9 @@ Faire défiler les armes vers la gauche
 [FEC_CWR]
 Faire défiler les armes vers la droite
 
+[FEC_CWE]
+Changer d'arme
+
 [FEC_LOF]
 Regarder devant
 
@@ -1774,6 +1777,9 @@ Config. 3
 
 [FEC_CF4]
 Config. 4
+
+[FEC_CF5]
+GTA IV
 
 [FEC_CDP]
 Affichage manette :

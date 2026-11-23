@@ -398,6 +398,8 @@ CFont::LoadButtons(const char *txdPath)
 		ButtonSprite[BUTTON_RSTICK_DOWN].SetTexture("thumbryd");
 		ButtonSprite[BUTTON_RSTICK_LEFT].SetTexture("thumbrxl");
 		ButtonSprite[BUTTON_RSTICK_RIGHT].SetTexture("thumbrxr");
+		ButtonSprite[BUTTON_DPAD_LEFT].SetTexture("left");
+		ButtonSprite[BUTTON_DPAD_RIGHT].SetTexture("right");
 		CTxdStore::PopCurrentTxd();
 	}
 	else {
@@ -1316,8 +1318,12 @@ CFont::GetStringWidth(wchar *s, bool spaces)
 						case 'J':
 						case 'V':
 						case 'C':
+						case 'H':
+						case 'L':
 						case '(':
 						case ')':
+						case '[':
+						case ']':
 							w += 17.0f * Details.scaleY;
 							break;
 						default:
@@ -1354,8 +1360,12 @@ CFont::GetStringWidth(wchar *s, bool spaces)
 				case 'J':
 				case 'V':
 				case 'C':
+				case 'H':
+				case 'L':
 				case '(':
 				case ')':
+				case '[':
+				case ']':
 					w += 17.0f * Details.scaleY;
 					break;
 				default:
@@ -1529,6 +1539,8 @@ CFont::ParseToken(wchar* str, CRGBA &color, bool &flash, bool &bold)
 		case 'L': PS2Symbol = BUTTON_RSTICK_DOWN; break;
 		case '(': PS2Symbol = BUTTON_RSTICK_LEFT; break;
 		case ')': PS2Symbol = BUTTON_RSTICK_RIGHT; break;
+		case '[': PS2Symbol = BUTTON_DPAD_LEFT; break;
+		case ']': PS2Symbol = BUTTON_DPAD_RIGHT; break;
 #endif
 		default:
 			break;
@@ -1582,6 +1594,8 @@ CFont::ParseToken(wchar *s, bool japShit)
 		case 'L': PS2Symbol = BUTTON_RSTICK_DOWN; break;
 		case '(': PS2Symbol = BUTTON_RSTICK_LEFT; break;
 		case ')': PS2Symbol = BUTTON_RSTICK_RIGHT; break;
+		case '[': PS2Symbol = BUTTON_DPAD_LEFT; break;
+		case ']': PS2Symbol = BUTTON_DPAD_RIGHT; break;
 #endif
 		}
 	} else if (IsJapanese()) {
@@ -1708,6 +1722,8 @@ CFont::ParseToken(wchar *s)
 		case 'L': PS2Symbol = BUTTON_RSTICK_DOWN; break;
 		case '(': PS2Symbol = BUTTON_RSTICK_LEFT; break;
 		case ')': PS2Symbol = BUTTON_RSTICK_RIGHT; break;
+		case '[': PS2Symbol = BUTTON_DPAD_LEFT; break;
+		case ']': PS2Symbol = BUTTON_DPAD_RIGHT; break;
 #endif
 		}
 	while(*s != '~') s++;

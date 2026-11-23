@@ -1721,6 +1721,9 @@ Eine Waffe nach links
 [FEC_CWR]
 Eine Waffe nach rechts
 
+[FEC_CWE]
+Waffe wechseln
+
 [FEC_LOF]
 Nach vorne sehen
 
@@ -1792,6 +1795,9 @@ Konfig. 3
 
 [FEC_CF4]
 Konfig. 4
+
+[FEC_CF5]
+GTA IV
 
 [FEC_CDP]
 Controller-Anzeige :

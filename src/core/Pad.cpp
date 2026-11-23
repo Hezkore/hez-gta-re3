@@ -56,6 +56,8 @@ const float STANDARD_PAD_STICK_DEADZONE = 0.3f;
 const float STANDARD_PAD_TRIGGER_DEADZONE = 30.0f / 255.0f;
 const float STANDARD_PAD_STICK_RANGE = 128.0f;
 const int16 STANDARD_PAD_FULLY_PRESSED = 255;
+// how far a stick goes before the GTA IV setup reads a flick for zooming or switching targets
+const int16 GTA4_STICK_PUSHED = 64;
 #ifdef GTA_PS2
 u_long128 pad_dma_buf[scePadDmaBufferMax] __attribute__((aligned(64)));
 u_long128 pad2_dma_buf[scePadDmaBufferMax] __attribute__((aligned(64)));
@@ -2150,6 +2152,30 @@ int16 CPad::ClassicSetup(int16 setup)
 	return setup;
 }
 
+// Mission scripts check PS2 buttons where setup 1 has them. In the GTA IV setup a button also answers
+// when the GTA IV button for the same action is down, so both "press" prompts and action checks work.
+CControllerState CPad::GetStateForScripts(void)
+{
+	if ( GetSetupInUse() != CONTROLLER_SETUP_GTA4 )
+		return NewState;
+
+	CControllerState state = NewState;
+	if ( FindPlayerVehicle() ) {
+		state.Cross = Max(NewState.Cross, NewState.RightShoulder2);	// accelerate
+		state.Square = Max(NewState.Square, NewState.LeftShoulder2);	// brake
+		state.RightShoulder1 = Max(NewState.RightShoulder1, NewState.Cross);	// handbrake
+		state.LeftShoulder1 = Max(NewState.LeftShoulder1, NewState.DPadRight);	// radio
+		state.LeftShoulder2 = NewState.LeftShoulder1;	// look left
+		state.RightShoulder2 = NewState.RightShoulder1;	// look right
+	} else {
+		state.Circle = Max(NewState.Circle, NewState.RightShoulder2);	// fire
+		state.RightShoulder1 = Max(NewState.RightShoulder1, NewState.LeftShoulder2);	// target
+		state.LeftShoulder2 = NewState.DPadLeft;	// previous weapon
+		state.RightShoulder2 = NewState.DPadRight;	// next weapon
+	}
+	return state;
+}
+
 int16 CPad::GetSteeringLeftRight(void)
 {
 	if ( ArePlayerControlsDisabled() )
@@ -2176,6 +2202,7 @@ int16 CPad::GetSteeringLeftRight(void)
 		}
 
 		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
 		{
 			SteeringLeftRightBuffer[0] = NewState.LeftStickX;
@@ -2214,6 +2241,7 @@ int16 CPad::GetSteeringUpDown(void)
 		}
 
 		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftStickY;
@@ -2233,6 +2261,7 @@ int16 CPad::GetCarGunUpDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_3:
 		{
@@ -2260,6 +2289,7 @@ int16 CPad::GetCarGunLeftRight(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_3:
 		{
@@ -2301,6 +2331,7 @@ int16 CPad::GetPedWalkLeftRight(void)
 		}
 
 		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftStickX;
@@ -2334,6 +2365,7 @@ int16 CPad::GetPedWalkUpDown(void)
 		}
 
 		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftStickY;
@@ -2364,6 +2396,7 @@ int16 CPad::GetAnalogueUpDown(void)
 		}
 
 		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftStickY;
@@ -2394,6 +2427,7 @@ int16 CPad::GetAnalogueLeftRight(void)
 		}
 
 		case CONTROLLER_SETUP_2:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_4:
 		{
 			return NewState.LeftStickX;
@@ -2410,6 +2444,9 @@ bool CPad::GetLookLeft(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
+	if ( GetSetupInUse() == CONTROLLER_SETUP_GTA4 )
+		return !!(NewState.LeftShoulder1 && !NewState.RightShoulder1);
+
 	return !!(NewState.LeftShoulder2 && !NewState.RightShoulder2);
 }
 
@@ -2417,6 +2454,9 @@ bool CPad::GetLookRight(void)
 {
 	if ( ArePlayerControlsDisabled() )
 		return false;
+
+	if ( GetSetupInUse() == CONTROLLER_SETUP_GTA4 )
+		return !!(NewState.RightShoulder1 && !NewState.LeftShoulder1);
 
 	return !!(NewState.RightShoulder2 && !NewState.LeftShoulder2);
 }
@@ -2426,6 +2466,10 @@ bool CPad::GetLookBehindForCar(void)
 {
 	if ( ArePlayerControlsDisabled() )
 		return false;
+
+	// both triggers, as every other setup and the pad picture have it
+	if ( GetSetupInUse() == CONTROLLER_SETUP_GTA4 )
+		return !!(NewState.LeftShoulder2 && NewState.RightShoulder2);
 
 	return !!(NewState.RightShoulder2 && NewState.LeftShoulder2);
 }
@@ -2446,6 +2490,7 @@ bool CPad::GetHorn(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return !!NewState.LeftShock;
 
@@ -2485,6 +2530,7 @@ bool CPad::HornJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		{
 			return !!(NewState.LeftShock && !OldState.LeftShock);
 
@@ -2524,6 +2570,7 @@ bool CPad::GetCarGunFired(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_3:
 		{
@@ -2551,6 +2598,7 @@ bool CPad::CarGunJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_3:
 		{
@@ -2598,6 +2646,10 @@ int16 CPad::GetHandBrake(void)
 
 			break;
 		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return NewState.Cross;
+		}
 	}
 
 	return 0;
@@ -2636,6 +2688,10 @@ int16 CPad::GetBrake(void)
 
 			break;
 		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return NewState.LeftShoulder2;
+		}
 	}
 
 	return 0;
@@ -2653,6 +2709,7 @@ bool CPad::GetExitVehicle(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_4:
 		{
@@ -2683,6 +2740,7 @@ bool CPad::ExitVehicleJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_4:
 		{
@@ -2730,6 +2788,10 @@ int32 CPad::GetWeapon(void)
 
 			break;
 		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return NewState.RightShoulder2;
+		}
 	}
 
 	return false;
@@ -2762,6 +2824,10 @@ bool CPad::WeaponJustDown(void)
 			return !!(NewState.RightShoulder1 && !OldState.RightShoulder1);
 
 			break;
+		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return !!(NewState.RightShoulder2 && !OldState.RightShoulder2);
 		}
 	}
 
@@ -2801,6 +2867,10 @@ int16 CPad::GetAccelerate(void)
 
 			break;
 		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return NewState.RightShoulder2;
+		}
 	}
 
 	return 0;
@@ -2812,6 +2882,7 @@ bool CPad::CycleCameraModeJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_3:
 		case CONTROLLER_SETUP_4:
 		{
@@ -2858,6 +2929,7 @@ bool CPad::CycleCameraModeUpJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_3:
 		case CONTROLLER_SETUP_4:
 		{
@@ -2882,6 +2954,7 @@ bool CPad::CycleCameraModeDownJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_3:
 		case CONTROLLER_SETUP_4:
 		{
@@ -2935,6 +3008,10 @@ bool CPad::ChangeStationJustDown(void)
 
 			break;
 		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return !!((NewState.DPadRight && !OldState.DPadRight) || (NewState.DPadLeft && !OldState.DPadLeft));
+		}
 	}
 
 	return false;
@@ -2945,6 +3022,9 @@ bool CPad::CycleWeaponLeftJustDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
+	if ( GetSetupInUse() == CONTROLLER_SETUP_GTA4 )
+		return !!(NewState.DPadLeft && !OldState.DPadLeft);
+
 	return !!(NewState.LeftShoulder2 && !OldState.LeftShoulder2);
 }
 
@@ -2952,6 +3032,9 @@ bool CPad::CycleWeaponRightJustDown(void)
 {
 	if ( ArePlayerControlsDisabled() )
 		return false;
+
+	if ( GetSetupInUse() == CONTROLLER_SETUP_GTA4 )
+		return !!(NewState.DPadRight && !OldState.DPadRight);
 
 	return !!(NewState.RightShoulder2 && !OldState.RightShoulder2);
 }
@@ -2977,6 +3060,10 @@ bool CPad::GetTarget(void)
 			return !!NewState.LeftShoulder1;
 
 			break;
+		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return !!NewState.LeftShoulder2;
 		}
 	}
 
@@ -3005,6 +3092,10 @@ bool CPad::TargetJustDown(void)
 
 			break;
 		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return !!(NewState.LeftShoulder2 && !OldState.LeftShoulder2);
+		}
 	}
 
 	return false;
@@ -3018,6 +3109,7 @@ bool CPad::CollectPickupJustDown(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		{
 			return !!(NewState.LeftShoulder1 && !OldState.LeftShoulder1);
@@ -3066,6 +3158,7 @@ bool CPad::GetSprint(void)
 	switch (GetSetupInUse())
 	{
 		case CONTROLLER_SETUP_1:
+		case CONTROLLER_SETUP_GTA4:
 		case CONTROLLER_SETUP_2:
 		case CONTROLLER_SETUP_4:
 		{
@@ -3090,6 +3183,9 @@ bool CPad::ShiftTargetLeftJustDown(void)
 	if ( ArePlayerControlsDisabled() )
 		return false;
 
+	if ( GetSetupInUse() == CONTROLLER_SETUP_GTA4 )
+		return NewState.RightStickX < -GTA4_STICK_PUSHED && OldState.RightStickX >= -GTA4_STICK_PUSHED;
+
 	return !!(NewState.LeftShoulder2 && !OldState.LeftShoulder2);
 }
 
@@ -3097,6 +3193,9 @@ bool CPad::ShiftTargetRightJustDown(void)
 {
 	if ( ArePlayerControlsDisabled() )
 		return false;
+
+	if ( GetSetupInUse() == CONTROLLER_SETUP_GTA4 )
+		return NewState.RightStickX > GTA4_STICK_PUSHED && OldState.RightStickX <= GTA4_STICK_PUSHED;
 
 	return !!(NewState.LeftShoulder1 && !OldState.LeftShoulder1) || !!(NewState.RightShoulder2 && !OldState.RightShoulder2);
 }
@@ -3241,6 +3340,10 @@ bool CPad::ForceCameraBehindPlayer(void)
 
 			break;
 		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return !!NewState.RightShoulder1;
+		}
 	}
 
 	return false;
@@ -3267,6 +3370,10 @@ bool CPad::SniperZoomIn(void)
 			return !!NewState.Triangle;
 
 			break;
+		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return NewState.LeftStickY < -GTA4_STICK_PUSHED;
 		}
 	}
 
@@ -3295,6 +3402,10 @@ bool CPad::SniperZoomOut(void)
 
 			break;
 		}
+		case CONTROLLER_SETUP_GTA4:
+		{
+			return NewState.LeftStickY > GTA4_STICK_PUSHED;
+		}
 	}
 
 	return false;
@@ -3303,8 +3414,10 @@ bool CPad::SniperZoomOut(void)
 
 int16 CPad::SniperModeLookLeftRight(void)
 {
-	int16 axis = NewState.LeftStickX;
-	int16 dpad = (NewState.DPadRight - NewState.DPadLeft) / 2;
+	// the GTA IV setup aims with the right stick, its left stick zooms and its D-pad picks weapons
+	bool isGta4Setup = GetSetupInUse() == CONTROLLER_SETUP_GTA4;
+	int16 axis = isGta4Setup ? NewState.RightStickX : NewState.LeftStickX;
+	int16 dpad = isGta4Setup ? 0 : (NewState.DPadRight - NewState.DPadLeft) / 2;
 
 	if ( Abs(axis) > Abs(dpad) ) {
 		if ( Abs(axis) > 35.0f ) {
@@ -3318,7 +3431,8 @@ int16 CPad::SniperModeLookLeftRight(void)
 
 int16 CPad::SniperModeLookUpDown(void)
 {
-	int16 axis = NewState.LeftStickY;
+	bool isGta4Setup = GetSetupInUse() == CONTROLLER_SETUP_GTA4;
+	int16 axis = isGta4Setup ? NewState.RightStickY : NewState.LeftStickY;
 	int16 dpad;
 
 #ifdef FIX_BUGS
@@ -3330,6 +3444,8 @@ int16 CPad::SniperModeLookUpDown(void)
 	} else {
 		dpad = (NewState.DPadUp - NewState.DPadDown) / 2;
 	}
+	if ( isGta4Setup )
+		dpad = 0;
 
 	if ( Abs(axis) > Abs(dpad) ) {
 	    if ( Abs(axis) > 35.0f ) {
