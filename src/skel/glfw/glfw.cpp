@@ -745,6 +745,27 @@ UINT GetBestRefreshRate(UINT width, UINT height, UINT depth)
 /*
  *****************************************************************************
  */
+#ifdef IMPROVED_VIDEOMODE
+// The fullscreen mode with the fewest pixels, or -1 when there is none
+static RwInt32
+SmallestFullscreenMode(void)
+{
+	RwVideoMode vm;
+	RwInt32 smallest = -1;
+	RwInt32 smallestPixels = 0;
+	for(RwInt32 i = 0; i < RwEngineGetNumVideoModes(); i++){
+		RwEngineGetVideoModeInfo(&vm, i);
+		if(!(vm.flags & rwVIDEOMODEEXCLUSIVE))
+			continue;
+		if(smallest < 0 || vm.width * vm.height < smallestPixels){
+			smallest = i;
+			smallestPixels = vm.width * vm.height;
+		}
+	}
+	return smallest;
+}
+#endif
+
 RwBool
 psSelectDevice()
 {
@@ -871,6 +892,9 @@ psSelectDevice()
 			}
 		}
 
+		// Wayland lists only the desktop mode, which can be larger than what we wanted
+		if(bestFsMode < 0)
+			bestFsMode = SmallestFullscreenMode();
 		if(bestFsMode < 0){
 			printf("WARNING: Cannot find desired video mode, selecting device cancelled\n");
 			return FALSE;
@@ -887,8 +911,16 @@ psSelectDevice()
 	RwEngineGetVideoModeInfo(&vm, GcurSelVM);
 
 #ifdef IMPROVED_VIDEOMODE
-	if (FrontEndMenuManager.m_nPrefsWindowed)
+	if (FrontEndMenuManager.m_nPrefsWindowed) {
 		GcurSelVM = bestWndMode;
+
+		// a window keeps the size it was given as long as it fits on the desktop, since Wayland has no other modes to pick from
+		if (!useDefault) {
+			const GLFWvidmode *desktop = glfwGetVideoMode(glfwGetPrimaryMonitor());
+			vm.width = Min(FrontEndMenuManager.m_nPrefsWidth, desktop->width);
+			vm.height = Min(FrontEndMenuManager.m_nPrefsHeight, desktop->height);
+		}
+	}
 
 	// Now GcurSelVM is 0 but vm has sizes(and fullscreen flag) of the video mode we want, that's why we changed the rwVIDEOMODEEXCLUSIVE conditions below
 	FrontEndMenuManager.m_nPrefsWidth = vm.width;
@@ -943,6 +975,9 @@ psSelectDevice()
 #ifdef MULTISAMPLING
 	RwD3D8EngineSetMultiSamplingLevels(1 << FrontEndMenuManager.m_nPrefsMSAALevel);
 #endif
+
+	// the window shows once psPostRWinit has given it its size and place, so it never appears somewhere else first
+	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 	return TRUE;
 }
 
@@ -1058,6 +1093,27 @@ bool _InputMouseNeedsExclusive()
 	return !(vm.flags & rwVIDEOMODEEXCLUSIVE) || lastCursorMode == GLFW_CURSOR_HIDDEN;
 }
 
+// Centers a window in the desktop area of the primary monitor, outside the panels
+static void
+CenterWindow(GLFWwindow *window)
+{
+#ifdef GLFW_PLATFORM_WAYLAND
+	// on Wayland the compositor places every window
+	if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND)
+		return;
+#endif
+	int areaX, areaY, areaWidth, areaHeight;
+	glfwGetMonitorWorkarea(glfwGetPrimaryMonitor(), &areaX, &areaY, &areaWidth, &areaHeight);
+
+	int width, height, frameLeft, frameTop, frameRight, frameBottom;
+	glfwGetWindowSize(window, &width, &height);
+	glfwGetWindowFrameSize(window, &frameLeft, &frameTop, &frameRight, &frameBottom);
+	int outerWidth = frameLeft + width + frameRight;
+	int outerHeight = frameTop + height + frameBottom;
+
+	glfwSetWindowPos(window, areaX + (areaWidth - outerWidth) / 2 + frameLeft, areaY + (areaHeight - outerHeight) / 2 + frameTop);
+}
+
 void psPostRWinit(void)
 {
 	RwVideoMode vm;
@@ -1079,8 +1135,11 @@ void psPostRWinit(void)
 	_InputInitialiseJoys();
 	_InputInitialiseMouse(false);
 
-	if(!(vm.flags & rwVIDEOMODEEXCLUSIVE))
+	if(!(vm.flags & rwVIDEOMODEEXCLUSIVE)) {
 		glfwSetWindowSize(PSGLOBAL(window), RsGlobal.maximumWidth, RsGlobal.maximumHeight);
+		CenterWindow(PSGLOBAL(window));
+	}
+	glfwShowWindow(PSGLOBAL(window));
 
 	// Make sure all keys are released
 	CPad::GetPad(0)->Clear(true);
