@@ -247,6 +247,21 @@ CCamera::Init(void)
 	m_nAvoidTheGeometryProbsDirn = 0;
 }
 
+// the speed is distance per logical frame, as the game was made for, while Process
+// runs once per rendered frame
+void
+CCamera::UpdateAverageSpeed(void)
+{
+	m_CameraSpeedSoFar += (GetPosition() - m_PreviousCameraPosition).Magnitude();
+	m_iNumFramesSoFar++;
+	if(m_iNumFramesSoFar == m_iWorkOutSpeedThisNumFrames){
+		m_CameraAverageSpeed = m_CameraSpeedSoFar / m_iWorkOutSpeedThisNumFrames;
+		m_CameraSpeedSoFar = 0.0f;
+		m_iNumFramesSoFar = 0;
+	}
+	m_PreviousCameraPosition = GetPosition();
+}
+
 void
 CCamera::Process(void)
 {
@@ -631,19 +646,11 @@ CCamera::Process(void)
 	CDraw::SetNearClipZ(RwCameraGetNearClipPlane(m_pRwCamera));
 	CDraw::SetFarClipZ(RwCameraGetFarClipPlane(m_pRwCamera));
 
-	// Keep track of speed
+	// a jump to a new camera is no speed, UpdateAverageSpeed measures from here
 	if(m_bJustInitalised || m_bJust_Switched){
 		m_PreviousCameraPosition = GetPosition();
 		m_bJustInitalised = false;
 	}
-	m_CameraSpeedSoFar += (GetPosition() - m_PreviousCameraPosition).Magnitude();
-	m_iNumFramesSoFar++;
-	if(m_iNumFramesSoFar == m_iWorkOutSpeedThisNumFrames){
-		m_CameraAverageSpeed = m_CameraSpeedSoFar / m_iWorkOutSpeedThisNumFrames;
-		m_CameraSpeedSoFar = 0.0f;
-		m_iNumFramesSoFar = 0;
-	}
-	m_PreviousCameraPosition = GetPosition();
 
 	if(Cams[ActiveCam].DirectionWasLooking != LOOKING_FORWARD && Cams[ActiveCam].Mode != CCam::MODE_TOP_DOWN_PED){
 		Cams[ActiveCam].Source = Cams[ActiveCam].SourceBeforeLookBehind;

@@ -552,6 +552,7 @@ public:
 	// High level and misc
 	CCamera(void);
 	void Init(void);
+	void UpdateAverageSpeed(void);
 	void Process(void);
 	void CamControl(void);
 	void UpdatePadInput(void);

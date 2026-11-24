@@ -22,6 +22,7 @@
 #include "Physical.h"
 #include "SaveBuf.h"
 #include "debugmenu.h"
+#include "postfx.h"
 
 #define MAX_PARTICLES_ON_SCREEN   (750)
 
@@ -876,6 +877,11 @@ CParticle *CParticle::AddParticle(tParticleType type, CVector const &vecPos, CVe
 {
 	if ( CTimer::GetIsPaused() || ms_bAddBlocked )
 		return nil;
+
+#ifdef EXTENDED_COLOURFILTER
+	if ( ( type == PARTICLE_WATERDROP || type == PARTICLE_BLOODDROP ) && CPostFX::Droplets != CPostFX::DROPLETS_PC )
+		return nil;
+#endif
 
 	if ( ( type == PARTICLE_ENGINE_SMOKE
 		|| type == PARTICLE_ENGINE_SMOKE2
@@ -1825,6 +1831,9 @@ void CParticle::Update()
 void CParticle::Render()
 {
 	PUSH_RENDERGROUP("CParticle::Render");
+
+	// the screen FX queue holds only what this frame adds
+	CMBlur::ClearRenderFx();
 
 	RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void *)rwTEXTUREADDRESSWRAP);
 	RwRenderStateSet(rwRENDERSTATETEXTUREPERSPECTIVE, (void *)TRUE);

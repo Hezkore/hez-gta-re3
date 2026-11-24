@@ -18,6 +18,7 @@ RwRaster *CPostFX::pBackBuffer;
 bool CPostFX::bJustInitialised;
 int CPostFX::EffectSwitch = POSTFX_NORMAL;
 bool CPostFX::bTrails = true;
+int8 CPostFX::Droplets = CPostFX::DefaultDroplets;
 int8 CPostFX::MotionBlur = MBLUR_FAINT;
 // how long the trail lingers with each setting, 1 being the game as it was
 static const float aBlurStrength[] = { 0.0f, 0.35f, 0.8f };
@@ -338,31 +339,6 @@ CPostFX::NeedBackBuffer(void)
 	return false;
 }
 
-bool
-CPostFX::NeedFrontBuffer(int32 type)
-{
-	// Last frame -- needed for motion blur
-	if(CMBlur::Drunkness > 0.0f)
-		return true;
-	if(type == MOTION_BLUR_SNIPER)
-		return true;
-
-	switch(EffectSwitch){
-	case POSTFX_OFF:
-	case POSTFX_SIMPLE:
-		// no actual rendering here
-		return false;
-	case POSTFX_NORMAL:
-		if(MotionBlur != MBLUR_OFF)
-			return true;
-		else
-			return false;
-	case POSTFX_MOBILE:
-		return false;
-	}
-	return false;
-}
-
 void
 CPostFX::GetBackBuffer(RwCamera *cam)
 {
@@ -424,6 +400,10 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 	if(!bJustInitialised)
 		RenderMotionBlur(cam, 175.0f * CMBlur::Drunkness);
 
+	// the PC drops, splashes and heat haze bend the last frame
+	if(type != MOTION_BLUR_SNIPER && !bJustInitialised)
+		CMBlur::OverlayRenderFx(cam, pFrontBuffer);
+
 	RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
 	RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)TRUE);
 	RwRenderStateSet(rwRENDERSTATETEXTURERASTER, nil);
@@ -431,13 +411,11 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 	RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
 	RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
 
-	if(NeedFrontBuffer(type)){
-		RwRasterPushContext(pFrontBuffer);
-		RwRasterRenderFast(RwCameraGetRaster(cam), 0, 0);
-		RwRasterPopContext();
-		bJustInitialised = false;
-	}else
-		bJustInitialised = true;
+	// keep this frame for the next one: motion blur, the sniper view and the PC screen FX bend it
+	RwRasterPushContext(pFrontBuffer);
+	RwRasterRenderFast(RwCameraGetRaster(cam), 0, 0);
+	RwRasterPopContext();
+	bJustInitialised = false;
 
 	POP_RENDERGROUP();
 }

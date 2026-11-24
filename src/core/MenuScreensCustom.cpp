@@ -31,6 +31,8 @@
 #include "CarCtrl.h"
 #include "Population.h"
 #include "SpecialFX.h"
+#include "Particle.h"
+#include "screendroplets.h"
 
 // Menu screens array is at the bottom of the file.
 
@@ -91,8 +93,11 @@
 		MENUACTION_CFO_SELECT, "FED_CLF", { new CCFOSelect((int8*)&CPostFX::EffectSwitch, "Graphics", "ColourFilter", filterNames, ARRAY_SIZE(filterNames), false) }, 0, 0, MENUALIGN_LEFT, \
 		MENUACTION_CFO_SELECT, "FED_MBL", { new CCFOSelect(&CPostFX::MotionBlur, "Graphics", "MotionBlur", motionBlurTexts, ARRAY_SIZE(motionBlurTexts), false) }, 0, 0, MENUALIGN_LEFT, \
 		MENUACTION_CFO_DYNAMIC, "FEM_TRL", { new CCFODynamic((int8*)&CPostFX::bTrails, "Graphics", "TrailEffect", TrailsDraw, TrailsButtonPress) }, 0, 0, MENUALIGN_LEFT,
+	#define DROPLETS_SELECTOR \
+		MENUACTION_CFO_SELECT, "FED_DRP", { new CCFOSelect(&CPostFX::Droplets, "Graphics", "Droplets", dropletsTexts, ARRAY_SIZE(dropletsTexts), false, DropletsAfterChange) }, 0, 0, MENUALIGN_LEFT,
 #else
 	#define POSTFX_SELECTORS
+	#define DROPLETS_SELECTOR
 #endif	
 
 #ifdef INVERT_LOOK_FOR_PAD
@@ -119,9 +124,11 @@ const char *filterNames[] = { "FEM_NON", "FEM_SIM", "FEM_NRM", "FEM_MOB" };
 const char *off_on[] = { "FEM_OFF", "FEM_ON" };
 const char *lowHigh[] = { "FEM_LOW", "FEM_HIG" };
 const char *motionBlurTexts[] = { "FEM_OFF", "FEM_FNT", "FEM_STR" };
+const char *dropletsTexts[] = { "FEM_OFF", "FEM_XBX", "FEM_PC" };
 extern const char *frameLimitTexts[];
 extern int32 numFrameLimits;
 void IslandLoadingAfterChange(int8 before, int8 after);
+void DropletsAfterChange(int8 before, int8 after);
 
 void RestoreDefGraphics(int8 action) {
 	if (action != FEOPTION_ACTION_SELECT)
@@ -155,6 +162,9 @@ void RestoreDefGraphics(int8 action) {
 		#ifdef EXTENDED_COLOURFILTER
 			CPostFX::MotionBlur = CPostFX::MBLUR_FAINT;
 			CPostFX::bTrails = true;
+			int8 dropletsBefore = CPostFX::Droplets;
+			CPostFX::Droplets = CPostFX::DefaultDroplets;
+			DropletsAfterChange(dropletsBefore, CPostFX::Droplets);
 		#endif
 		CMBlur::BlurOn = false;
 		FrontEndMenuManager.SaveSettings();
@@ -187,6 +197,17 @@ void RestoreDefDisplay(int8 action) {
 		FrontEndMenuManager.SaveSettings();
 	#endif
 }
+
+#ifdef EXTENDED_COLOURFILTER
+// drops of the kind just turned off would stay frozen on the screen, so clear them
+void DropletsAfterChange(int8 before, int8 after) {
+	#ifdef SCREEN_DROPLETS
+		ScreenDroplets::Initialise();
+	#endif
+	CParticle::RemovePSystem(PARTICLE_WATERDROP);
+	CParticle::RemovePSystem(PARTICLE_BLOODDROP);
+}
+#endif
 
 #ifdef NO_ISLAND_LOADING
 const char *islandLoadingOpts[] = { "FEM_LOW", "FEM_MED", "FEM_HIG" };
@@ -423,22 +444,15 @@ static void StepPadSetting(int8 *steps, int8 action, int8 minSteps, int8 maxStep
 }
 
 #ifdef EXTENDED_COLOURFILTER
-// the trails are the motion blur's last frame drawn again a little moved, so with the
-// motion blur off they have nothing to show and the row is greyed out
-static bool AreTrailsAvailable(void)
-{
-	return CPostFX::MotionBlur != CPostFX::MBLUR_OFF;
-}
-
 wchar *TrailsDraw(bool *disabled, bool userHovering)
 {
-	*disabled = !AreTrailsAvailable();
+	*disabled = !CPostFX::AreTrailsPossible();
 	return TheText.Get(CPostFX::bTrails ? "FEM_ON" : "FEM_OFF");
 }
 
 void TrailsButtonPress(int8 action)
 {
-	if (action == FEOPTION_ACTION_FOCUSLOSS || !AreTrailsAvailable())
+	if (action == FEOPTION_ACTION_FOCUSLOSS || !CPostFX::AreTrailsPossible())
 		return;
 	CPostFX::bTrails = !CPostFX::bTrails;
 	FrontEndMenuManager.SaveSettings();
@@ -875,6 +889,7 @@ CMenuScreenCustom aScreens[] = {
 		MENUACTION_TRAILS,		"FED_TRA", { nil, SAVESLOT_NONE, MENUPAGE_GRAPHICS_SETTINGS }, 0, 0, MENUALIGN_LEFT,
 #endif
 		MENUACTION_CFO_SELECT,	"FED_LCU", { new CCFOSelect((int8*)&CBrightLights::bLightCubes, "Graphics", "LightCubes", off_on, 2, false) }, 0, 0, MENUALIGN_LEFT,
+		DROPLETS_SELECTOR
 		// re3.cpp inserts here pipeline selectors if neo/neo.txd exists and EXTENDED_PIPELINES defined
 		MENUACTION_CFO_DYNAMIC,	"FET_DEF", { new CCFODynamic(nil, nil, nil, nil, RestoreDefGraphics) }, 320, 0, MENUALIGN_CENTER,
 		MENUACTION_GOBACK,		"FEDS_TB", {nil, SAVESLOT_NONE, MENUPAGE_NONE}, 320, 0, MENUALIGN_CENTER,

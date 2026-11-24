@@ -307,6 +307,11 @@ ScreenDroplets::Clear(void)
 	for(drop = &ms_drops[0]; drop < &ms_drops[MAXDROPS]; drop++)
 		drop->active = false;
 	ms_numDrops = 0;
+
+	ScreenDropMoving *moving;
+	for(moving = ms_dropsMoving; moving < &ms_dropsMoving[MAXDROPSMOVING]; moving++)
+		moving->drop = nil;
+	ms_numDropsMoving = 0;
 }
 
 ScreenDroplets::ScreenDrop*

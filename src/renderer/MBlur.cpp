@@ -290,8 +290,9 @@ CMBlur::CreateImmediateModeData(RwCamera *cam, RwRect *rect, RwIm2DVertex *verts
 		v2 = Clamp(v2, 0.0f, 1.0f);
 	}
 
-	float recipz = 1.0f/z;
-	// TODO: CameraZ is wrong, what should we do?
+	// the quad lies on the near plane, as its camera z says. 1/z of the screen z goes
+	// negative under OpenGL's -1 to 1 depth range, and the whole quad is clipped away
+	float recipz = 1.0f/RwCameraGetNearClipPlane(cam);
 	RwIm2DVertexSetScreenX(&verts[0], x1);
 	RwIm2DVertexSetScreenY(&verts[0], y1);
 	RwIm2DVertexSetScreenZ(&verts[0], z);
@@ -534,7 +535,6 @@ CMBlur::OverlayRender(RwCamera *cam, RwRaster *raster, RwRGBA color, int32 type,
 			RwIm2DVertexSetIntRGBA(&Vertex2[3], r, g, b, 80);
 			RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
 			RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
-			pBufVertCount = 0;
 		}else{
 			RwIm2DVertexSetIntRGBA(&Vertex2[0], r*2, g*2, b*2, 30);
 			RwIm2DVertexSetIntRGBA(&Vertex2[1], r*2, g*2, b*2, 30);
@@ -632,6 +632,17 @@ CMBlur::PosInside(RwRect *rect, float x1, float y1, float x2, float y2)
 	   (rect->w < x1 - 10.0f || rect->w > x2 + 10.0f || rect->y < y1 - 10.0f || rect->y > y2 + 10.0f))
 		return false;
 	return true;
+}
+
+// the PC drops are bright while the trails show and a faint grey without them
+static bool
+AreDropsBright(void)
+{
+#ifdef EXTENDED_COLOURFILTER
+	return CPostFX::AreTrailsDrawn();
+#else
+	return CMBlur::BlurOn;
+#endif
 }
 
 bool
@@ -755,7 +766,7 @@ CMBlur::OverlayRenderFx(RwCamera *cam, RwRaster *frontBuf)
 				RwD3D8SetRenderState(D3DRS_STENCILFUNC, D3DCMP_EQUAL);
 				RwD3D8SetRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
 #endif
-				if(BlurOn){
+				if(AreDropsBright()){
 					if(fxType[i] == FXTYPE_BLOOD1 || fxType[i] == FXTYPE_BLOOD2)
 						CreateImmediateModeData(cam, &fxRect[i], verts, CRGBA(255, 0, 0, 255), u1Off, 0.0f+halfHeight, u2Off, 0.0f-halfHeight, fxZ[i], false);
 					else
@@ -887,5 +898,4 @@ CMBlur::OverlayRenderFx(RwCamera *cam, RwRaster *frontBuf)
 
 	RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)FALSE);
 	RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)FALSE);
-	pBufVertCount = 0;
 }

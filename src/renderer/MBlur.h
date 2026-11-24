@@ -36,5 +36,6 @@ public:
 	
 	static bool PosInside(RwRect *rect, float x1, float y1, float x2, float y2);
 	static bool AddRenderFx(RwCamera *cam, RwRect *rect, float z, FxType type);
+	static void ClearRenderFx(void) { pBufVertCount = 0; }
 	static void OverlayRenderFx(RwCamera *cam, RwRaster *frontBuf);
 };
