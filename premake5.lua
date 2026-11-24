@@ -309,6 +309,7 @@ project "re3"
 	includedirs { "src/vehicles" }
 	includedirs { "src/weapons" }
 	includedirs { "src/extras" }
+	includedirs { "vendor/pl_mpeg" }
 
 	if(not _OPTIONS["no-git-hash"]) then
 		defines { "USE_OUR_VERSIONING" }
