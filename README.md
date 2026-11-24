@@ -25,7 +25,8 @@ Audio is done with MSS (using dlls from original GTA) or OpenAL.
 * On screens wider than 16:9 the HUD, subtitles and loading screens stay in a 16:9 box, and cutscenes are not zoomed in. EXTEND HUD under Display puts the HUD at the screen edges.
 * PS2 .VB radio and cutscene audio plays without VBDec, from the PS2 folders, such as `audio\MUSIC\HEAD.VB`, or the VBDec layout, such as `audio\HEAD.VB`.
 * The game starts on a Wayland desktop instead of quitting with `GLFW Error: X11: Platform not initialized`.
-* The intro videos play on Linux too, and keep their shape with black bars on wider screens.
+* The intro videos play on every build through their own player instead of DirectShow, so they work on Linux too, and keep their shape with black bars on wider screens.
+* The game starts on Wayland with any window size, and the window opens centered.
 
 ## Installation
 
