@@ -20,7 +20,7 @@ public:
 	static RwRaster *pBackBuffer;
 	static bool bJustInitialised;
 	static int EffectSwitch;
-	static bool BlurOn;	// or use CMblur for that?
+	static bool bTrails;	// the PC game's trails: the last frame again, a little down and to the right
 	static int8 MotionBlur;	// MBLUR_OFF, MBLUR_FAINT or MBLUR_STRONG
 	static float Intensity;
 

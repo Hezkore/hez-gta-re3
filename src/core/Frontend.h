@@ -357,7 +357,7 @@ enum eCheckHover
 enum
 {
 #if defined LEGACY_MENU_OPTIONS || defined CUSTOM_FRONTEND_OPTIONS
-	NUM_MENUROWS = 18,
+	NUM_MENUROWS = 19,
 #else
 	NUM_MENUROWS = 12,
 #endif

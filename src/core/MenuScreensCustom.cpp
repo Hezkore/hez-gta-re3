@@ -30,6 +30,7 @@
 #include "IniFile.h"
 #include "CarCtrl.h"
 #include "Population.h"
+#include "SpecialFX.h"
 
 // Menu screens array is at the bottom of the file.
 
@@ -84,9 +85,12 @@
 #endif
 
 #ifdef EXTENDED_COLOURFILTER
+	wchar *TrailsDraw(bool *disabled, bool userHovering);
+	void TrailsButtonPress(int8 action);
 	#define POSTFX_SELECTORS \
 		MENUACTION_CFO_SELECT, "FED_CLF", { new CCFOSelect((int8*)&CPostFX::EffectSwitch, "Graphics", "ColourFilter", filterNames, ARRAY_SIZE(filterNames), false) }, 0, 0, MENUALIGN_LEFT, \
-		MENUACTION_CFO_SELECT, "FED_MBL", { new CCFOSelect(&CPostFX::MotionBlur, "Graphics", "MotionBlur", motionBlurTexts, 3, false) }, 0, 0, MENUALIGN_LEFT,
+		MENUACTION_CFO_SELECT, "FED_MBL", { new CCFOSelect(&CPostFX::MotionBlur, "Graphics", "MotionBlur", motionBlurTexts, ARRAY_SIZE(motionBlurTexts), false) }, 0, 0, MENUALIGN_LEFT, \
+		MENUACTION_CFO_DYNAMIC, "FEM_TRL", { new CCFODynamic((int8*)&CPostFX::bTrails, "Graphics", "TrailEffect", TrailsDraw, TrailsButtonPress) }, 0, 0, MENUALIGN_LEFT,
 #else
 	#define POSTFX_SELECTORS
 #endif	
@@ -147,6 +151,11 @@ void RestoreDefGraphics(int8 action) {
 		#endif
 		FrontEndMenuManager.m_PrefsUseWideScreen = false;
 		FrontEndMenuManager.m_nDisplayVideoMode = FrontEndMenuManager.m_nPrefsVideoMode;
+		CBrightLights::bLightCubes = false;
+		#ifdef EXTENDED_COLOURFILTER
+			CPostFX::MotionBlur = CPostFX::MBLUR_FAINT;
+			CPostFX::bTrails = false;
+		#endif
 		CMBlur::BlurOn = false;
 		FrontEndMenuManager.SaveSettings();
 	#endif
@@ -412,6 +421,29 @@ static void StepPadSetting(int8 *steps, int8 action, int8 minSteps, int8 maxStep
 	*steps = Clamp(*steps + (action == FEOPTION_ACTION_RIGHT ? 1 : -1), minSteps, maxSteps);
 	FrontEndMenuManager.SaveSettings();
 }
+
+#ifdef EXTENDED_COLOURFILTER
+// the trails are the motion blur's last frame drawn again a little moved, so with the
+// motion blur off they have nothing to show and the row is greyed out
+static bool AreTrailsAvailable(void)
+{
+	return CPostFX::MotionBlur != CPostFX::MBLUR_OFF;
+}
+
+wchar *TrailsDraw(bool *disabled, bool userHovering)
+{
+	*disabled = !AreTrailsAvailable();
+	return TheText.Get(CPostFX::bTrails ? "FEM_ON" : "FEM_OFF");
+}
+
+void TrailsButtonPress(int8 action)
+{
+	if (action == FEOPTION_ACTION_FOCUSLOSS || !AreTrailsAvailable())
+		return;
+	CPostFX::bTrails = !CPostFX::bTrails;
+	FrontEndMenuManager.SaveSettings();
+}
+#endif
 
 wchar *LookSensitivityDraw(bool *disabled, bool userHovering)
 {
@@ -842,6 +874,7 @@ CMenuScreenCustom aScreens[] = {
 #elif defined LEGACY_MENU_OPTIONS
 		MENUACTION_TRAILS,		"FED_TRA", { nil, SAVESLOT_NONE, MENUPAGE_GRAPHICS_SETTINGS }, 0, 0, MENUALIGN_LEFT,
 #endif
+		MENUACTION_CFO_SELECT,	"FED_LCU", { new CCFOSelect((int8*)&CBrightLights::bLightCubes, "Graphics", "LightCubes", off_on, 2, false) }, 0, 0, MENUALIGN_LEFT,
 		// re3.cpp inserts here pipeline selectors if neo/neo.txd exists and EXTENDED_PIPELINES defined
 		MENUACTION_CFO_DYNAMIC,	"FET_DEF", { new CCFODynamic(nil, nil, nil, nil, RestoreDefGraphics) }, 320, 0, MENUALIGN_CENTER,
 		MENUACTION_GOBACK,		"FEDS_TB", {nil, SAVESLOT_NONE, MENUPAGE_NONE}, 320, 0, MENUALIGN_CENTER,

@@ -577,7 +577,10 @@ bool LoadINISettings()
 					ReadIniIfExists(option.m_CFO->saveCat, option.m_CFO->save, (int8*)option.m_CFO->value);
 
 				if (option.m_Action == MENUACTION_CFO_SELECT) {
-					option.m_CFOSelect->lastSavedValue = option.m_CFOSelect->displayedValue = *(int8*)option.m_CFO->value;
+					// an older or hand-edited ini can hold a value past the end of the list
+					int8 *value = (int8*)option.m_CFO->value;
+					*value = Clamp(*value, 0, option.m_CFOSelect->numRightTexts - 1);
+					option.m_CFOSelect->lastSavedValue = option.m_CFOSelect->displayedValue = *value;
 				}
 			}
 		}
@@ -1027,7 +1030,6 @@ extern bool gbRenderWorld2;
 		e = DebugMenuAddVar("Render", "Colourfilter", &CPostFX::EffectSwitch, nil, 1, CPostFX::POSTFX_OFF, CPostFX::POSTFX_MOBILE, filternames);
 		DebugMenuEntrySetWrap(e, true);
 		DebugMenuAddVar("Render", "Intensity", &CPostFX::Intensity, nil, 0.05f, 0, 10.0f);
-		DebugMenuAddVarBool8("Render", "Blur", &CPostFX::BlurOn, nil);
 #endif
 		DebugMenuAddVar("Render", "Drunkness", &CMBlur::Drunkness, nil, 0.05f, 0, 1.0f);
 #ifndef MASTER

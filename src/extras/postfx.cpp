@@ -17,7 +17,7 @@ RwRaster *CPostFX::pFrontBuffer;
 RwRaster *CPostFX::pBackBuffer;
 bool CPostFX::bJustInitialised;
 int CPostFX::EffectSwitch = POSTFX_NORMAL;
-bool CPostFX::BlurOn = false;
+bool CPostFX::bTrails = false;
 int8 CPostFX::MotionBlur = MBLUR_FAINT;
 // how long the trail lingers with each setting, 1 being the game as it was
 static const float aBlurStrength[] = { 0.0f, 0.35f, 0.8f };
@@ -230,9 +230,9 @@ CPostFX::RenderOverlayBlur(RwCamera *cam, int32 r, int32 g, int32 b, int32 a)
 	for(i = 0; i < 3; i++){
 		float first = alpha * Min(2.0f*tint[i], 1.0f);
 		over[i] = first + tint[i];
-		keep[i] = tint[i] + (BlurOn ? 0.0f : over[i]);
+		keep[i] = tint[i] + (bTrails ? 0.0f : over[i]);
 	}
-	CMBlur::RenderTrail(Vertex, pFrontBuffer, keep, pass, white, trailStrength, BlurOn ? Vertex2 : nil, over, pBackBuffer);
+	CMBlur::RenderTrail(Vertex, pFrontBuffer, keep, pass, white, trailStrength, bTrails ? Vertex2 : nil, over, pBackBuffer);
 }
 
 void

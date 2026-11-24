@@ -921,30 +921,26 @@ CWaterLevel::RenderWater()
 	
 	if ( !CTimer::GetIsPaused() )
 	{
-		TEXTURE_ADDU       += windAddUV;
-		TEXTURE_ADDV       += windAddUV;
+		// the game moved these once per frame at 30 fps, so scale them to the frame's length
+		float step = CTimer::GetTimeStepFix();
 		
-		_TEXTURE_MASK_ADDU += Sin(fAngle) 		 * 0.0005f + 1.1f * windAddUV;
-		_TEXTURE_MASK_ADDV -= Cos(fAngle * 1.3f) * 0.0005f + 1.2f * windAddUV;
+		TEXTURE_ADDU       += windAddUV * step;
+		TEXTURE_ADDV       += windAddUV * step;
 		
-		_TEXTURE_WAKE_ADDU -= Sin(fAngle) 		 * 0.0003f + windAddUV;
-		_TEXTURE_WAKE_ADDV += Cos(fAngle * 0.7f) * 0.0003f + windAddUV;
+		_TEXTURE_MASK_ADDU += (Sin(fAngle) 		 * 0.0005f + 1.1f * windAddUV) * step;
+		_TEXTURE_MASK_ADDV -= (Cos(fAngle * 1.3f) * 0.0005f + 1.2f * windAddUV) * step;
+		
+		_TEXTURE_WAKE_ADDU -= (Sin(fAngle) 		 * 0.0003f + windAddUV) * step;
+		_TEXTURE_WAKE_ADDV += (Cos(fAngle * 0.7f) * 0.0003f + windAddUV) * step;
 	}
 	
-	if ( _TEXTURE_MASK_ADDU >= 1.0f )
-		_TEXTURE_MASK_ADDU = 0.0f;
-	if ( _TEXTURE_MASK_ADDV >= 1.0f )
-		_TEXTURE_MASK_ADDV = 0.0f;
-	
-	if ( _TEXTURE_WAKE_ADDU >= 1.0f )
-		_TEXTURE_WAKE_ADDU = 0.0f;
-	if ( _TEXTURE_WAKE_ADDV >= 1.0f )
-		_TEXTURE_WAKE_ADDV = 0.0f;
-	
-	if ( TEXTURE_ADDU >= 1.0f )
-		TEXTURE_ADDU = 0.0f;
-	if ( TEXTURE_ADDV >= 1.0f )
-		TEXTURE_ADDV = 0.0f;
+	// keep them in 0..1 both ways without a jump, as two of them only go down
+	_TEXTURE_MASK_ADDU -= floorf(_TEXTURE_MASK_ADDU);
+	_TEXTURE_MASK_ADDV -= floorf(_TEXTURE_MASK_ADDV);
+	_TEXTURE_WAKE_ADDU -= floorf(_TEXTURE_WAKE_ADDU);
+	_TEXTURE_WAKE_ADDV -= floorf(_TEXTURE_WAKE_ADDV);
+	TEXTURE_ADDU -= floorf(TEXTURE_ADDU);
+	TEXTURE_ADDV -= floorf(TEXTURE_ADDV);
 	
 #ifdef PC_WATER
 	_fWaterZOffset = CWeather::WindClipped * 0.5f + 0.25f;
@@ -1728,15 +1724,19 @@ CWaterLevel::RenderOneWavySector(float fX, float fY, float fZ, RwRGBA const &col
 
 				RwRGBAAssign(wavyPreLight, &color);
 
+				// the game took one random step per frame at 30 fps, so take one per logical frame
 				if (i > 0 && i < 16 && j > 0 && j < 16)
 				{
-					wavyMorphVerts->x += CGeneral::GetRandomNumberInRange(-1.0f, 1.0f) * randomMove;
-					wavyMorphVerts->x *= fRandomDamp;
-					wavyMorphVerts->x += float(i) * randomDampInv2;
+					for ( uint32 step = 0; step < CTimer::GetLogicalFramesPassed(); step++ )
+					{
+						wavyMorphVerts->x += CGeneral::GetRandomNumberInRange(-1.0f, 1.0f) * randomMove;
+						wavyMorphVerts->x *= fRandomDamp;
+						wavyMorphVerts->x += float(i) * randomDampInv2;
 
-					wavyMorphVerts->y += CGeneral::GetRandomNumberInRange(-1.0f, 1.0f) * randomMove;
-					wavyMorphVerts->y *= fRandomDamp;
-					wavyMorphVerts->y += float(j) * randomDampInv2;
+						wavyMorphVerts->y += CGeneral::GetRandomNumberInRange(-1.0f, 1.0f) * randomMove;
+						wavyMorphVerts->y *= fRandomDamp;
+						wavyMorphVerts->y += float(j) * randomDampInv2;
+					}
 				}
 
 				float morphVertXHalf = (i == 16) ? 0.0f : vertMul * wavyMorphVerts->x;
