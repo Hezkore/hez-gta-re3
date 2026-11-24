@@ -251,6 +251,21 @@ CCamera::Init(void)
 	m_f3rdPersonCHairMultY = 0.4f;
 }
 
+// the speed is distance per logical frame, as the game was made for, while Process
+// runs once per rendered frame
+void
+CCamera::UpdateAverageSpeed(void)
+{
+	m_CameraSpeedSoFar += (GetPosition() - m_PreviousCameraPosition).Magnitude();
+	m_iNumFramesSoFar++;
+	if(m_iNumFramesSoFar == m_iWorkOutSpeedThisNumFrames){
+		m_CameraAverageSpeed = m_CameraSpeedSoFar / m_iWorkOutSpeedThisNumFrames;
+		m_CameraSpeedSoFar = 0.0f;
+		m_iNumFramesSoFar = 0;
+	}
+	m_PreviousCameraPosition = GetPosition();
+}
+
 void
 CCamera::Process(void)
 {
@@ -731,19 +746,11 @@ CCamera::Process(void)
 	LODDistMultiplier *= CRenderer::ms_lodDistScale;
 #endif
 
-	// Keep track of speed
+	// a jump to a new camera is no speed, UpdateAverageSpeed measures from here
 	if(m_bJustInitalised || m_bJust_Switched){
 		m_PreviousCameraPosition = GetPosition();
 		m_bJustInitalised = false;
 	}
-	m_CameraSpeedSoFar += (GetPosition() - m_PreviousCameraPosition).Magnitude();
-	m_iNumFramesSoFar++;
-	if(m_iNumFramesSoFar == m_iWorkOutSpeedThisNumFrames){
-		m_CameraAverageSpeed = m_CameraSpeedSoFar / m_iWorkOutSpeedThisNumFrames;
-		m_CameraSpeedSoFar = 0.0f;
-		m_iNumFramesSoFar = 0;
-	}
-	m_PreviousCameraPosition = GetPosition();
 
 	// PS2 normalizes a CVector2D GetForward() here. is it used anywhere?
 

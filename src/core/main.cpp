@@ -1787,6 +1787,7 @@ Idle(void *arg)
 			SnapshotMovingEntities();
 			CPointLights::InitPerLogicalFrame();
 			CGame::Process();
+			TheCamera.UpdateAverageSpeed();
 			CPointLights::EndLogicalFrame();
 			DMAudio.Service();
 		}
@@ -1899,9 +1900,11 @@ Idle(void *arg)
 		        TheCamera.SetMotionBlurAlpha(150);
 
 #ifdef SCREEN_DROPLETS
-		CPostFX::GetBackBuffer(Scene.camera);
-		ScreenDroplets::Process();
-		ScreenDroplets::Render();
+		if(CPostFX::Droplets == CPostFX::DROPLETS_XBOX){
+			CPostFX::GetBackBuffer(Scene.camera);
+			ScreenDroplets::Process();
+			ScreenDroplets::Render();
+		}
 #endif
 
 		tbStartTimer(0, "RenderMotionBlur");

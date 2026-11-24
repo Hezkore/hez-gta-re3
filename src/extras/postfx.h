@@ -11,6 +11,10 @@ public:
 		MBLUR_STRONG
 	};
 	enum {
+		DROPLETS_OFF,
+		DROPLETS_XBOX	// the round Neo lens drops
+	};
+	enum {
 		POSTFX_OFF,
 		POSTFX_SIMPLE,
 		POSTFX_NORMAL,
@@ -22,6 +26,8 @@ public:
 	static int EffectSwitch;
 	static int8 MotionBlur;	// MBLUR_OFF, MBLUR_FAINT or MBLUR_STRONG
 	static float Intensity;
+	static int8 Droplets;	// DROPLETS_OFF or DROPLETS_XBOX
+	static const int8 DefaultDroplets = DROPLETS_XBOX;
 
 	static void InitOnce(void);
 	static void Open(RwCamera *cam);

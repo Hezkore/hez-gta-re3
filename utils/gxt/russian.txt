@@ -7992,6 +7992,9 @@ PS2 ALPHA TEST
 [FED_LCU]
 СВЕТОВЫЕ КУБЫ
 
+[FED_DRP]
+КАПЛИ
+
 [FED_HUP]
 ПОЛОЖЕНИЕ HUD
 

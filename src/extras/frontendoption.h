@@ -63,7 +63,7 @@ uint8 GetNumberOfMenuOptions(int screen);
 //		But you can still use the APIs below, and manipulate aScreens while in game.
 
 // Limits:
-//		The code relies on that you won't use more then NUM_MENUROWS(18) options on one page, and won't exceed the MENUPAGES of pages.
+//		The code relies on that you won't use more then NUM_MENUROWS(19) options on one page, and won't exceed the MENUPAGES of pages.
 //		Also congrats if you can make 18 options visible at once.
 
 // Texts:

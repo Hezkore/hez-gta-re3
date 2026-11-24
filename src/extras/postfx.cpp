@@ -19,6 +19,7 @@ RwRaster *CPostFX::pBackBuffer;
 bool CPostFX::bJustInitialised;
 int CPostFX::EffectSwitch = POSTFX_NORMAL;
 int8 CPostFX::MotionBlur = MBLUR_FAINT;
+int8 CPostFX::Droplets = CPostFX::DefaultDroplets;
 // how much of the timecycle blur each setting uses
 // how long the trail lingers with each setting, 1 being the game as it was
 static const float aBlurStrength[] = { 0.0f, 0.35f, 0.8f };

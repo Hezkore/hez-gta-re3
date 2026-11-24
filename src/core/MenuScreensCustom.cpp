@@ -31,6 +31,7 @@
 #include "CarCtrl.h"
 #include "Population.h"
 #include "SpecialFX.h"
+#include "screendroplets.h"
 #include "Hud.h"
 
 // Menu screens array is at the bottom of the file.
@@ -117,10 +118,12 @@ const char *filterNames[] = { "FEM_NON", "FEM_SIM", "FEM_NRM", "FEM_MOB" };
 const char *off_on[] = { "FEM_OFF", "FEM_ON" };
 const char *lowHigh[] = { "FEM_LOW", "FEM_HIG" };
 const char *motionBlurTexts[] = { "FEM_OFF", "FEM_FNT", "FEM_STR" };
+const char *dropletsTexts[] = { "FEM_OFF", "FEM_XBX" };
 const char *hudPositionTexts[] = { "FEM_PC", "FEM_PS2" };
 extern const char *frameLimitTexts[];
 extern int32 numFrameLimits;
 void IslandLoadingAfterChange(int8 before, int8 after);
+void DropletsAfterChange(int8 before, int8 after);
 
 void RestoreDefGraphics(int8 action) {
 	if (action != FEOPTION_ACTION_SELECT)
@@ -147,6 +150,11 @@ void RestoreDefGraphics(int8 action) {
 		CBrightLights::bLightCubes = false;
 		#ifdef EXTENDED_COLOURFILTER
 			CPostFX::MotionBlur = CPostFX::MBLUR_FAINT;
+		#endif
+		#ifdef SCREEN_DROPLETS
+			int8 dropletsBefore = CPostFX::Droplets;
+			CPostFX::Droplets = CPostFX::DefaultDroplets;
+			DropletsAfterChange(dropletsBefore, CPostFX::Droplets);
 		#endif
 		#if GTA_VERSION >= GTA3_PC_11
 			if (_dwOperatingSystemVersion == OS_WIN98) {
@@ -187,6 +195,13 @@ void RestoreDefDisplay(int8 action) {
 		FrontEndMenuManager.SaveSettings();
 	#endif
 }
+
+#ifdef SCREEN_DROPLETS
+// drops left from before the change would stay frozen on the screen, so clear them
+void DropletsAfterChange(int8 before, int8 after) {
+	ScreenDroplets::Initialise();
+}
+#endif
 
 #ifdef NO_ISLAND_LOADING
 const char *islandLoadingOpts[] = { "FEM_LOW", "FEM_MED", "FEM_HIG" };
@@ -974,6 +989,9 @@ CMenuScreenCustom aScreens[MENUPAGES] = {
 		MENUACTION_TRAILS,		"FED_TRA", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
 #endif
 		MENUACTION_CFO_SELECT,	"FED_LCU", { new CCFOSelect((int8*)&CBrightLights::bLightCubes, "Graphics", "LightCubes", off_on, 2, false) },
+#ifdef SCREEN_DROPLETS
+		MENUACTION_CFO_SELECT,	"FED_DRP", { new CCFOSelect(&CPostFX::Droplets, "Graphics", "Droplets", dropletsTexts, ARRAY_SIZE(dropletsTexts), false, DropletsAfterChange) },
+#endif
 		// re3.cpp inserts here pipeline selectors if neo/neo.txd exists and EXTENDED_PIPELINES defined
 		MENUACTION_CFO_DYNAMIC,	"FET_DEF", { new CCFODynamic(nil, nil, nil, nil, RestoreDefGraphics) },
 		MENUACTION_CHANGEMENU,	"FEDS_TB", { nil, SAVESLOT_NONE, MENUPAGE_NONE },

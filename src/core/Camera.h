@@ -566,6 +566,7 @@ public:
 	CCamera(void);
 	CCamera(float);
 	void Init(void);
+	void UpdateAverageSpeed(void);
 	void Process(void);
 	void CamControl(void);
 	void UpdatePadInput(void);
