@@ -139,6 +139,9 @@ void RestoreDefGraphics(int8 action) {
 		FrontEndMenuManager.m_PrefsUseWideScreen = false;
 		FrontEndMenuManager.m_nDisplayVideoMode = FrontEndMenuManager.m_nPrefsVideoMode;
 		CBrightLights::bLightCubes = false;
+		#ifdef EXTENDED_COLOURFILTER
+			CPostFX::MotionBlur = CPostFX::MBLUR_FAINT;
+		#endif
 		CMBlur::BlurOn = false;
 		FrontEndMenuManager.SaveSettings();
 	#endif
