@@ -154,7 +154,7 @@ void RestoreDefGraphics(int8 action) {
 		CBrightLights::bLightCubes = false;
 		#ifdef EXTENDED_COLOURFILTER
 			CPostFX::MotionBlur = CPostFX::MBLUR_FAINT;
-			CPostFX::bTrails = false;
+			CPostFX::bTrails = true;
 		#endif
 		CMBlur::BlurOn = false;
 		FrontEndMenuManager.SaveSettings();
