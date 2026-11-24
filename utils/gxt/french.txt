@@ -1279,6 +1279,15 @@ Choisis la langue d'affichage.
 [FEM_ON]
 AVEC
 
+[FED_LCU]
+CUBES LUMINEUX:
+
+[FED_DRP]
+GOUTTES:
+
+[FEM_XBX]
+XBOX
+
 [FEM_OFF]
 SANS
 

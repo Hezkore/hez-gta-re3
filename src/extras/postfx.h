@@ -11,6 +11,10 @@ public:
 		MBLUR_STRONG
 	};
 	enum {
+		DROPLETS_OFF,
+		DROPLETS_XBOX	// the round Neo lens drops
+	};
+	enum {
 		POSTFX_OFF,
 		POSTFX_PSP,
 		POSTFX_PS2,
@@ -26,6 +30,8 @@ public:
 	static bool BlurOn;	// or use CMblur for that?
 	static int8 MotionBlur;	// MBLUR_OFF, MBLUR_FAINT or MBLUR_STRONG
 	static float Intensity;
+	static int8 Droplets;	// DROPLETS_OFF or DROPLETS_XBOX
+	static const int8 DefaultDroplets = DROPLETS_XBOX;
 
 	// smooth blur color
 	enum { NUMAVERAGE = 20 };

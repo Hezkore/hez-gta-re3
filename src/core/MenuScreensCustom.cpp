@@ -31,6 +31,7 @@
 #include "CarCtrl.h"
 #include "Population.h"
 #include "SpecialFX.h"
+#include "screendroplets.h"
 
 // Menu screens array is at the bottom of the file.
 
@@ -106,9 +107,11 @@
 const char *filterNames[] = { "FEM_NON", "FEM_SIM", "FEM_NRM", "FEM_MOB" };
 const char *off_on[] = { "FEM_OFF", "FEM_ON" };
 const char *motionBlurTexts[] = { "FEM_OFF", "FEM_FNT", "FEM_STR" };
+const char *dropletsTexts[] = { "FEM_OFF", "FEM_XBX" };
 extern const char *frameLimitTexts[];
 extern int32 numFrameLimits;
 void IslandLoadingAfterChange(int8 before, int8 after);
+void DropletsAfterChange(int8 before, int8 after);
 
 void RestoreDefGraphics(int8 action) {
 	if (action != FEOPTION_ACTION_SELECT)
@@ -142,6 +145,11 @@ void RestoreDefGraphics(int8 action) {
 		#ifdef EXTENDED_COLOURFILTER
 			CPostFX::MotionBlur = CPostFX::MBLUR_FAINT;
 		#endif
+		#ifdef SCREEN_DROPLETS
+			int8 dropletsBefore = CPostFX::Droplets;
+			CPostFX::Droplets = CPostFX::DefaultDroplets;
+			DropletsAfterChange(dropletsBefore, CPostFX::Droplets);
+		#endif
 		CMBlur::BlurOn = false;
 		FrontEndMenuManager.SaveSettings();
 	#endif
@@ -172,6 +180,13 @@ void RestoreDefDisplay(int8 action) {
 		FrontEndMenuManager.SaveSettings();
 	#endif
 }
+
+#ifdef SCREEN_DROPLETS
+// drops left from before the change would stay frozen on the screen, so clear them
+void DropletsAfterChange(int8 before, int8 after) {
+	ScreenDroplets::Initialise();
+}
+#endif
 
 #ifdef NO_ISLAND_LOADING
 const char *islandLoadingOpts[] = { "FEM_LOW", "FEM_MED", "FEM_HIG" };
@@ -796,6 +811,9 @@ CMenuScreenCustom aScreens[] = {
 		MENUACTION_TRAILS,		"FED_TRA", { nil, SAVESLOT_NONE, MENUPAGE_GRAPHICS_SETTINGS }, 0, 0, MENUALIGN_LEFT,
 #endif
 		MENUACTION_CFO_SELECT,	"FED_LCU", { new CCFOSelect((int8*)&CBrightLights::bLightCubes, "Graphics", "LightCubes", off_on, 2, false) }, 0, 0, MENUALIGN_LEFT,
+#ifdef SCREEN_DROPLETS
+		MENUACTION_CFO_SELECT,	"FED_DRP", { new CCFOSelect(&CPostFX::Droplets, "Graphics", "Droplets", dropletsTexts, ARRAY_SIZE(dropletsTexts), false, DropletsAfterChange) }, 0, 0, MENUALIGN_LEFT,
+#endif
 		// re3.cpp inserts here pipeline selectors if neo/neo.txd exists and EXTENDED_PIPELINES defined
 		MENUACTION_CFO_DYNAMIC,	"FET_DEF", { new CCFODynamic(nil, nil, nil, nil, RestoreDefGraphics) }, 320, 0, MENUALIGN_CENTER,
 		MENUACTION_GOBACK,		"FEDS_TB", {nil, SAVESLOT_NONE, MENUPAGE_NONE}, 320, 0, MENUALIGN_CENTER,
