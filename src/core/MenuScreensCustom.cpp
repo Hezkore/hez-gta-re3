@@ -30,6 +30,7 @@
 #include "IniFile.h"
 #include "CarCtrl.h"
 #include "Population.h"
+#include "SpecialFX.h"
 
 // Menu screens array is at the bottom of the file.
 
@@ -85,7 +86,7 @@
 #ifdef EXTENDED_COLOURFILTER
 	#define POSTFX_SELECTORS \
 		MENUACTION_CFO_SELECT, "FED_CLF", { new CCFOSelect((int8*)&CPostFX::EffectSwitch, "Graphics", "ColourFilter", filterNames, ARRAY_SIZE(filterNames), false) }, 0, 0, MENUALIGN_LEFT, \
-		MENUACTION_CFO_SELECT, "FED_MBL", { new CCFOSelect(&CPostFX::MotionBlur, "Graphics", "MotionBlur", motionBlurTexts, 3, false) }, 0, 0, MENUALIGN_LEFT,
+		MENUACTION_CFO_SELECT, "FED_MBL", { new CCFOSelect(&CPostFX::MotionBlur, "Graphics", "MotionBlur", motionBlurTexts, ARRAY_SIZE(motionBlurTexts), false) }, 0, 0, MENUALIGN_LEFT,
 #else
 	#define POSTFX_SELECTORS
 #endif	
@@ -137,6 +138,7 @@ void RestoreDefGraphics(int8 action) {
 		#endif
 		FrontEndMenuManager.m_PrefsUseWideScreen = false;
 		FrontEndMenuManager.m_nDisplayVideoMode = FrontEndMenuManager.m_nPrefsVideoMode;
+		CBrightLights::bLightCubes = false;
 		CMBlur::BlurOn = false;
 		FrontEndMenuManager.SaveSettings();
 	#endif
@@ -790,6 +792,7 @@ CMenuScreenCustom aScreens[] = {
 #elif defined LEGACY_MENU_OPTIONS
 		MENUACTION_TRAILS,		"FED_TRA", { nil, SAVESLOT_NONE, MENUPAGE_GRAPHICS_SETTINGS }, 0, 0, MENUALIGN_LEFT,
 #endif
+		MENUACTION_CFO_SELECT,	"FED_LCU", { new CCFOSelect((int8*)&CBrightLights::bLightCubes, "Graphics", "LightCubes", off_on, 2, false) }, 0, 0, MENUALIGN_LEFT,
 		// re3.cpp inserts here pipeline selectors if neo/neo.txd exists and EXTENDED_PIPELINES defined
 		MENUACTION_CFO_DYNAMIC,	"FET_DEF", { new CCFODynamic(nil, nil, nil, nil, RestoreDefGraphics) }, 320, 0, MENUALIGN_CENTER,
 		MENUACTION_GOBACK,		"FEDS_TB", {nil, SAVESLOT_NONE, MENUPAGE_NONE}, 320, 0, MENUALIGN_CENTER,
