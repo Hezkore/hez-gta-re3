@@ -34,9 +34,27 @@ enum eSprites
 	NUM_HUD_SPRITES,
 };
 
+enum eHudPosition
+{
+	HUD_POSITION_PC,
+	HUD_POSITION_PS2,
+	NUM_HUD_POSITIONS
+};
+
+// where the HUD and its texts sit on a 640x480 screen, as on the PC or the PS2
+struct CHudLayout
+{
+	float moneyX, weaponX, ammoX, healthX, starsX, clockX;
+	float zoneY, vehicleY, subtitlesY, wastedBustedY, bigMessageY;
+	float radarBottom, radarGrowLeftTop, radarGrowRightBottom;
+	float welcomeScale, welcomeY, welcomeNameY;
+};
+
 class CHud
 {
 public:
+	static int8 HudPosition;
+	static const CHudLayout &Layout(void);
 	static int16 m_ItemToFlash;
 	static CSprite2d Sprites[NUM_HUD_SPRITES];
 	static wchar *m_pZoneName;

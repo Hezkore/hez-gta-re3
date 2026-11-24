@@ -30,6 +30,8 @@
 #include "IniFile.h"
 #include "CarCtrl.h"
 #include "Population.h"
+#include "SpecialFX.h"
+#include "Hud.h"
 
 // Menu screens array is at the bottom of the file.
 
@@ -86,7 +88,7 @@
 #ifdef EXTENDED_COLOURFILTER
 	#define POSTFX_SELECTORS \
 		MENUACTION_CFO_SELECT, "FED_CLF", { new CCFOSelect((int8*)&CPostFX::EffectSwitch, "Graphics", "ColourFilter", filterNames, ARRAY_SIZE(filterNames), false) }, \
-		MENUACTION_CFO_SELECT, "FED_MBL", { new CCFOSelect(&CPostFX::MotionBlur, "Graphics", "MotionBlur", motionBlurTexts, 3, false) },
+		MENUACTION_CFO_SELECT, "FED_MBL", { new CCFOSelect(&CPostFX::MotionBlur, "Graphics", "MotionBlur", motionBlurTexts, ARRAY_SIZE(motionBlurTexts), false) },
 #else
 	#define POSTFX_SELECTORS
 #endif	
@@ -115,6 +117,7 @@ const char *filterNames[] = { "FEM_NON", "FEM_SIM", "FEM_NRM", "FEM_MOB" };
 const char *off_on[] = { "FEM_OFF", "FEM_ON" };
 const char *lowHigh[] = { "FEM_LOW", "FEM_HIG" };
 const char *motionBlurTexts[] = { "FEM_OFF", "FEM_FNT", "FEM_STR" };
+const char *hudPositionTexts[] = { "FEM_PC", "FEM_PS2" };
 extern const char *frameLimitTexts[];
 extern int32 numFrameLimits;
 void IslandLoadingAfterChange(int8 before, int8 after);
@@ -141,6 +144,7 @@ void RestoreDefGraphics(int8 action) {
 		CMenuManager::m_PrefsVsync = true;
 		CMenuManager::m_PrefsUseWideScreen = false;
 		FrontEndMenuManager.m_nDisplayVideoMode = FrontEndMenuManager.m_nPrefsVideoMode;
+		CBrightLights::bLightCubes = false;
 		#if GTA_VERSION >= GTA3_PC_11
 			if (_dwOperatingSystemVersion == OS_WIN98) {
 				CMBlur::BlurOn = false;
@@ -176,6 +180,7 @@ void RestoreDefDisplay(int8 action) {
 		CRenderer::ms_lodDistScale = 1.8f;
 		CMenuManager::m_PrefsShowSubtitles = true;
 		CDraw::ms_bExtendHud = false;
+		CHud::HudPosition = HUD_POSITION_PC;
 		FrontEndMenuManager.SaveSettings();
 	#endif
 }
@@ -536,6 +541,7 @@ CMenuScreenCustom aScreens[MENUPAGES] = {
 		FREE_CAM_TOGGLE
 		MENUACTION_SUBTITLES,	"FED_SUB", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
 		MENUACTION_CFO_SELECT,	"FEM_EHU", { new CCFOSelect((int8*)&CDraw::ms_bExtendHud, "Display", "ExtendHud", off_on, 2, false) },
+		MENUACTION_CFO_SELECT,	"FED_HUP", { new CCFOSelect(&CHud::HudPosition, "Display", "HudPosition", hudPositionTexts, ARRAY_SIZE(hudPositionTexts), false) },
 		MENUACTION_CFO_DYNAMIC,	"FET_DEF", { new CCFODynamic(nil, nil, nil, nil, RestoreDefDisplay) },
 		MENUACTION_CHANGEMENU,	"FEDS_TB", { nil, SAVESLOT_NONE, MENUPAGE_NONE },
 	},
@@ -964,6 +970,7 @@ CMenuScreenCustom aScreens[MENUPAGES] = {
 #else
 		MENUACTION_TRAILS,		"FED_TRA", { nil, SAVESLOT_NONE, MENUPAGE_DISPLAY_SETTINGS },
 #endif
+		MENUACTION_CFO_SELECT,	"FED_LCU", { new CCFOSelect((int8*)&CBrightLights::bLightCubes, "Graphics", "LightCubes", off_on, 2, false) },
 		// re3.cpp inserts here pipeline selectors if neo/neo.txd exists and EXTENDED_PIPELINES defined
 		MENUACTION_CFO_DYNAMIC,	"FET_DEF", { new CCFODynamic(nil, nil, nil, nil, RestoreDefGraphics) },
 		MENUACTION_CHANGEMENU,	"FEDS_TB", { nil, SAVESLOT_NONE, MENUPAGE_NONE },

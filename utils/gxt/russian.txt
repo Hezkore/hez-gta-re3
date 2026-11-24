@@ -7989,6 +7989,15 @@ PS2 ALPHA TEST
 [FEC_VCH]
 ВЫСОТА КАМЕРЫ ТРАНСПОРТА
 
+[FED_LCU]
+СВЕТОВЫЕ КУБЫ
+
+[FED_HUP]
+ПОЛОЖЕНИЕ HUD
+
+[FEM_PC]
+PC
+
 { Linux joy detection }
 [FEC_JOD]
 DETECT JOYSTICK

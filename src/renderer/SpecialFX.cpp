@@ -658,10 +658,18 @@ C3dMarkers::Update()
 #define BRIGHTLIGHTS_MAX_DIST (60.0f)	// invisible beyond this
 #define BRIGHTLIGHTS_FADE_DIST (45.0f)	// strongest between these two
 #define CARLIGHTS_MAX_DIST (30.0f)
-#define CARLIGHTS_FADE_DIST (15.0f)	// 31 for close lights
+#define CARLIGHTS_FADE_DIST (15.0f)	// faded down to the near alpha closer than this
+#define CARLIGHTS_NEAR_CUBE_ALPHA (31)	// the original game kept faint light cubes on close car lights
 
 int CBrightLights::NumBrightLights;
 CBrightLight CBrightLights::aBrightLights[NUMBRIGHTLIGHTS];
+bool CBrightLights::bLightCubes = false;
+
+uint8
+CBrightLights::NearCarLightAlpha(void)
+{
+	return bLightCubes ? CARLIGHTS_NEAR_CUBE_ALPHA : 0;
+}
 
 void
 CBrightLights::Init(void)
@@ -775,12 +783,13 @@ CBrightLights::Render(void)
 			a = 255;
 		else
 			a = 255*(1.0f - (aBrightLights[i].m_camDist-BRIGHTLIGHTS_FADE_DIST)/(BRIGHTLIGHTS_MAX_DIST-BRIGHTLIGHTS_FADE_DIST));
-		// fade car lights down to 31 as they come near
+		// fade car lights down to the near alpha as they come near
 		if(aBrightLights[i].m_type >= BRIGHTLIGHT_FRONT_LONG && aBrightLights[i].m_type <= BRIGHTLIGHT_REAR_TALL){
+			uint8 nearAlpha = NearCarLightAlpha();
 			if(aBrightLights[i].m_camDist < CARLIGHTS_FADE_DIST)
-				a = 31;
+				a = nearAlpha;
 			else if(aBrightLights[i].m_camDist < CARLIGHTS_MAX_DIST)
-				a = 31 + (255-31)*((aBrightLights[i].m_camDist-CARLIGHTS_FADE_DIST)/(CARLIGHTS_MAX_DIST-CARLIGHTS_FADE_DIST));
+				a = nearAlpha + (255-nearAlpha)*((aBrightLights[i].m_camDist-CARLIGHTS_FADE_DIST)/(CARLIGHTS_MAX_DIST-CARLIGHTS_FADE_DIST));
 		}
 
 		switch(aBrightLights[i].m_type){

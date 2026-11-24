@@ -152,7 +152,7 @@ inline uint32 ldb(uint32 p, uint32 s, uint32 w)
 #include "skeleton.h"
 #include "Draw.h"
 
-#if defined(PROPER_SCALING) || defined(PS2_HUD)
+#if defined(PROPER_SCALING)
 	#ifdef FORCE_PC_SCALING
 		#define DEFAULT_SCREEN_WIDTH  (640)
 		#define DEFAULT_SCREEN_HEIGHT (448)

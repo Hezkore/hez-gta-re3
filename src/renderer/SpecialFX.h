@@ -152,7 +152,9 @@ class CBrightLights
 {
 	static int NumBrightLights;
 	static CBrightLight aBrightLights[NUMBRIGHTLIGHTS];
+	static uint8 NearCarLightAlpha(void);
 public:
+	static bool bLightCubes;
 	static void Init(void);
 	static void RegisterOne(CVector pos, CVector up, CVector side, CVector front,
 		uint8 type, uint8 red = 0, uint8 green = 0, uint8 blue = 0);

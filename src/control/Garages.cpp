@@ -1387,11 +1387,7 @@ void CGarages::PrintMessages()
 		CFont::SetFontStyle(FONT_LOCALE(FONT_BANK));
 		CFont::SetColor(CRGBA(0, 0, 0, 255));
 
-#if defined(PS2_HUD) || defined (FIX_BUGS)
 		float y_offset = SCREEN_HEIGHT / 3; // THIS is PS2 calculation
-#else
-		float y_offset = SCREEN_HEIGHT / 2 - SCREEN_SCALE_Y(84.0f); // This is PC and results in text being written over some HUD elements
-#endif
 
 		if (MessageNumberInString2 >= 0) {
 			CMessages::InsertNumberInString(TheText.Get(MessageIDString), MessageNumberInString, MessageNumberInString2, -1, -1, -1, -1, gUString);
