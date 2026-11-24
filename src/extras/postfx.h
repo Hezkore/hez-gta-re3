@@ -33,6 +33,7 @@ public:
 	static void Open(RwCamera *cam);
 	static void Close(void);
 	static void RenderOverlayBlur(RwCamera *cam, int32 r, int32 g, int32 b, int32 a);
+	static void RenderPlainTrail(int32 r, int32 g, int32 b, int32 a);
 	static void RenderOverlaySimple(RwCamera *cam, int32 r, int32 g, int32 b, int32 a);
 	static void RenderOverlaySniper(RwCamera *cam, int32 r, int32 g, int32 b, int32 a);
 	static void RenderOverlayShader(RwCamera *cam, int32 r, int32 g, int32 b, int32 a);

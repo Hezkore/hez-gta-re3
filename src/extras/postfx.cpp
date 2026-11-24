@@ -20,7 +20,6 @@ bool CPostFX::bJustInitialised;
 int CPostFX::EffectSwitch = POSTFX_NORMAL;
 int8 CPostFX::MotionBlur = MBLUR_FAINT;
 int8 CPostFX::Droplets = CPostFX::DefaultDroplets;
-// how much of the timecycle blur each setting uses
 // how long the trail lingers with each setting, 1 being the game as it was
 static const float aBlurStrength[] = { 0.0f, 0.35f, 0.8f };
 static float trailStrength = 1.0f;
@@ -212,16 +211,49 @@ CPostFX::Close(void)
 #endif
 }
 
+// What the normal filter's trail takes from each frame: keep of the previous frame, per
+// channel, tinted with alpha a, and pass of the new one
+static void
+GetTrailWeights(int32 r, int32 g, int32 b, int32 a, float *keep, float *pass)
+{
+	float alpha = a/255.0f;
+
+	keep[0] = alpha*r/255.0f;
+	keep[1] = alpha*g/255.0f;
+	keep[2] = alpha*b/255.0f;
+	*pass = 1.0f - alpha;
+}
+
 void
 CPostFX::RenderOverlayBlur(RwCamera *cam, int32 r, int32 g, int32 b, int32 a)
 {
 	// the previous frame, tinted, with alpha a over the new one, see CMBlur::RenderTrail
-	float alpha = a/255.0f;
-	float keep[3] = { alpha*r/255.0f, alpha*g/255.0f, alpha*b/255.0f };
-	float pass[3] = { 1.0f - alpha, 1.0f - alpha, 1.0f - alpha };
+	float keep[3], fresh;
 	float white[3] = { 0.0f, 0.0f, 0.0f };
 
+	GetTrailWeights(r, g, b, a, keep, &fresh);
+	float pass[3] = { fresh, fresh, fresh };
 	CMBlur::RenderTrail(Vertex, pFrontBuffer, keep, pass, white, trailStrength);
+}
+
+void
+CPostFX::RenderPlainTrail(int32 r, int32 g, int32 b, int32 a)
+{
+	// The normal filter's trail without its tint, for the other filters. The previous
+	// frame gets the share of the picture it has with the normal filter, and the new
+	// frame the rest, so the colours stay
+	float keep[3], fresh, share = 0.0f;
+	float white[3] = { 0.0f, 0.0f, 0.0f };
+	int i;
+
+	GetTrailWeights(r, g, b, a, keep, &fresh);
+	for(i = 0; i < 3; i++)
+		if(keep[i] + fresh > 0.0f)
+			share += keep[i]/(keep[i] + fresh)/3.0f;
+	float plainKeep[3] = { share, share, share };
+	float pass[3] = { 1.0f - share, 1.0f - share, 1.0f - share };
+
+	CMBlur::RenderTrail(Vertex, pFrontBuffer, plainKeep, pass, white, trailStrength);
 }
 
 void
@@ -448,10 +480,11 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 		break;
 	}
 
-	// TODO? maybe we want this even without motion blur on sometimes?
-	if(MotionBlur != MBLUR_OFF)
-		if(!bJustInitialised)
-			RenderMotionBlur(cam, bluralpha);
+	if(MotionBlur != MBLUR_OFF && !bJustInitialised){
+		if(EffectSwitch != POSTFX_NORMAL && type != MOTION_BLUR_SNIPER)
+			RenderPlainTrail(red, green, blue, blur);
+		RenderMotionBlur(cam, bluralpha);
+	}
 
 	RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
 	RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)TRUE);
