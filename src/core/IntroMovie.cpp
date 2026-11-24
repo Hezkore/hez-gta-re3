@@ -259,7 +259,8 @@ IsSkipPressed(void)
 		|| pad->GetEnterJustDown()
 		|| pad->GetCharJustDown(' ')
 		|| pad->GetAltJustDown()
-		|| pad->GetTabJustDown();
+		|| pad->GetTabJustDown()
+		|| (pad->NewState.CheckForInput() && !pad->OldState.CheckForInput());
 }
 
 static const char *
