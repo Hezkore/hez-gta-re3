@@ -22,6 +22,8 @@ int8 CPostFX::Droplets = CPostFX::DefaultDroplets;
 int8 CPostFX::MotionBlur = MBLUR_FAINT;
 // how long the trail lingers with each setting, 1 being the game as it was
 static const float aBlurStrength[] = { 0.0f, 0.35f, 0.8f };
+// the alpha of the game's trail, see CPostFX::RenderOverlayBlur
+static const float TRAIL_ALPHA = 30.0f/255.0f;
 static float trailStrength = 1.0f;
 
 static RwIm2DVertex Vertex[4];
@@ -212,6 +214,21 @@ CPostFX::Close(void)
 #endif
 }
 
+// What the normal filter's trail takes from each frame, see CPostFX::RenderOverlayBlur:
+// tint and over of the previous frame, per channel, and pass of the new one
+static void
+GetTrailWeights(int32 r, int32 g, int32 b, float *tint, float *over, float *pass)
+{
+	int i;
+
+	tint[0] = r/255.0f;
+	tint[1] = g/255.0f;
+	tint[2] = b/255.0f;
+	for(i = 0; i < 3; i++)
+		over[i] = TRAIL_ALPHA*Min(2.0f*tint[i], 1.0f) + tint[i];
+	*pass = 1.0f - TRAIL_ALPHA;
+}
+
 void
 CPostFX::RenderOverlayBlur(RwCamera *cam, int32 r, int32 g, int32 b, int32 a)
 {
@@ -221,19 +238,37 @@ CPostFX::RenderOverlayBlur(RwCamera *cam, int32 r, int32 g, int32 b, int32 a)
 	// The two added copies are blended additively, where a plays no part, so they add
 	// the full tint of the previous frame each frame. That is the warm, bright look
 	// trails give the game
-	float alpha = 30.0f/255.0f;
-	float tint[3] = { r/255.0f, g/255.0f, b/255.0f };
-	float keep[3], over[3];
-	float pass[3] = { 1.0f - alpha, 1.0f - alpha, 1.0f - alpha };
+	float tint[3], over[3], keep[3], fresh;
 	float white[3] = { 0.0f, 0.0f, 0.0f };
 	int i;
 
-	for(i = 0; i < 3; i++){
-		float first = alpha * Min(2.0f*tint[i], 1.0f);
-		over[i] = first + tint[i];
+	GetTrailWeights(r, g, b, tint, over, &fresh);
+	float pass[3] = { fresh, fresh, fresh };
+	for(i = 0; i < 3; i++)
 		keep[i] = tint[i] + (bTrails ? 0.0f : over[i]);
-	}
 	CMBlur::RenderTrail(Vertex, pFrontBuffer, keep, pass, white, trailStrength, bTrails ? Vertex2 : nil, over, pBackBuffer);
+}
+
+void
+CPostFX::RenderPlainTrail(int32 r, int32 g, int32 b)
+{
+	// The normal filter's trail without its tint or trails, for the other filters. The
+	// previous frame gets the share of the picture it has with the normal filter, and
+	// the new frame the rest, so the colours stay. The normal filter can keep more than
+	// all of the previous frame, but a share stays below 1, so the picture never stands still
+	float tint[3], over[3], fresh, share = 0.0f;
+	float white[3] = { 0.0f, 0.0f, 0.0f };
+	int i;
+
+	GetTrailWeights(r, g, b, tint, over, &fresh);
+	for(i = 0; i < 3; i++){
+		float keep = tint[i] + over[i];
+		share += keep/(keep + fresh)/3.0f;
+	}
+	float keep[3] = { share, share, share };
+	float pass[3] = { 1.0f - share, 1.0f - share, 1.0f - share };
+
+	CMBlur::RenderTrail(Vertex, pFrontBuffer, keep, pass, white, trailStrength);
 }
 
 void
@@ -396,6 +431,9 @@ CPostFX::Render(RwCamera *cam, uint32 red, uint32 green, uint32 blue, uint32 blu
 		RenderOverlayShader(cam, red, green, blue, blur);
 		break;
 	}
+
+	if(EffectSwitch != POSTFX_NORMAL && MotionBlur != MBLUR_OFF && type != MOTION_BLUR_SNIPER && !bJustInitialised)
+		RenderPlainTrail(red, green, blue);
 
 	if(!bJustInitialised)
 		RenderMotionBlur(cam, 175.0f * CMBlur::Drunkness);
