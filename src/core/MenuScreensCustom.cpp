@@ -145,6 +145,9 @@ void RestoreDefGraphics(int8 action) {
 		CMenuManager::m_PrefsUseWideScreen = false;
 		FrontEndMenuManager.m_nDisplayVideoMode = FrontEndMenuManager.m_nPrefsVideoMode;
 		CBrightLights::bLightCubes = false;
+		#ifdef EXTENDED_COLOURFILTER
+			CPostFX::MotionBlur = CPostFX::MBLUR_FAINT;
+		#endif
 		#if GTA_VERSION >= GTA3_PC_11
 			if (_dwOperatingSystemVersion == OS_WIN98) {
 				CMBlur::BlurOn = false;
