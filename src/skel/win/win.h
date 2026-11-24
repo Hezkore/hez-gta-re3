@@ -81,9 +81,6 @@ BOOL _InputTranslateShiftKey(RsKeyCodes *rs, UINT key, BOOLEAN bDown);
 BOOL _InputIsExtended(INT flag);
 #endif
 
-void CenterVideo(void);
-void CloseClip(void);
-
 #ifdef    __cplusplus
 }
 #endif                          /* __cplusplus */

@@ -44,6 +44,7 @@ long _dwOperatingSystemVersion;
 #include "DMAudio.h"
 #include "ControllerConfig.h"
 #include "Frontend.h"
+#include "IntroMovie.h"
 #include "Game.h"
 #include "PCSave.h"
 #include "MemoryCard.h"
@@ -2143,85 +2144,21 @@ main(int argc, char *argv[])
 				{
 					case GS_START_UP:
 					{
-#ifdef NO_MOVIES
-						gGameState = GS_INIT_ONCE;
-#else
-						gGameState = GS_INIT_LOGO_MPEG;
-#endif
-						TRACE("gGameState = GS_INIT_ONCE");
+						gGameState = CIntroMovie::FirstState();
 						break;
 					}
 
-				    case GS_INIT_LOGO_MPEG:
+					case GS_INIT_LOGO_MPEG:
+					case GS_LOGO_MPEG:
+					case GS_INIT_INTRO_MPEG:
+					case GS_INTRO_MPEG:
 					{
-					    //if (!startupDeactivate)
-						//    PlayMovieInWindow(cmdShow, "movies\\Logo.mpg");
-					    gGameState = GS_LOGO_MPEG;
-					    TRACE("gGameState = GS_LOGO_MPEG;");
-					    break;
-				    }
-
-				    case GS_LOGO_MPEG:
-					{
-//					    CPad::UpdatePads();
-
-//					    if (startupDeactivate || ControlsManager.GetJoyButtonJustDown() != 0)
-						    ++gGameState;
-//					    else if (CPad::GetPad(0)->GetLeftMouseJustDown())
-//						    ++gGameState;
-//					    else if (CPad::GetPad(0)->GetEnterJustDown())
-//						    ++gGameState;
-//					    else if (CPad::GetPad(0)->GetCharJustDown(' '))
-//						    ++gGameState;
-//					    else if (CPad::GetPad(0)->GetAltJustDown())
-//						    ++gGameState;
-//					    else if (CPad::GetPad(0)->GetTabJustDown())
-//						    ++gGameState;
-
-					    break;
-				    }
-
-				    case GS_INIT_INTRO_MPEG:
-					{
-//#ifndef NO_MOVIES
-//					    CloseClip();
-//					    CoUninitialize();
-//#endif
-//
-//					    if (CMenuManager::OS_Language == LANG_FRENCH || CMenuManager::OS_Language == LANG_GERMAN)
-//						    PlayMovieInWindow(cmdShow, "movies\\GTAtitlesGER.mpg");
-//					    else
-//						    PlayMovieInWindow(cmdShow, "movies\\GTAtitles.mpg");
-
-					    gGameState = GS_INTRO_MPEG;
-					    TRACE("gGameState = GS_INTRO_MPEG;");
-					    break;
-				    }
-
-				    case GS_INTRO_MPEG:
-					{
-//					    CPad::UpdatePads();
-//
-//					    if (startupDeactivate || ControlsManager.GetJoyButtonJustDown() != 0)
-						    ++gGameState;
-//					    else if (CPad::GetPad(0)->GetLeftMouseJustDown())
-//						    ++gGameState;
-//					    else if (CPad::GetPad(0)->GetEnterJustDown())
-//						    ++gGameState;
-//					    else if (CPad::GetPad(0)->GetCharJustDown(' '))
-//						    ++gGameState;
-//					    else if (CPad::GetPad(0)->GetAltJustDown())
-//						    ++gGameState;
-//					    else if (CPad::GetPad(0)->GetTabJustDown())
-//						    ++gGameState;
-
-					    break;
-				    }
+						CIntroMovie::RunState();
+						break;
+					}
 
 					case GS_INIT_ONCE:
 					{
-						//CoUninitialize();
-						
 #ifdef PS2_MENU
 						extern char version_name[64];
 						if ( CGame::frenchGame || CGame::germanGame )
@@ -2362,6 +2299,7 @@ main(int argc, char *argv[])
 		/* 
 		* About to shut down - block resize events again...
 		*/
+		CIntroMovie::Close();
 		RwInitialised = FALSE;
 		
 		FrontEndMenuManager.UnloadTextures();

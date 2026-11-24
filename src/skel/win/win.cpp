@@ -24,10 +24,7 @@
 #endif
 
 #include <ddraw.h>
-#include <DShow.h>
 #pragma warning( pop )
-
-#define WM_GRAPHNOTIFY	WM_USER+13
 
 #ifndef USE_D3D9
 #pragma comment( lib, "d3d8.lib" )
@@ -35,7 +32,6 @@
 #pragma comment( lib, "ddraw.lib" )
 #pragma comment( lib, "Winmm.lib" )
 #pragma comment( lib, "dxguid.lib" )
-#pragma comment( lib, "strmiids.lib" )
 #pragma comment( lib, "dinput8.lib" )
 
 #define WITHD3D
@@ -61,8 +57,6 @@ static RwSubSystemInfo GsubSysInfo[MAX_SUBSYSTEMS];
 static RwInt32		GnumSubSystems = 0;
 static RwInt32		GcurSel = 0, GcurSelVM = 0;
 
-static RwBool startupDeactivate;
-
 static RwBool useDefault;
 
 /* Class name for the MS Window's window class. */
@@ -78,8 +72,6 @@ static psGlobalType PsGlobal;
 #define MAKEPOINTS(l)		(*((POINTS /*FAR*/ *)&(l)))
 
 #define SAFE_RELEASE(x) { if (x) x->Release(); x = NULL; }
-#define JIF(x) if (FAILED(hr=(x))) \
-	{debug(TEXT("FAILED(hr=0x%x) in ") TEXT(#x) TEXT("\n"), hr); return;}
 
 #include "main.h"
 #include "FileMgr.h"
@@ -89,6 +81,7 @@ static psGlobalType PsGlobal;
 #include "DMAudio.h"
 #include "ControllerConfig.h"
 #include "Frontend.h"
+#include "IntroMovie.h"
 #include "Game.h"
 #include "PCSave.h"
 #include "AnimViewer.h"
@@ -100,13 +93,6 @@ static psGlobalType PsGlobal;
 #endif
 	
 VALIDATE_SIZE(psGlobalType, 0x28);
-
-// DirectShow interfaces
-IGraphBuilder *pGB = nil;
-IMediaControl *pMC = nil;
-IMediaEventEx *pME = nil;
-IVideoWindow  *pVW = nil;
-IMediaSeeking *pMS = nil;
 
 DWORD dwDXVersion;
 SIZE_T _dwMemTotalPhys;
@@ -895,68 +881,6 @@ void _psSelectScreenVM(RwInt32 videoMode)
 
 /*
  *****************************************************************************
- */
-void WaitForState(FILTER_STATE State)
-{
-	HRESULT hr;
-	
-	ASSERT(pMC != nil);
-	
-	// Make sure we have switched to the required state
-	LONG   lfs;
-	do
-	{
-		hr = pMC->GetState(10, &lfs);
-	} while (State != lfs);
-}
-
-/*
- *****************************************************************************
- */
-void HandleGraphEvent(void)
-{
-	LONG evCode;
-	LONG_PTR evParam1, evParam2;
-	HRESULT hr=S_OK;
-	
-	ASSERT(pME != nil);
-
-	// Process all queued events
-	while (SUCCEEDED(pME->GetEvent(&evCode, &evParam1, &evParam2, 0)))
-	{
-		// Free memory associated with callback, since we're not using it
-		hr = pME->FreeEventParams(evCode, evParam1, evParam2);
-
-		// If this is the end of the clip, reset to beginning
-		if (EC_COMPLETE == evCode)
-		{
-			switch (gGameState)
-			{
-				case GS_LOGO_MPEG:
-				{
-					gGameState = GS_INIT_INTRO_MPEG;
-					TRACE("gGameState = GS_INIT_INTRO_MPEG");
-					break;
-				}
-				case GS_INTRO_MPEG:
-				{
-					gGameState = GS_INIT_ONCE;
-					TRACE("gGameState = GS_INIT_ONCE");
-					break;
-				}
-				default:
-				{
-					break;
-				}
-			}
-
-			pME->SetNotifyWindow((OAHWND)NULL, 0, 0);
-		}
-	}
-}
-
-/*
- *****************************************************************************
  */ 
 LRESULT CALLBACK
 MainWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
@@ -1171,58 +1095,6 @@ MainWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_ACTIVATEAPP:
 		{
-			switch ( gGameState )
-			{
-				case GS_LOGO_MPEG:
-				case GS_INTRO_MPEG:
-				{
-					ASSERT(pMC != nil);
-					
-					LONG state;
-					pMC->GetState(10, &state);
-					
-					if ( !(BOOL)wParam ) // losing activation
-					{
-						if ( state == State_Running && pMC != nil )
-						{
-							HRESULT hr = pMC->Pause();
-
-							if (hr == S_FALSE)
-								OutputDebugString("Failed to pause the MPEG");
-							else
-								WaitForState(State_Paused);
-						}
-					}
-					else
-					{
-						CenterVideo();
-						
-						if ( state != State_Running && pMC != nil )
-						{
-							HRESULT hr = pMC->Run();
-
-							if ( hr == S_FALSE )
-								OutputDebugString("Failed to run the MPEG");
-							else
-							{
-								WaitForState(State_Running);
-								SetFocus(PSGLOBAL(window));
-							}
-						}
-					}
-					
-					break;
-				}
-				
-				case GS_START_UP:
-				{
-					if ( !(BOOL)wParam && PSGLOBAL(fullScreen) ) // losing activation
-						startupDeactivate = TRUE;
-					
-					break;
-				}
-			}
-			
 			CPad::GetPad(0)->Clear(false);
 			CPad::GetPad(1)->Clear(false);
 			
@@ -1234,14 +1106,6 @@ MainWndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 			return 0L;
 		}
 		
-		case WM_GRAPHNOTIFY:
-		{
-			if (gGameState == GS_INTRO_MPEG || gGameState == GS_LOGO_MPEG)
-				HandleGraphEvent();
-
-			break;
-		}
-
 		case WM_CLOSE:
 		case WM_DESTROY:
 		{
@@ -1878,114 +1742,6 @@ void InitialiseLanguage()
 /*
  *****************************************************************************
  */
-void CenterVideo(void)
-{
-	HRESULT hr = S_OK;
-	RECT rect;
-
-	ASSERT(pVW != nil);
-	
-	GetClientRect(PSGLOBAL(window), &rect);
-
-	JIF(pVW->SetWindowPosition(rect.left, rect.top, rect.right, rect.bottom));
-
-	JIF(pVW->put_MessageDrain((OAHWND) PSGLOBAL(window)));
-
-	SetFocus(PSGLOBAL(window));
-}
-
-/*
- *****************************************************************************
- */
-void PlayMovieInWindow(int cmdShow, const char* szFile)
-{
-	WCHAR wFileName[256];
-	HRESULT hr;
-
-	// Clear open dialog remnants before calling RenderFile()
-	UpdateWindow(PSGLOBAL(window));
-
-	// Convert filename to wide character string
-	MultiByteToWideChar(CP_ACP, 0, szFile, -1, wFileName, sizeof(wFileName) - 1);
-
-	// Initialize COM
-#ifdef FIX_BUGS // will also return S_FALSE if it has already been inited in the same thread
-	CoInitialize(nil);
-#else
-	JIF(CoInitialize(nil));
-#endif
-
-	// Get the interface for DirectShow's GraphBuilder
-	JIF(CoCreateInstance(CLSID_FilterGraph, nil, CLSCTX_INPROC, 
-						 IID_IGraphBuilder, (void **)&pGB));
-
-	if(SUCCEEDED(hr))
-	{
-		// Have the graph builder construct its the appropriate graph automatically
-		JIF(pGB->RenderFile(&wFileName[0], nil));
-
-		// QueryInterface for DirectShow interfaces
-		JIF(pGB->QueryInterface(IID_IMediaControl, (void **)&pMC));
-		JIF(pGB->QueryInterface(IID_IMediaEventEx, (void **)&pME));
-		JIF(pGB->QueryInterface(IID_IMediaSeeking, (void **)&pMS));
-
-		// Query for video interfaces, which may not be relevant for audio files
-		JIF(pGB->QueryInterface(IID_IVideoWindow, (void **)&pVW));
-
-		JIF(pVW->put_Owner((OAHWND) PSGLOBAL(window)));
-		JIF(pVW->put_WindowStyle(WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN));
-
-		// Have the graph signal event via window callbacks for performance
-		JIF(pME->SetNotifyWindow((OAHWND)PSGLOBAL(window), WM_GRAPHNOTIFY, 0));
-
-		CenterVideo();
-
-		// Run the graph to play the media file
-		JIF(pMC->Run());
-
-		SetFocus(PSGLOBAL(window));
-	}
-	
-	ASSERT(pGB != nil);
-	ASSERT(pVW != nil);
-	ASSERT(pME != nil);
-	ASSERT(pMC != nil);
-
-	if(FAILED(hr))
-		CloseClip();
-}
-
-/*
- *****************************************************************************
- */
-void CloseInterfaces(void)
-{
-	// Release and zero DirectShow interfaces
-	SAFE_RELEASE(pME);
-	SAFE_RELEASE(pMS);
-	SAFE_RELEASE(pMC);
-	SAFE_RELEASE(pVW);
-	SAFE_RELEASE(pGB);
-}
-
-/*
- *****************************************************************************
- */
-void CloseClip(void)
-{
-	HRESULT hr;
-
-	// Stop playback
-	if(pMC)
-		hr = pMC->Stop();
-
-	// Free DirectShow interfaces
-	CloseInterfaces();
-}
-
-/*
- *****************************************************************************
- */
 void HandleExit()
 {
 	MSG message;
@@ -2274,98 +2030,21 @@ WinMain(HINSTANCE instance,
 				{
 					case GS_START_UP:
 					{
-#ifdef NO_MOVIES
-						gGameState = IntroMoviesWanted() ? GS_INIT_LOGO_MPEG : GS_INIT_ONCE;
-#else
-						gGameState = GS_INIT_LOGO_MPEG;
-#endif
-						TRACE("gGameState = GS_INIT_LOGO_MPEG");
+						gGameState = CIntroMovie::FirstState();
 						break;
 					}
 					
 					case GS_INIT_LOGO_MPEG:
-					{
-						if ( !startupDeactivate )
-							PlayMovieInWindow(cmdShow, "movies\\Logo.mpg");
-						gGameState = GS_LOGO_MPEG;
-						TRACE("gGameState = GS_LOGO_MPEG;");
-						break;
-					}
-					
 					case GS_LOGO_MPEG:
-					{
-						CPad::UpdatePads();
-
-						if ( startupDeactivate || ControlsManager.GetJoyButtonJustDown() != 0 )
-							++gGameState;
-						else if ( CPad::GetPad(0)->NewState.CheckForInput() )
-							++gGameState;
-						else if ( CPad::GetPad(0)->GetLeftMouseJustDown() )
-							++gGameState;
-						else if ( CPad::GetPad(0)->GetEnterJustDown() )
-							++gGameState;
-						else if ( CPad::GetPad(0)->GetCharJustDown(' ') )
-							++gGameState;
-						else if ( CPad::GetPad(0)->GetAltJustDown() )
-							++gGameState;
-						else if ( CPad::GetPad(0)->GetTabJustDown() )
-							++gGameState;
-
-						break;
-					}
-					
 					case GS_INIT_INTRO_MPEG:
-					{
-#ifdef NO_MOVIES
-						if (IntroMoviesWanted())
-#endif
-						CloseClip();
-#ifndef FIX_BUGS
-						CoUninitialize();
-#endif
-						
-						if ( FrontEndMenuManager.OS_Language == LANG_FRENCH || FrontEndMenuManager.OS_Language == LANG_GERMAN )
-							PlayMovieInWindow(cmdShow, "movies\\GTAtitlesGER.mpg");
-						else
-							PlayMovieInWindow(cmdShow, "movies\\GTAtitles.mpg");
-						
-						gGameState = GS_INTRO_MPEG;
-						TRACE("gGameState = GS_INTRO_MPEG;");
-						break;
-					}
-					
 					case GS_INTRO_MPEG:
 					{
-						CPad::UpdatePads();
-
-						if ( startupDeactivate || ControlsManager.GetJoyButtonJustDown() != 0 )
-							++gGameState;
-						else if ( CPad::GetPad(0)->NewState.CheckForInput() )
-							++gGameState;
-						else if ( CPad::GetPad(0)->GetLeftMouseJustDown() )
-							++gGameState;
-						else if ( CPad::GetPad(0)->GetEnterJustDown() )
-							++gGameState;
-						else if ( CPad::GetPad(0)->GetCharJustDown(' ') )
-							++gGameState;
-						else if ( CPad::GetPad(0)->GetAltJustDown() )
-							++gGameState;
-						else if ( CPad::GetPad(0)->GetTabJustDown() )
-							++gGameState;
-
+						CIntroMovie::RunState();
 						break;
 					}
 					
 					case GS_INIT_ONCE:
 					{
-#ifdef NO_MOVIES
-						if (IntroMoviesWanted())
-#endif
-						CloseClip();
-#ifndef FIX_BUGS
-						CoUninitialize();
-#endif
-						
 #ifdef FIX_BUGS
 						// draw one frame because otherwise we'll end up looking at black screen for a while if vsync is on
 						RsCameraShowRaster(Scene.camera);
@@ -2515,6 +2194,7 @@ WinMain(HINSTANCE instance,
 		/* 
 		* About to shut down - block resize events again...
 		*/
+		CIntroMovie::Close();
 		RwInitialised = FALSE;
 		
 		FrontEndMenuManager.UnloadTextures();

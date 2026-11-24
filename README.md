@@ -23,7 +23,7 @@ They are in both games. See [My fixes](https://github.com/hezkore/hez-gta-re3/tr
   - `re3-windows-amd64-d3d9.zip` and `re3-linux-amd64-opengl.zip` for GTA III
   - `reVC-windows-amd64-d3d9.zip` and `reVC-linux-amd64-opengl.zip` for GTA Vice City
   - `reLCS-alpha-windows-amd64-d3d9.zip` and `reLCS-alpha-linux-amd64-opengl.zip` for GTA Liberty City Stories, an unfinished alpha with its own setup on [the lcs branch](https://github.com/hezkore/hez-gta-re3/tree/lcs)
-- The Windows builds use Direct3D 9, and the Linux builds use OpenGL. Only the Windows builds play the intro videos.
+- The Windows builds use Direct3D 9, and the Linux builds use OpenGL.
 - Extract the zip over the game directory and run the binary in it. The zip has the binary, updated and additional gamefiles and the dlls OpenAL needs.
 - Start the binary with `-loadsave 1` to skip the intro and menus and load save slot 1 straight away, and with `-cheat thugstools` to enter a cheat as soon as you can play. `-cheat` can be given several times. `-spawncar cheetah` puts you in that car on the nearest road, and `-teleport X,Y,Z` puts you at those coordinates, or on the ground with only X and Y.
 
