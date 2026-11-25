@@ -234,3 +234,19 @@ jobs:
           done
           echo "Could not push the bug form versions after $attempt tries." >&2
           exit 1
+
+  issues:
+    needs: [check, release]
+    # the latest nightly holds every fix when it was just published, or when nothing needed a build
+    if: ${{ !cancelled() && (needs.check.outputs.build == 'no' || needs.release.result == 'success') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Ask about the potentially fixed issues and close the unanswered ones
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/potentially-fixed.sh
