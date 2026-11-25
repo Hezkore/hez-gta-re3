@@ -12,6 +12,10 @@ concurrency:
   group: nightly
   cancel-in-progress: false
 
+env:
+  # the bug form gets a commit after each nightly, which is no reason to build or list in the changelog
+  FORM_FILES: .github/ISSUE_TEMPLATE
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -33,12 +37,19 @@ jobs:
           body=$(gh api repos/${{ github.repository }}/releases \
             --jq '[.[] | select(.tag_name | startswith("nightly-"))] | first | .body // ""' | tr -d '\r')
 
+          only_forms() {
+            local files
+            [ -n "$1" ] || return 1
+            files=$(gh api "repos/${{ github.repository }}/compare/$1...$2" --jq '.files[].filename') || return 1
+            ! grep -qv "^$FORM_FILES/" <<< "$files"
+          }
+
           build=no
           for branch in master miami lcs; do
             sha=$(gh api repos/${{ github.repository }}/commits/$branch --jq .sha)
             # notes edited on the web come back with \r\n, and older nightlies name every branch on one line
             prev=$(echo "$body" | grep '^Built from ' | grep -o "\b$branch [0-9a-f]\{40\}\b" | cut -d' ' -f2 || true)
-            if [ "$sha" != "$prev" ]; then
+            if [ "$sha" != "$prev" ] && ! only_forms "$prev" "$sha"; then
               build=yes
             fi
             echo "$branch=$sha" >> $GITHUB_OUTPUT
@@ -101,6 +112,7 @@ jobs:
         shell: bash
         run: |
           asset=${{ matrix.asset }}.zip
+          echo "Version: ${{ needs.check.outputs.tag }}" > gamefiles/VERSION.txt
           if [ "$RUNNER_OS" = "Linux" ]; then
             (cd gamefiles && zip -r "../$asset" .)
           else
@@ -133,25 +145,24 @@ jobs:
           log() {
             if [ -z "$1" ]; then
               echo "* first nightly"
-            elif [ "$1" = "$2" ]; then
-              echo "* no changes"
-            else
-              # the branch's own line only, so a merged pull request is one entry with its title
-              # instead of every commit inside it
-              git log --first-parent --format='%H %P' "$1..$2" | while read -r commit parent merged; do
-                if [ -n "$merged" ]; then
-                  pull_request=$(git log -1 --format='%s' "$commit" | sed -n 's/^Merge pull request #\([0-9]*\) from \([^/]*\)\/.*/#\1 by \2/p')
-                  title=$(git log -1 --format='%b' "$commit" | sed '/^$/d' | head -n 1)
-                  if [ -n "$pull_request" ]; then
-                    echo "* ${title:-pull request} ($pull_request)"
-                  else
-                    echo "* $(git log -1 --format='%s' "$commit")"
-                  fi
-                else
-                  git log -1 --format='%B' "$commit" | sed '/^$/d; s/^/* /'
-                fi
-              done
+              return
             fi
+            # the branch's own line only, so a merged pull request is one entry with its title
+            # instead of every commit inside it
+            changes=$(git log --first-parent --format='%H %P' "$1..$2" -- . ":!$FORM_FILES" | while read -r commit parent merged; do
+              if [ -n "$merged" ]; then
+                pull_request=$(git log -1 --format='%s' "$commit" | sed -n 's/^Merge pull request #\([0-9]*\) from \([^/]*\)\/.*/#\1 by \2/p')
+                title=$(git log -1 --format='%b' "$commit" | sed '/^$/d' | head -n 1)
+                if [ -n "$pull_request" ]; then
+                  echo "* ${title:-pull request} ($pull_request)"
+                else
+                  echo "* $(git log -1 --format='%s' "$commit")"
+                fi
+              else
+                git log -1 --format='%B' "$commit" | sed '/^$/d; s/^/* /'
+              fi
+            done)
+            echo "${changes:-* no changes}"
           }
 
           {
@@ -192,9 +203,34 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release list --limit 100 --json tagName,createdAt \
-            --jq '[.[] | select(.tagName | startswith("nightly-"))] | sort_by(.createdAt) | reverse | .[10:] | .[].tagName' |
+          # tags are nightly-YYYY-MM-DD, the same order the bug form lists them in
+          gh release list --limit 100 --json tagName \
+            --jq '[.[].tagName | select(startswith("nightly-"))] | sort | reverse | .[10:] | .[]' |
           while read -r tag; do
             echo "Removing $tag"
             gh release delete "$tag" --yes --cleanup-tag
           done
+
+      - name: List the nightlies in the bug form
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # master may move while the nightly builds, so start from the newest master and retry when a push fails
+          for attempt in 1 2 3; do
+            git fetch -q origin master
+            git checkout -q -B master origin/master
+            .github/nightly-versions.sh
+            if git diff --quiet; then
+              echo "The bug form already lists these nightlies."
+              exit 0
+            fi
+            git commit -q -am "update the bug form versions"
+            if git push -q origin master; then
+              exit 0
+            fi
+          done
+          echo "Could not push the bug form versions after $attempt tries." >&2
+          exit 1

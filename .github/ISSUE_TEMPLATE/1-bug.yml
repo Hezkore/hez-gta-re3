@@ -27,11 +27,24 @@ body:
         - Linux (OpenGL)
     validations:
       required: true
-  - type: input
+  - type: dropdown
     id: version
     attributes:
       label: Version
-      description: The nightly you run, such as the name of the zip file or the release.
+      description: Check VERSION.txt in your game folder.
+      multiple: true
+      options:
+        - nightly-2026-11-25
+        - nightly-2026-11-24
+        - nightly-2026-11-23
+        - nightly-2026-11-22
+        - nightly-2026-11-21
+        - nightly-2026-11-20
+        - nightly-2026-10-29
+        - nightly-2026-09-01
+        - nightly-2026-08-31
+        - Older than nightly-2026-08-31
+        - Built from source
     validations:
       required: true
   - type: textarea
