@@ -1,0 +1,30 @@
+name: Suggestion
+description: An idea for something new or better.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **One suggestion per issue.** Have more than one? Open a new issue for each.
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      multiple: true
+      options:
+        - GTA III
+        - GTA Vice City
+        - GTA Liberty City Stories
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Suggestion
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What this would make better for you.

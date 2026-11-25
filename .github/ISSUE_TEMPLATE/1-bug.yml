@@ -1,0 +1,57 @@
+name: Bug report
+description: Something is broken or acts wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **One bug per issue.** Found more than one? Open a new issue for each.
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      options:
+        - GTA III
+        - GTA Vice City
+        - GTA Liberty City Stories
+    validations:
+      required: true
+  - type: dropdown
+    id: build
+    attributes:
+      label: Build
+      options:
+        - Windows (Direct3D 9)
+        - Linux (OpenGL)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The nightly you run, such as the name of the zip file or the release.
+    validations:
+      required: true
+  - type: textarea
+    id: bug
+    attributes:
+      label: What happens
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to repeat the bug
+      placeholder: |
+        1. Start a new game
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots, videos or logs

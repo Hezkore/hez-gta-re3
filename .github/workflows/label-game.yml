@@ -1,0 +1,28 @@
+name: label game
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label the issue with its game
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.issue.number }}
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          games=$(printf '%s\n' "$BODY" | awk '/^### /{f=($0=="### Game");next} f&&NF{print;exit}')
+          args=()
+          for entry in "III:5a8f3a" "Vice City:e0559b" "Liberty City Stories:3a7bd5"; do
+            label=${entry%:*}
+            gh label create "$label" --color "${entry#*:}" --force
+            if [[ ", $games," == *", GTA $label,"* ]]; then args+=(--add-label "$label"); else args+=(--remove-label "$label"); fi
+          done
+          gh issue edit "$NUMBER" "${args[@]}"
