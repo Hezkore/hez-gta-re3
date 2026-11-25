@@ -417,6 +417,14 @@ CMatrix::operator*=(CMatrix const &rhs)
 	return *this;
 }
 
+// Whether the axes are left handed, which no rotation gives. The rotated garage doors
+// are, CGarage::BuildRotatedDoorMatrix crosses their axes that way round
+bool
+CMatrix::IsMirrored(void) const
+{
+	return DotProduct(CrossProduct(GetRight(), GetForward()), GetUp()) < 0.0f;
+}
+
 // Puts this between a and b, at b for t = 1. The rotation goes the shorter way round as a
 // quaternion, a plain blend of two matrices that differ a lot collapses towards zero
 void
@@ -425,8 +433,20 @@ CMatrix::Interpolate(const CMatrix &a, const CMatrix &b, float t)
 	RwMatrix ma, mb, m;
 	CQuaternion qa, qb, q;
 
-	ma.right = a.GetRight(); ma.up = a.GetForward(); ma.at = a.GetUp();
-	mb.right = b.GetRight(); mb.up = b.GetForward(); mb.at = b.GetUp();
+	// nothing lies between a matrix and its mirror image
+	if(a.IsMirrored() != b.IsMirrored()){
+		GetRight() = b.GetRight();
+		GetForward() = b.GetForward();
+		GetUp() = b.GetUp();
+		GetPosition() = a.GetPosition() + (b.GetPosition() - a.GetPosition())*t;
+		return;
+	}
+	// a quaternion only holds a rotation, so a mirrored pair is blended with its
+	// right axis turned round, and the blend is turned back
+	float side = b.IsMirrored() ? -1.0f : 1.0f;
+
+	ma.right = a.GetRight()*side; ma.up = a.GetForward(); ma.at = a.GetUp();
+	mb.right = b.GetRight()*side; mb.up = b.GetForward(); mb.at = b.GetUp();
 	qa.Set(ma);
 	qb.Set(mb);
 	if(qa.x*qb.x + qa.y*qb.y + qa.z*qb.z + qa.w*qb.w < 0.0f)
@@ -434,7 +454,7 @@ CMatrix::Interpolate(const CMatrix &a, const CMatrix &b, float t)
 	q = qa*(1.0f - t) + qb*t;
 	q.Normalise();
 	q.Get(&m);
-	GetRight() = m.right;
+	GetRight() = m.right*side;
 	GetForward() = m.up;
 	GetUp() = m.at;
 	GetPosition() = a.GetPosition() + (b.GetPosition() - a.GetPosition())*t;
