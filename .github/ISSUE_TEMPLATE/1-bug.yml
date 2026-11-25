@@ -10,6 +10,7 @@ body:
     id: game
     attributes:
       label: Game
+      description: Pick each game the bug shows up in.
       multiple: true
       options:
         - GTA III
@@ -18,13 +19,14 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: build
+    id: platform
     attributes:
-      label: Build
+      label: Platform
       multiple: true
       options:
-        - Windows (Direct3D 9)
-        - Linux (OpenGL)
+        - Windows
+        - Linux
+        - Other
     validations:
       required: true
   - type: dropdown
