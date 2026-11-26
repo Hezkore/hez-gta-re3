@@ -36,6 +36,7 @@ body:
       description: Check VERSION.txt in your game folder.
       multiple: true
       options:
+        - nightly-2026-11-26
         - nightly-2026-11-25
         - nightly-2026-11-24
         - nightly-2026-11-23
